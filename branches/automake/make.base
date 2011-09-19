@@ -1,0 +1,185 @@
+##########################################################
+#
+# Filename:		make.base
+# Author:		Eric Torstenson
+# Purpose:		Provides basic make targets and behavior useful to track down and ease the process of building
+#	
+
+STRIP=strip
+
+
+ifeq ($(LOCAL_RELEASE), 1)
+	LOCAL_FLAGS=-DLOCAL_RELEASE=1
+endif
+ifdef USE_DOPT
+	FLAGS_DOPT=-D USE_DOPTIMIZATION
+	DOPT_DESC="w/ D Optimization"
+endif
+
+ifdef ENABLE_CV
+	FLAGS_CV=-D CROSS_VALIDATION
+	CV_DESC="w/ Cross Validation"
+endif
+
+ifdef VAMPIRE
+    MPI_LIBS= -lmpich -lpthread
+    MPI_INC=-I/usr/local/mpich-ether/p4/absoft_gcc/include/
+    CL=mpiCC
+	VMP_DESC="for Vampire"
+else
+    MPI_LIBS=-lmpichcxx -lmpich -lpthread
+    MPI_INC=
+	CL=$(CPP)
+endif
+
+
+ifeq ($(USE_MPI), 1)
+	FLAGS_MPI=-D USE_MPI
+	MPI_LINK=$(MPI_LIBS)
+	EXEC_PREFIX=p
+	MPIPATH=parallel
+	MPI_DESC="w/ MPI"
+else
+	MPI_LINK=
+	EXEC_PREFIX=
+	MPIPATH=serial
+	MPI_DESC="w/o MPI"
+endif
+
+INC_BUILD?=0
+ifndef OBJS
+	OBJS=$(patsubst %,$(OBJECT_PATH)/%,$(notdir $(SRCS:.cpp=.o)))  $(ADDITIONAL_OBJECTS)
+endif 
+ifndef COBJS
+	COBJS=$(patsubst %,$(OBJECT_PATH)/%,$(notdir $(CSRCS:.c=.o)))
+endif
+
+
+#This didn't work perfectly, since some objects don't have matching .h files
+#HDRS=$(SRCS:.cpp=.h)
+
+CPPFLAGS= -Wall $(MODE_FLAG) $(INCLUDES) $(PREPROC_FLAG) $(COMPILER_FLAGS) $(LARGE_FILESYSTEM) $(LOCAL_FLAGS)
+APPFLAGS=-L$(LIBPATH) 
+# -lboost_thread
+DEPEND= $(CL) -MM 
+
+
+
+VALGRIND_OPTIONS = -v --leak-check=full 
+
+AR_FLAGS=-rsv
+DEBUGLIB=$(LIBPATH)/$(EXEC_PREFIX)$(PROJECTNAME)$(DEBUGSUFFIX).a
+
+
+
+include $(MAKEPATH)/platform.make
+include $(MAKEPATH)/color.make
+include $(MAKEPATH)/make.directory
+
+GCC_VERSION=$(shell $(CXX) --version | grep gcc | cut -f3 -d\ | cut -f1-2 -d. )
+
+LIBNAME=lib$(PROJECTNAME)$(LIBSUFFIX).a
+RLABLIBS=$(patsubst %,$(LIBPATH)/lib%$(LIBSUFFIX).a, $(LOCAL_LIBS))
+RLABLIBLIST=$(patsubst %,-l%$(LIBSUFFIX), $(LOCAL_LIBS))
+
+.PHONY:	clean debug all test tell release remake depend appinterface.l
+
+STARTPATH=$(CURDIR)
+
+all:	$(MAINTARGET)
+
+release:
+	@(SUPRESS)make remake RELEASE=1
+
+remake:
+	@(SUPRESS)rm -f $(OBJS) $(MAINTARGET)
+	@(SUPRESS)make	
+
+-include $(OBJS:.o=.d)
+
+$(LIBPATH)/$(LIBNAME): $(OBJS) $(COBJS) $(ADLDEPS)
+	$(TERM_PINK)
+	@echo "Linking $(LIBNAME) "
+	@echo "  Selected Options: $(MPI_DESC) $(VMP_DESC) $(CV_DESC) $(DOPT_DESC) $(RAND_DESC)"
+	$(TERM_RESET)
+	$(SUPRESS)mkdir -p $(LIBPATH)
+	$(SUPRESS)ar -rs $@ $^
+
+$(OBJS): $(SRCS)
+	$(SUPRESS)mkdir -p $(OBJECT_PATH)
+	$(SUPRESS)$(CL) -c $(CPPFLAGS) $(filter $(*F).cpp, $^) $(WORDSIZE) -o $(OBJECT_PATH)/$(*F)$(CMP_EXT)  $(MPI_INC) $(FLAGS_RAND)
+	#http://scottmcpeak.com/autodepend/autodepend.html
+	$(SUPRESS)$(CL) -MM $(CPPFLAGS) $(filter $(*F).cpp, $^) $(WORDSIZE) $(MPI_INC) $(FLAGS_RAND) > $(OBJECT_PATH)/$(*F).d
+	@mv -f $(OBJECT_PATH)/$(*F).d $(OBJECT_PATH)/$(*F).d.tmp
+	@sed -e 's|.*:|$*.o:|' < $(OBJECT_PATH)/$(*F).d.tmp > $(OBJECT_PATH)/$(*F).d
+	@rm $(OBJECT_PATH)/$(*F).d.tmp 
+	$(TERM_GREEN)
+	@echo "  - $(filter $(*F).cpp, $^)"
+	$(TERM_RESET)
+	
+$(COBJS): $(CSRCS) $(SOURCE_FILES)
+	echo "$(CSRCS) -- $(COBJS)"
+	$(SUPRESS)mkdir -p $(OBJECT_PATH)
+	$(SUPRESS)$(CL) -c $(CPPFLAGS) $(filter %$(*F).c, $^) $(WORDSIZE) -o $(OBJECT_PATH)/$(*F)$(CMP_EXT) $(MPI_INC) $(FLAGS_RAND)
+	$(TERM_GREEN)
+	$(SUPRESS)echo "  - $(filter $(*F).C, $^)"
+	$(TERM_RESET)
+
+
+
+
+$(BINPATH)/$(EXENAME):  timestamp.l $(COBJS) $(OBJS) $(RLABLIBS) $(ADLDEPS) 
+	@echo "Linking $(EXENAME) : $@ "
+	@echo "  Selected Options: $(MPI_DESC) $(VMP_DESC) $(CV_DESC) $(DOPT_DESC) $(RAND_DESC)"
+	$(TERM_PINK)
+	$(SUPRESS)mkdir -p $(BINPATH)
+	$(SUPRESS)echo $@
+	$(TERM_RESET)
+	$(SUPRESS)$(CL) $(LINKER_FLAGS) -o $@ $(OBJS) -L$(LIBPATH) $(RLABLIBLIST) $(MPI_LINK)  $(TESTLINKS) $(EXTERNAL_LINKS)
+
+include $(MAKEPATH)/make.test
+
+
+timestamp.l:
+ifeq ($(INC_BUILD), 1)
+	env /bin/sh ~/bin/inc_version.sh timestamp.h
+	#$(shell inc_version.sh timestamp.h)
+endif
+
+
+tell:
+	$(SUPRESS)echo ""
+	$(SUPRESS)echo ""
+	$(SUPRESS)echo "TARGET:"
+	$(SUPRESS)echo "$(MAINTARGET)"
+	$(SUPRESS)echo "SRCS: "
+	$(SUPRESS)echo $(SRCS)
+	$(SUPRESS)echo "OBJS:"
+	$(SUPRESS)echo "$(OBJS)"
+	$(SUPRESS)echo "LIBS:           $(RLABLIBS)"
+	$(SUPRESS)echo "Compile Flags:"
+	$(SUPRESS)echo $(CPPFLAGS)
+	$(SUPRESS)echo "Link Flags:"
+	$(SUPRESS)echo $(LINKER_FLAGS)
+
+test: 
+#$(BINPATH)/$(EXENAME)
+	$(SUPRESS)$(MAKE) TEST=1
+
+memtest: $(BINPATH)/test$(EXENAME)
+	$(SUPRESS)cd $(BINPATH);	valgrind $(VALGRIND_OPTIONS) ./test$(EXENAME) > ./$(EXENAME).valgrind.output
+	#> $(EXENAME).test.output
+	$(SUPRESS)cd $(STARTPATH)
+
+runtest: $(BINPATH)/$(EXENAME)
+	$(SUPRESS)cd $(BINPATH);./$(EXENAME) > $(EXENAME).test.output
+	#cd $(STARTPATH)
+
+clean:
+	$(SUPRESS)rm -f $(OBJS) $(MAINTARGET)
+	$(SUPRESS)rm -f .depend
+
+cleantmps:
+	$(SUPRESS)rm -f .*.tmp
+
+

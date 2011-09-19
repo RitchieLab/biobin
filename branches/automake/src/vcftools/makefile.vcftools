@@ -1,0 +1,55 @@
+# This is just a makefile to compile the vcf tools. It only 
+# differs from the version I got with the code so that it
+# compiles into my directories (and accepts the various command
+# options and compiler/linker flags)
+
+PROJECT_COMPILER_FLAGS=$(FLAGS_DOPT) $(FLAGS_CV) $(FLAGS_MPI)
+
+PROJECTNAME=vcftools
+
+#dgeev.h #this isn't currently being used....
+HDRS=vcftools.h vcf_file.h vcf_entry.h parameters.h output_log.h
+
+
+#ADLDEPS=
+#timestamp.l
+
+#DEFINE THE sources
+SRCS=vcftools.cpp vcf_file.cpp vcf_entry.cpp \
+	vcf_entry_getters.cpp vcf_entry_setters.cpp \
+	vcf_file_filters.cpp vcf_file_output.cpp \
+	vcf_file_format_convert.cpp \
+        vcf_file_diff.cpp parameters.cpp output_log.cpp
+
+
+#DEFINE THE ROOTPATH - This is the top level where there will be a make, dist, and others
+ROOTPATH=../..
+
+#OVERRIDE the path to sources if necessary
+SRCPATHS=..
+
+
+#list the projects which build into libraries
+LOCAL_LIBS=knowledge utility
+#ldspline
+#appinterface.l
+
+#Uncomment this line for executables
+LIBRARY_MAKE=0
+
+#Uncomment this line for test applications
+IS_TEST=0
+MAKEPATH=$(ROOTPATH)
+EXTERNAL_LINKS=-lz
+
+include $(MAKEPATH)/extlibs.make
+include $(MAKEPATH)/make.base
+
+
+OBJECTONLY: $(OBJS)
+	$(SUPRESS)mkdir -p $(HEADERDEST)
+	$(SUPRESS)cp $(SRCPATH)/*.h $(HEADERDEST)
+	
+
+
+
