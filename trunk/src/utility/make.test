@@ -1,0 +1,46 @@
+PROJECT_COMPILER_FLAGS=$(FLAGS_DOPT) $(FLAGS_CV) $(FLAGS_MPI)
+
+PROJECTNAME=utility
+
+HDRS=rs.h \
+	strings.h
+
+
+#ADLDEPS=
+#timestamp.l
+
+#DEFINE THE sources
+SRCS=rs.cpp \
+	strings.cpp \
+	testmain.cpp
+
+#DEFINE THE ROOTPATH - This is the top level where there will be a make, dist, and others
+ROOTPATH=../..
+
+#OVERRIDE the path to sources if necessary
+SRCPATHS=..
+
+#list the projects which build into libraries
+LOCAL_LIBS=
+#utility random
+#appinterface.l
+
+#Uncomment this line for executables
+#LIBRARY_MAKE=0
+
+#Uncomment this line for test applications
+IS_TEST=1
+SOCI=1
+MAKEPATH=$(ROOTPATH)
+EXTERNAL_LINKS=-lboost_filesystem -lboost_system
+include $(MAKEPATH)/extlibs.make
+include $(MAKEPATH)/make.base
+
+OBJECTONLY: $(OBJS)
+	$(SUPRESS)mkdir -p $(HEADERDEST)
+	$(SUPRESS)cp $(SRCPATH)/*.h $(HEADERDEST)
+	
+
+
+
+

@@ -1,0 +1,31 @@
+ifndef TESTOBJS
+	TESTOBJS=$(patsubst %,$(OBJECT_PATH)/%,$(notdir $(TEST_SRCS:.cpp=.o)))  $(ADDITIONAL_OBJECTS)
+endif
+TEST_INCLUDES=-fprofile-arcs -ftest-coverage
+TEST_LINKS=-lboost_filesystem -lboost_system -fprofile-arcs -ftest-coverage
+LAST_CALL=$(shell echo $$?)
+$(TESTOBJSs): $(TEST_SRCS) $(HDRS) .depend
+	@echo "OBJS: $(TESTOBJS)"
+	@echo "SRCS: $(TEST_SRCS)"
+	$(SUPRESS)mkdir -p $(OBJECT_PATH)
+	$(SUPRESS)$(CL) -c $(CPPFLAGS) $(filter $(*F).cpp, $^) $(WORDSIZE) -o $(OBJECT_PATH)/$(*F)$(CMP_EXT)  $(MPI_INC) $(FLAGS_RAND)
+	$(TERM_GREEN)
+	$(SUPRESS)echo "  - $(filter $(*F).cpp, $^)"
+	$(TERM_RESET)
+
+TESTPROG=$(BINPATH)/test-$(EXENAME)
+$(BINPATH)/test-$(EXENAME):  $(OBJS) $(RLABLIBS) $(ADLDEPS)
+	$(SUPRESS)rm -f $(BINPATH)/test-$(EXENAME)
+	@echo "  Selected Options: $(MPI_DESC) $(VMP_DESC) $(CV_DESC) $(DOPT_DESC) $(RAND_DESC)"
+	$(TERM_PINK)
+	$(SUPRESS)mkdir -p $(BINPATH)
+	$(SUPRESS)echo $@
+	$(TERM_RESET)
+
+	$(SUPRESS)$(CL) $(LINKER_FLAGS) -o $@ $(OBJS) -L$(LIBPATH) $(RLABLIBS) $(MPI_LINK)  $(TESTLINKS) $(EXTERNAL_LINKS)
+	$(SUPRESS)$(TESTPROG)
+	$(TERM_RED)
+	@if [ "$(LAST_CALL)" != "0" ]; then echo "Unable to continue"; exit 2; else echo "\t\t\tOK"; fi
+	$(TERM_RESET)
+
+.PRECIOUS: $(BINPATH)/test-$(EXENAME)

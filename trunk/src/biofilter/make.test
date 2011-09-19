@@ -1,0 +1,54 @@
+PROJECT_COMPILER_FLAGS=$(FLAGS_DOPT) $(FLAGS_CV) $(FLAGS_MPI)
+
+PROJECTNAME=biofilter
+
+HDRS=application.h \
+	configuration.h \
+	main.h \
+	timestamp.h
+
+
+#ADLDEPS=
+#timestamp.l
+
+
+#DEFINE THE sources
+SRCS=application.cpp \
+	configuration.cpp \
+	ldsplineimporter.cpp \
+	main.cpp \
+	task.cpp \
+	taskgenecoverage.cpp\
+	testmain.cpp
+
+#DEFINE THE ROOTPATH - This is the top level where there will be a make, dist, and others
+ROOTPATH=../..
+
+#OVERRIDE the path to sources if necessary
+SRCPATHS=..
+
+#list the projects which build into libraries
+LOCAL_LIBS=utility knowledge
+#random
+#appinterface.l
+
+#Uncomment this line for executables
+#LIBRARY_MAKE=0
+
+#Uncomment this line for test applications
+IS_TEST=1
+SOCI=1
+MAKEPATH=$(ROOTPATH)
+ALT_INCLUDES=-fprofile-arcs -ftest-coverage
+EXTERNAL_LINKS=-lboost_filesystem -lboost_system -fprofile-arcs -ftest-coverage
+include $(MAKEPATH)/extlibs.make
+include $(MAKEPATH)/make.base
+
+OBJECTONLY: $(OBJS)
+	$(SUPRESS)mkdir -p $(HEADERDEST)
+	$(SUPRESS)cp $(SRCPATH)/*.h $(HEADERDEST)
+	
+
+
+
+
