@@ -1,4 +1,4 @@
-SOCI_HOME=$(HOME)/programs
+SOCI_HOME=/usr/local
 # -- Some libraries and applications require freetype. They will definie this variable
                                                                                                             
 ifeq ($(FREETYPE), 1)
