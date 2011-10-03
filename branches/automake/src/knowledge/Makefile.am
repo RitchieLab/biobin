@@ -11,9 +11,8 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	regionmanager.cpp \
 	regionmanagerdb.cpp \
 	snpdataset.cpp \
-	snpsnpmodel.cpp
-	
-include_HEADERS=chromosome.h \
+	snpsnpmodel.cpp \
+	chromosome.h \
 	genegenemodel.h \
 	genegenemodelarchive.h \
 	groupmanager.h \
@@ -23,8 +22,13 @@ include_HEADERS=chromosome.h \
 	regionmanager.h \
 	regionmanagerdb.h \
 	snpdataset.h \
-	snpsnpmodel.h 
+	snpsnpmodel.h \
+	biomodel.h \
+	biomodel.cpp \
+	group.h \
+	def.h 
 	
-AM_CPPFLAGS=-I..	
+	
+AM_CPPFLAGS=-I$(top_srcdir)/src
 
 libknowledge_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
