@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE([1.9 foreign])
 AC_CONFIG_SRCDIR([src/biobin/main.cpp])
 AC_CONFIG_HEADER([config.h])
 
-m4_include([make/configure.ac])
+RL_CONFIGURE([1.20.0],[HAVE_BOOST HAVE_BOOST_THREAD])
 
 AC_CONFIG_FILES([Makefile
                  src/biobin/Makefile
