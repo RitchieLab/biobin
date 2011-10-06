@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libbiofilter.la
+noinst_LTLIBRARIES=libbiofilter.la
 
 libbiofilter_la_SOURCES=application.cpp \
 	configuration.cpp \

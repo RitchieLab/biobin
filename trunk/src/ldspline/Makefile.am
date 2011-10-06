@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libldspline.la
+noinst_LTLIBRARIES=libldspline.la
 
 libldspline_la_SOURCES=ldspline.cpp \
 	locuslookup.cpp \

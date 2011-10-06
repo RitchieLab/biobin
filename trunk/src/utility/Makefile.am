@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libutility.la
+noinst_LTLIBRARIES=libutility.la
 
 libutility_la_SOURCES=filetools.cpp \
 	lineparser.cpp \

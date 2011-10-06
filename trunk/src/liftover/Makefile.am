@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libliftover.la
+noinst_LTLIBRARIES=libliftover.la
 
 libliftover_la_SOURCES=chain.cpp \
 	converter.cpp \

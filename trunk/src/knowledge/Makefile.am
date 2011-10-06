@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libknowledge.la
+noinst_LTLIBRARIES=libknowledge.la
 
 libknowledge_la_SOURCES=chromosome.cpp \
 	def.cpp \

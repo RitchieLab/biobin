@@ -1,4 +1,4 @@
-lib_LTLIBRARIES=libvcftools.la
+noinst_LTLIBRARIES=libvcftools.la
 
 libvcftools_la_SOURCES=vcf_file.cpp vcf_entry.cpp \
 	vcf_entry_getters.cpp vcf_entry_setters.cpp \
