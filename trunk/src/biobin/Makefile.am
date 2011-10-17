@@ -20,7 +20,7 @@ biobin_SOURCES=binapplication.cpp \
    taskfilegeneration.h \
    timestamp.h
    
-AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SOCI_CPPFLAGS) $(SOCI_SQLITE_CPPFLAGS)
+AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SOCI_CPPFLAGS) $(SOCI_SQLITE_CPPFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) $(SOCI_LDFLAGS) $(SOCI_SQLITE_LDFLAGS)
 
 biobin_LDADD=../utility/libutility.la ../biofilter/libbiofilter.la \

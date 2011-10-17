@@ -143,6 +143,11 @@ const Utility::StringArray& BinManager::BinNames() {
 }
 
 inline
+/**
+ * Sorts all of the variants found into either a "standard" variant or a "rare" variant.
+ *
+ * variants and rareVariants are sets of uints that are initially empty
+ */
 void BinManager::CollectVariantGroups(Utility::IdCollection& variants, Utility::IdCollection& rareVariants) {
 	uint count = binIDs.size(); 
 	uint notRare = (uint)-1;
