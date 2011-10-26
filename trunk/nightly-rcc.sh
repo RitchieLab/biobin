@@ -2,7 +2,7 @@
 
 # This script checks out and builds the biobin application
 
-GROUP_DIR=/afs/bx.psu.edu/depot/data/ritchie_lab
+GROUP_DIR=/gpfs/group/mdr23
 SVN_REPO="--username=rlb5494 --password=Build4RL --non-interactive --trust-server-cert https://ritchielab.psu.edu/svn"
 
 DEST_DIR=$HOME/nightly/biobin
