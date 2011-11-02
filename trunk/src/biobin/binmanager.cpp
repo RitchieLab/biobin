@@ -207,7 +207,7 @@ void BinManager::GenerateIntergenicBins(
 				chrom->second.begin();
 		std::map<uint, Utility::IdCollection>::iterator segEnd =
 				chrom->second.end();
-		std::string chromosome = Utility::ChromFromIntChr(chrom->first);
+		std::string chromosome = Utility::ChromFromIntChr(chrom->first-1);
 		while (seg != segEnd) {
 			GenerateBin(seg->second, indexLookup, binID,
 					chromosome + "-" + Utility::ToString(seg->first));

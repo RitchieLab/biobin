@@ -214,8 +214,8 @@ void Configuration::ExecuteConfiguration(BinApplication* app) {
 	AddTask("EXPORT_SNP_MODELS", new Biofilter::Task::SnpSnpModelArchive());
 	
 
-	BinManager::IntergenicBinWidth						= GetInteger("INTERGENIC_BIN_LENGTH");
-	BinManager::BinTraverseThreshold						= GetInteger("BIN_TRAVERSE_THRESHOLD") * 1000;
+	BinManager::IntergenicBinWidth						= GetInteger("INTERGENIC_BIN_LENGTH")*1000;
+	BinManager::BinTraverseThreshold						= GetInteger("BIN_TRAVERSE_THRESHOLD");
 	BinManager::MinBinSize									= GetInteger("MINIMUM_BIN_SIZE");
 	BinManager::ExpandByExons								= GetInteger("EXPAND_INTO_SUBGENES");
 	
