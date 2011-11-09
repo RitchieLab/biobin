@@ -17,7 +17,7 @@
 namespace Spline {
 
 LdSpline::LdSpline()  {}
-LdSpline::LdSpline(const LdSpline::LdSpline& orig) {}
+LdSpline::LdSpline(const LdSpline& orig) {}
 LdSpline::~LdSpline() {}
 
 void LdSpline::LoadHeadersFromHapmap(const char *chrom, const char* filename) {

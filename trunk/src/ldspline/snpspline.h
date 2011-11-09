@@ -1,6 +1,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <stdint.h>
 
 namespace Spline {
 

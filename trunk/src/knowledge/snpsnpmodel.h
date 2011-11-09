@@ -20,6 +20,8 @@
 #include <sstream>
 #include "def.h"
 
+#include <stdlib.h>
+
 namespace Knowledge {
 
 

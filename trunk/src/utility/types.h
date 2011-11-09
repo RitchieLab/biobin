@@ -14,6 +14,8 @@
 #include <string>
 #include <set>
 
+#include <cstring>
+
 namespace Utility {
 /**
  * Ideally, this is a set of indexes into the local snp data
