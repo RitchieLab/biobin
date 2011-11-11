@@ -15,8 +15,8 @@ namespace Task {
  This is an arbitrary choice by Eric Torstenson
  */
 int	BinCollapse::maxSnpCount					= 200;
-bool	BinCollapse::VisualizeGroupTrees			= false;
-bool	BinCollapse::WriteKnowledgeBins			= false;
+bool	BinCollapse::VisualizeGroupTrees			= true;
+bool	BinCollapse::WriteKnowledgeBins			= true;
 
 void BinCollapse::CollectSNPs(std::map<uint, std::set<uint> >& snpCollection, uint idx, Knowledge::GroupManager& mgr, Knowledge::RegionManager& regions) {
 	if (snpCollection.find(idx) == snpCollection.end()) {

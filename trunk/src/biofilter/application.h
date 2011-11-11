@@ -10,6 +10,8 @@
 
 #include <iostream>
 #include <sstream>
+
+// Rewriting regionManager and groupManager from scratch
 #include "knowledge/regionmanagerdb.h"
 #include "knowledge/groupmanagerdb.h"
 #include "knowledge/genegenemodelarchive.h"

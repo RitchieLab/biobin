@@ -26,7 +26,11 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	biomodel.h \
 	biomodel.cpp \
 	group.h \
-	def.h 
+	def.h \
+	RegionCollection.h \
+	RegionCollection.cpp \
+	RegionCollectionSQLite.h \
+	RegionCollectionSQLite.cpp
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src

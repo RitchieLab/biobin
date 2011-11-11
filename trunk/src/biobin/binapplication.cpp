@@ -148,7 +148,7 @@ std::pair<uint, uint> BinApplication::InitBins(std::vector<uint>& locusRemap,
 	uint locusCount = dataset.Size();
 	std::string ofn = AddReport("locus", "csv", "Locus Description");
 	std::ofstream locusFile(ofn.c_str());
-	locusFile<<"Chromosome,bp loc,all(1),freq(1),all(2),freq(2),type,gene,bin name\n";
+	locusFile<<"Chromosome,Location,ID,all(1):freq(1),all(2):freq(2),type,gene(s),bin name(s)\n";
 	for (uint i=0; i<locusCount; i++) {
 		dataset[i].Print(locusFile, ",");
 		binData.DescribeLocus(i, locusFile, regions,dataset);

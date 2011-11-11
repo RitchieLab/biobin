@@ -18,7 +18,14 @@ biobin_SOURCES=binapplication.cpp \
    main.h \
    taskbincollapse.h \
    taskfilegeneration.h \
-   timestamp.h
+   timestamp.h 
+   #../../data/knowledge.bio \
+   #../../data/example.cfg \
+   #../../data/example.vcf
+   
+dist_data_DATA=$(top_srcdir)/data/knowledge.bio \
+	$(top_srcdir)/data/example.cfg \
+	$(top_srcdir)/data/example.vcf 
    
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SOCI_CPPFLAGS) $(SOCI_SQLITE_CPPFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) $(SOCI_LDFLAGS) $(SOCI_SQLITE_LDFLAGS)
