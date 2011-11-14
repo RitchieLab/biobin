@@ -291,13 +291,28 @@ uint Application::LoadGroupDataByName(Utility::StringArray& userDefinedGroups,
 
 
 void Application::InitBiofilter(const char *filename, bool reportVersion) {
-	dbFilename				= filename;
-	if (!Utility::FileExists(dbFilename.c_str())) {
+	dbFilename = filename;
+	boost::filesystem::path dbPath = boost::filesystem::path(dbFilename);
+	bool fileFound = false;
+	if (boost::filesystem::is_regular_file(dbPath)) {
+		fileFound = true;
+	}else{
+		#ifdef DATA_DIR
+			if (dbPath.is_relative()){
+				dbPath = (boost::filesystem::path(std::string(DATA_DIR))/=(dbPath));
+				if (boost::filesystem::is_regular_file(dbPath)){
+					fileFound=true;
+				}
+			}
+		#endif
+	}
+
+	if (!fileFound){
 		throw Utility::Exception::FileNotFound(filename);
 	}
 
 	try {
-		std::string cnxParam = "dbname="+std::string(dbFilename)+" timeout=2500";
+		std::string cnxParam = "dbname="+dbPath.native()+" timeout=2500";
 		sociDB.open(soci::sqlite3, cnxParam.c_str());
 		std::string dbSnp, ensembl, hapmap, build, variations;
 		sociDB<<"SELECT version FROM versions WHERE element='ncbi'", soci::into(dbSnp);

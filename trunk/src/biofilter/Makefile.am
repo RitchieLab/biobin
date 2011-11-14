@@ -20,6 +20,6 @@ tasksnpgenemap.h \
 tasksnpreport.h \
 tasksnpsnpmodelarchive.h
 	
-AM_CPPFLAGS=-I$(top_srcdir)/src
+AM_CPPFLAGS=-I$(top_srcdir)/src -DDATA_DIR='"$(datadir)"'
 
 libbiofilter_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_REGEX_LIB)
