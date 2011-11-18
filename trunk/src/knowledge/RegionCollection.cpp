@@ -7,46 +7,57 @@
 
 #include "RegionCollection.h"
 
+#include "Locus.h"
+
+#include "utility/strings.h"
+
 
 namespace Knowledge{
 
 Region& RegionCollection::operator[](const uint idx){
-	unordered_map<uint,Region>::iterator element = region_map.find(idx);
-	if (element != region_map.end()){
-		return element->second;
+	unordered_map<uint,Region*>::iterator element = _region_map.find(idx);
+	if (element != _region_map.end()){
+		return *(element->second);
 	}
 	return region_not_found;
 }
 
-Region& RegionCollection::operator[](const string& alias){
-	unordered_map<string,uint>::iterator idx_itr = alias_map.find(alias);
-	if (idx_itr != alias_map.end()){
-		unordered_map<uint,Region>::iterator element = region_map.find(idx_itr->second);
-		if (element != region_map.end()){
+/*
+const set<Region&>& RegionCollection::operator[](const string& alias){
+	unordered_map<string,uint>::iterator idx_itr = _alias_map.find(alias);
+	if (idx_itr != _alias_map.end()){
+		unordered_map<uint,Region>::iterator element = _region_map.find(idx_itr->second);
+		if (element != _region_map.end()){
 			return element->second;
 		}
 	}
 	return region_not_found;
 }
+*/
 
 
 const Region& RegionCollection::operator[](const uint idx) const{
-	unordered_map<uint,Region>::const_iterator element = region_map.find(idx);
-	if (element != region_map.end()){
-		return element->second;
+	unordered_map<uint,Region*>::const_iterator element = _region_map.find(idx);
+	if (element != _region_map.end()){
+		return *(element->second);
 	}
 	return region_not_found;
 }
 
-const Region& RegionCollection::operator[](const string& alias) const{
-	unordered_map<string,uint>:: const_iterator idx_itr = alias_map.find(alias);
-	if (idx_itr != alias_map.end()){
-		unordered_map<uint,Region>::const_iterator element = region_map.find(idx_itr->second);
-		if (element != region_map.end()){
-			return element->second;
-		}
+RegionCollection::const_region_iterator RegionCollection::aliasBegin(const string& alias) const{
+	unordered_map<string,set<Region*> >:: const_iterator idx_itr = _alias_map.find(alias);
+	if (idx_itr != _alias_map.end()){
+		return idx_itr->second.begin();
 	}
-	return region_not_found;
+	return empty_region_set.begin();
+}
+
+RegionCollection::const_region_iterator RegionCollection::aliasEnd(const string& alias) const{
+	unordered_map<string,set<Region*> >:: const_iterator idx_itr = _alias_map.find(alias);
+	if (idx_itr != _alias_map.end()){
+		return idx_itr->second.end();
+	}
+	return empty_region_set.end();
 }
 
 /**
@@ -54,37 +65,48 @@ const Region& RegionCollection::operator[](const string& alias) const{
  * This should be called only by AssociateSNPs
  */
 void RegionCollection::Squeeze(){
-	unordered_map<uint, Region>::iterator end = region_map.end();
-	for (unordered_map<uint, Region>::iterator itr = region_map.begin(); itr!=end;itr++){
-		if (itr->second.SnpCount() == 0){
+	unordered_map<uint, Region*>::iterator end = _region_map.end();
+	for (unordered_map<uint, Region*>::iterator itr = _region_map.begin(); itr!=end;itr++){
+		if (itr->second->locusCount() == 0){
 			// Erase all of the aliases associated with this region
-			for (Utility::StringArray::iterator alias_itr=itr->second.aliases.begin(); alias_itr != itr->second.aliases.begin(); alias_itr++){
-				alias_map.erase(*alias_itr);
+			for (Region::const_alias_iterator alias_itr=itr->second->aliasBegin(); alias_itr != itr->second->aliasEnd(); alias_itr++){
+				_alias_map[*alias_itr].erase(itr->second);
 			}
 			// And get rid of the region
-			region_map.erase(itr);
+			_region_map.erase(itr);
 		}
 	}
 }
 
-void RegionCollection::AddRegion(const char *name, uint id, char chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const char* aliases) {
+void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
 	assert(chrom > 0);
 	// Insert the region into the map
-	region_map.insert(std::make_pair(id, Region(name, id, chrom, effStart, effStop, trueStart, trueStop)));
-	region_map[id].AddAliases(aliases);
+
+	Region& new_region = *(new Region(name, id, chrom, effStart, effStop, trueStart, trueStop));
+
+	// WARNING: inserting a region with an identical ID will result in a memory leak!
+	_region_map.insert(std::make_pair(id, &new_region));
+	new_region.addAliases(aliases);
+
+	set<Region*> new_set;
+	new_set.insert(&new_region);
+
+	// Make it available to the interval map
+	_region_bounds[chrom].add(
+			std::make_pair(interval<uint>::closed(effStart, effStop), new_set));
 
 	// Add all aliases, including the canonical name
-	alias_map[name] = id;
-	Utility::StringArray aliasList = Utility::Split(aliases, ",");
+	_alias_map[name].insert(&new_region);
+	Utility::StringArray aliasList = Utility::Split(aliases.c_str(), ",");
 	Utility::StringArray::const_iterator itr = aliasList.begin();
 	Utility::StringArray::const_iterator end = aliasList.end();
 	while (itr != end){
-		alias_map[*itr++] = id;
+		_alias_map[*itr++].insert(&new_region);
 	}
 
 }
 
-void RegionCollection::AddRegion(const char *name, uint id, char chrom, uint start, uint stop, const char *aliases) {
+void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases) {
 	AddRegion(name, id, chrom, start, stop, start, stop, aliases);
 }
 
@@ -108,7 +130,14 @@ uint RegionCollection::Load(const uint pop_id, const vector<string>& alias_list)
 }
 
 bool RegionCollection::isValid(const Region& other){
-	return (region_not_found.id == other.id);
+	return (region_not_found.getID() == other.getID());
+}
+
+template <class T_iter>
+void RegionCollection::associateLoci(T_iter& begin, const T_iter& end){
+	while (begin != end){
+		++begin;
+	}
 }
 };
 

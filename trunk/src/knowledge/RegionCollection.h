@@ -3,16 +3,23 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/icl/interval_map.hpp>
 
-#include "knowledge/region.h"
+#include "Region.h"
 
 using boost::unordered_map;
+using boost::unordered_set;
+using boost::icl::interval_map;
+using boost::icl::interval;
 using std::string;
 using std::vector;
-using boost::unordered_set;
+using std::set;
+
+class Locus;
 
 namespace Knowledge{
 
@@ -23,7 +30,9 @@ namespace Knowledge{
 class RegionCollection{
 	
 public:
-	RegionCollection():region_not_found("Not Found",-1,-1){};
+	typedef set<Region*>::const_iterator const_region_iterator;
+
+	RegionCollection():region_not_found("Not Found",-1,-1, 0, 0){};
 	virtual ~RegionCollection(){};
 
 	/**
@@ -35,7 +44,7 @@ public:
 	 * @param aliases Comma separated list of aliases
     * @return returns a reference to the actual region
     */
-	void AddRegion(const char *, uint id, char chrom, uint start, uint stop, const char *aliases = "");
+	void AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
 
 	/**
 	 * Adds region and returns it's index
@@ -48,7 +57,7 @@ public:
 	 * @param aliases Comma separated list of aliases
     * @return returns a reference to the actual region
     */
-	void AddRegion(const char *name, uint id, char chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const char* aliases = "");
+	void AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
 	
 	/**
 	 * Access bracket operator, indexing by id
@@ -62,20 +71,37 @@ public:
 	 * NOTE: contrary to the default behavior of a map, this will not insert
 	 * values into the map.  To insert, you must use AddRegion
 	 */
-	Region& operator[](const string&);
+	//const set<Region&>& operator[](const string&);
+
 	/**
 	 * Access bracket operator, indexing by ID.
 	 */	
 	const Region& operator[](const uint) const;
+
 	/** 
-	 * Access bracket operator, indexing by name.  NOTE: there is no 
-	 * assignment bracket operator by name/alias. 
+	 * Access by alias is controlled by an iterator
 	 */
-	const Region& operator[](const string&) const;
-	
+	const_region_iterator aliasBegin(const string&) const;
+	const_region_iterator aliasEnd(const string&) const;
+
+	/**
+	 * Compares the region agains the private flagged region
+	 */
+	bool isValid(const Region&);
+
+	/**
+	 * Takes a list of SNPs (realistically, just chrom->bp locations) and adds
+	 * them to the Regions that contain them
+	 *
+	 * You know, what, I'm going to make this an iterator based so that I have
+	 * a little bit of flexibility.
+	 */
+	template <class T_iter>
+	void associateLoci(T_iter& begin, const T_iter& end);
+
 	/**
 	 * Loading function - must be subclassed
-	 * This function does the heavy lifting, and is the only function that needs
+	 * This function does the heavy lifting,region is not in the map and is the only function that needs
 	 * to be subclassed
 	 */
 	virtual uint Load(const uint popID,
@@ -104,26 +130,22 @@ public:
 	 */
 	virtual uint Load();
 
-	/**
-	 * Compares the region agains the private flagged region
-	 */
-	bool isValid(const Region&);
-
-	/**
-	 * Special value used for if the requested region is not in the map
-	 */
 
 protected:
-	// A map from id -> Region
-	unordered_map<uint,Region> region_map;
+	// A map from id -> Region*
+	unordered_map<uint,Region*> _region_map;
 	// A map from alias -> id (to get region, essentially use
 	// regionMap[aliasMap[alias]])
-	unordered_map<string,uint> alias_map;
+	unordered_map<string,set<Region*> > _alias_map;
 
+
+	// OK, this is ugly!
 	/**
-	 * Deletes regions that have no SNPs associated with them
+	 * It's a map from chromosome -> map of intervals -> set of Regions
+	 * Basically, use as the following:
+	 * _region_bounds[chromosome][position] = {All Regions containing that position}
 	 */
-	void Squeeze();
+	unordered_map<char,interval_map<uint, set<Region*> > > _region_bounds;
 
 private:
 	/**
@@ -133,7 +155,20 @@ private:
 	RegionCollection(const RegionCollection&);
 	RegionCollection& operator=(const RegionCollection&);
 
+	/**
+	 * Deletes regions that have no SNPs associated with them
+	 */
+	void Squeeze();
+
+	/**
+	 * Special value used for if the requested region is not in the map
+	 */
 	Region region_not_found;
+	/**
+	 * Special value used for if the requested alias not present
+	 * (NOTE: will be initialized by the default constructor)
+	 */
+	const set<Region*> empty_region_set;
 
 };
 }

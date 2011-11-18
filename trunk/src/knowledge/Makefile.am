@@ -30,7 +30,11 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	RegionCollection.h \
 	RegionCollection.cpp \
 	RegionCollectionSQLite.h \
-	RegionCollectionSQLite.cpp
+	RegionCollectionSQLite.cpp \
+	Allele.h \
+	Allele.cpp \
+	Locus.h \
+	Locus.cpp 
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src
