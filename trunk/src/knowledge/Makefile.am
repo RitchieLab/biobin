@@ -31,6 +31,8 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	RegionCollection.cpp \
 	RegionCollectionSQLite.h \
 	RegionCollectionSQLite.cpp \
+	Region.h \
+	Region.cpp \
 	Allele.h \
 	Allele.cpp \
 	Locus.h \

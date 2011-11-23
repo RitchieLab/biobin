@@ -16,10 +16,12 @@ using std::string;
 using std::set;
 using boost::unordered_map;
 
-class Locus;
-class Group;
+
 
 namespace Knowledge{
+
+class Locus;
+class Group;
 
 class Region{
 

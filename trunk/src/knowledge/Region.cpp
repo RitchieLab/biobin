@@ -65,7 +65,7 @@ void Region::addAliases(const string& aliases, const string& sep){
 		_aliases.insert(aliases.substr(init_pos, end_pos-init_pos));
 		init_pos = end_pos + sep.size();
 		end_pos = aliases.find(sep, init_pos);
-	} while(end_pos != string::npos);
+	} while((int) end_pos != (int) string::npos);
 }
 
 

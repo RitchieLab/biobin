@@ -22,6 +22,8 @@ namespace Knowledge{
 
 class Locus{
 
+public:
+
 	/**
 	 * Constructs a Locus object using the chromosome string (preferrable)
 	 */

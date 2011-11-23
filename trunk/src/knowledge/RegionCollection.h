@@ -19,7 +19,6 @@ using std::string;
 using std::vector;
 using std::set;
 
-class Locus;
 
 namespace Knowledge{
 
@@ -33,7 +32,7 @@ public:
 	typedef set<Region*>::const_iterator const_region_iterator;
 
 	RegionCollection():region_not_found("Not Found",-1,-1, 0, 0){};
-	virtual ~RegionCollection(){};
+	virtual ~RegionCollection();
 
 	/**
 	 * Adds region and returns

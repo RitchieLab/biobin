@@ -8,11 +8,23 @@
 #include "RegionCollection.h"
 
 #include "Locus.h"
+#include "Region.h"
 
 #include "utility/strings.h"
 
 
 namespace Knowledge{
+
+RegionCollection::~RegionCollection(){
+	// Go through the map of id->Region* and delete all of the regions
+	unordered_map<uint, Region*>::iterator itr = _region_map.begin();
+	unordered_map<uint, Region*>::const_iterator end = _region_map.end();
+
+	while (itr != end){
+		delete itr->second;
+		++itr;
+	}
+}
 
 Region& RegionCollection::operator[](const uint idx){
 	unordered_map<uint,Region*>::iterator element = _region_map.find(idx);
@@ -74,6 +86,7 @@ void RegionCollection::Squeeze(){
 			}
 			// And get rid of the region
 			_region_map.erase(itr);
+			delete itr->second;
 		}
 	}
 }
@@ -136,6 +149,18 @@ bool RegionCollection::isValid(const Region& other){
 template <class T_iter>
 void RegionCollection::associateLoci(T_iter& begin, const T_iter& end){
 	while (begin != end){
+		interval_map<uint, set<Region*> >& chrom_map =
+				_region_bounds[begin->getChrom()];
+		interval_map<uint, set<Region*> >::const_iterator region_itr =
+				chrom_map.find(begin->getPos());
+		if (region_itr != chrom_map.end()){
+			set<Region*>::iterator set_itr=region_itr->second.begin();
+			set<Region*>::const_iterator set_end=region_itr->second.end();
+			while (set_itr != set_end){
+				(*set_itr)->addLocus(*begin);
+				++set_itr;
+			}
+		}
 		++begin;
 	}
 }
