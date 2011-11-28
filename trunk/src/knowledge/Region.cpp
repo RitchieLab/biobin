@@ -36,6 +36,19 @@ void Region::addLoci(T_iter& begin, const T_iter& end){
 	}
 }
 
+void Region::addGroup(uint type, Group& container){
+	_group_map[type].insert(&container);
+}
+
+template <class T_iter>
+void Region::addGroups(uint type, T_iter& begin, const T_iter& end){
+	set<Group*>& group_set = _group_map[type];
+	while(begin != end){
+		group_set.insert(*begin);
+		++begin;
+	}
+}
+
 string Region::getAliasString(const string& sep) const{
 	set<string>::const_iterator end = _aliases.end();
 	set<string>::const_iterator itr = _aliases.begin();
@@ -68,6 +81,13 @@ void Region::addAliases(const string& aliases, const string& sep){
 	} while((int) end_pos != (int) string::npos);
 }
 
-
+bool Region::operator<(const Region& other) const{
+	// order by chromosome, then start, then end position
+	return (_chrom == other._chrom ?
+				(_true_start == other._true_start ?
+					_true_end < other._true_end :
+					_true_start < other._true_start) :
+				_chrom < other._chrom);
+}
 }
 

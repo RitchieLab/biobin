@@ -86,7 +86,7 @@ public:
 	/**
 	 * Compares the region agains the private flagged region
 	 */
-	bool isValid(const Region&);
+	bool isValid(const Region&) const;
 
 	/**
 	 * Takes a list of SNPs (realistically, just chrom->bp locations) and adds

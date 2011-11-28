@@ -13,8 +13,8 @@
 
 namespace Knowledge{
 
-RegionCollectionSQLite::RegionCollectionSQLite(const char* fn) : self_open(true){
-	sqlite3_open(fn,&db);
+RegionCollectionSQLite::RegionCollectionSQLite(const string& fn) : self_open(true){
+	sqlite3_open(fn.c_str(),&db);
 }
 
 RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn) :

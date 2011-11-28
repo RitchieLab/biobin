@@ -36,7 +36,13 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	Allele.h \
 	Allele.cpp \
 	Locus.h \
-	Locus.cpp 
+	Locus.cpp \
+	Group.h \
+	Group.cpp \
+	GroupCollection.h \
+	GroupCollection.cpp \
+	GroupCollectionSQLite.h \
+	GroupCollectionSQLite.cpp
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src

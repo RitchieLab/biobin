@@ -22,7 +22,7 @@ namespace Knowledge{
 class RegionCollectionSQLite : public RegionCollection{
 
 public:
-	RegionCollectionSQLite(const char *);
+	RegionCollectionSQLite(const string& fn);
 	RegionCollectionSQLite(sqlite3 *);
 	virtual ~RegionCollectionSQLite();
 
@@ -32,11 +32,6 @@ public:
 	virtual uint Load(const uint popID,
 			const unordered_set<uint>& ids,
 			const vector<string>& aliasList);
-
-	/**
-	 * Load the alias List as given.
-	 */
-	virtual void LoadRegionAliases(vector<string>& aliasList);
 
 private:
 	bool self_open;

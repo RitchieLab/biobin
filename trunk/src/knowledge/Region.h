@@ -55,6 +55,19 @@ public:
 	void addLoci(T_iter& start, const T_iter& end);
 
 	/**
+	 * Associate a single group with this region.  Note, we must supply a group
+	 * type in addition to the actual group itself.
+	 */
+	void addGroup(uint type, Group& container);
+
+	/**
+	 * Add a whole lot of Groups (using iterators) with this region
+	 * NOTe: We assume the iterators are iterating over a "set" of Group* objects
+	 */
+	template <class T_iter>
+	void addGroups(uint type, T_iter& start, const T_iter& end);
+
+	/**
 	 * Return a string of aliases associated with this region, separated by
 	 * the given separator
 	 */
@@ -108,11 +121,6 @@ public:
 	const_alias_iterator aliasEnd() const {return _aliases.end();}
 
 	/**
-	 * Equality operator
-	 */
-	bool operator==(const Region& other) const;
-
-	/**
 	 * Comparison operator, for any STL as needed
 	 */
 	bool operator<(const Region& other) const;
@@ -131,7 +139,7 @@ private:
 	set<string> _aliases;
 
 	// A list / mapping of all groups associated w/ this region
-	unordered_map<uint, set<const Group*> > _group_map;
+	unordered_map<uint, set<Group*> > _group_map;
 
 	string _name;
 	short _chrom;

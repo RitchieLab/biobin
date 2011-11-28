@@ -142,7 +142,7 @@ uint RegionCollection::Load(const uint pop_id, const vector<string>& alias_list)
 	return this->Load(pop_id, empty_set, alias_list);
 }
 
-bool RegionCollection::isValid(const Region& other){
+bool RegionCollection::isValid(const Region& other) const{
 	return (region_not_found.getID() == other.getID());
 }
 
