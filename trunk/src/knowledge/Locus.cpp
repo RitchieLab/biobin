@@ -59,6 +59,23 @@ uint Locus::distance(const Locus& other) const{
 	return other._chrom == _chrom ? abs(other._pos - _pos) : -1;
 }
 
+short Locus::encodeGenotype(uint a1, uint a2) const{
+	if (a1 == -1 || a2 == -1){
+		return -1;
+	}
+	return a1 * _alleles.size() + a2;
+}
+
+pair<uint, uint> Locus::decodeGenotype(short encoded_type) const{
+	pair<uint, uint> to_return = std::make_pair(-1,-1);
+	if (encoded_type != -1){
+		to_return.first = encoded_type / _alleles.size();
+		to_return.second = encoded_type % _alleles.size();
+	}
+	return to_return;
+}
+
+
 const string& Locus::getChromStr(short chrom){
 	if (chrom < 0 || chrom > _chrom_list.size()-1){
 		return invalid_chrom;
@@ -97,8 +114,20 @@ short Locus::getChrom(const string& chrom_str){
 
 void Locus::createID(){
 	std::stringstream ss;
-	ss << _pos;
-	_id = "chr" + getChromStr(_chrom) + "-" + ss.str();
+	ss << "chr" << getChromStr(_chrom) << "-" <<_pos;
+	_id = ss.str();
+}
+
+void Locus::print(ostream& o, const string& sep, bool printAlleles) const{
+	o << getChromStr() << sep << _pos << sep << _id;
+	if (printAlleles){
+		set<Allele>::const_iterator itr = _alleles.begin();
+		set<Allele>::const_iterator end = _alleles.end();
+		while(itr != end){
+			o << sep << *itr;
+			++itr;
+		}
+	}
 }
 
 }

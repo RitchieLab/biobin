@@ -96,7 +96,7 @@ public:
 	 * a little bit of flexibility.
 	 */
 	template <class T_iter>
-	void associateLoci(T_iter& begin, const T_iter& end);
+	void associateLoci(T_iter begin, const T_iter& end);
 
 	/**
 	 * Loading function - must be subclassed
@@ -144,7 +144,7 @@ protected:
 	 * Basically, use as the following:
 	 * _region_bounds[chromosome][position] = {All Regions containing that position}
 	 */
-	unordered_map<char,interval_map<uint, set<Region*> > > _region_bounds;
+	unordered_map<short,interval_map<uint, set<Region*> > > _region_bounds;
 
 private:
 	/**

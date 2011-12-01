@@ -11,12 +11,16 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <utility>
+#include <ostream>
 
 #include "Allele.h"
 
 using std::string;
 using std::set;
 using std::vector;
+using std::pair;
+using std::ostream;
 
 namespace Knowledge{
 
@@ -83,6 +87,18 @@ public:
 	bool operator<(const Locus& other) const;
 
 	/**
+	 * Encodes the genotype in a single value, which can the be decoded
+	 */
+	short encodeGenotype(uint a1, uint a2) const;
+
+	/**
+	 * Decodes the genotype in a pair of values.  Inverse of encodeGenotype
+	 */
+	pair<uint, uint> decodeGenotype(short encoded_type) const;
+
+	void print(ostream& o, const string& sep=",", bool printAlleles=false) const;
+
+	/**
 	 * Helper function for converting a chromosome index to a chromosome string
 	 * NOTE: This is the inverse of getChrom below.
 	 */
@@ -122,6 +138,12 @@ private:
 };
 
 }
+
+ostream& operator<<(ostream& o, const Knowledge::Locus& l){
+	l.print(o);
+	return o;
+}
+
 
 
 #endif /* KNOWLEDGE_LOCUS_H */

@@ -147,7 +147,7 @@ bool RegionCollection::isValid(const Region& other) const{
 }
 
 template <class T_iter>
-void RegionCollection::associateLoci(T_iter& begin, const T_iter& end){
+void RegionCollection::associateLoci(T_iter begin, const T_iter& end){
 	while (begin != end){
 		interval_map<uint, set<Region*> >& chrom_map =
 				_region_bounds[begin->getChrom()];

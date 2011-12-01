@@ -42,7 +42,17 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	GroupCollection.h \
 	GroupCollection.cpp \
 	GroupCollectionSQLite.h \
-	GroupCollectionSQLite.cpp
+	GroupCollectionSQLite.cpp \
+	liftover/BuildConversion.h \
+	liftover/BuildConversion.cpp \
+	liftover/Chain.h \
+	liftover/Chain.cpp \
+	liftover/Converter.h \
+	liftover/Converter.cpp \
+	liftover/ConverterSQLite.h \
+	liftover/ConverterSQLite.cpp \
+	liftover/RegionConverter.h \
+	liftover/RegionConverter.cpp
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src

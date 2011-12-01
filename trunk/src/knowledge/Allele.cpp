@@ -19,6 +19,10 @@ bool Allele::operator==(const Allele& other) const{
 	return (_freq==other._freq && _data == other._data);
 }
 
+void Allele::print(ostream& o, const string& sep) const{
+	o << _data << sep << _freq;
+}
+
 }
 
 

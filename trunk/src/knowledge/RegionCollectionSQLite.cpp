@@ -7,9 +7,14 @@
 
 #include "RegionCollectionSQLite.h"
 
+// Use the straight-up sqlite interface
+#include <sqlite3.h>
 #include <stdlib.h>
+#include <sstream>
 
-#include "utility/locus.h"
+#include "Locus.h"
+
+using std::stringstream;
 
 namespace Knowledge{
 
@@ -31,21 +36,31 @@ uint RegionCollectionSQLite::Load(const uint popID,
 
 	string where_clause = "";
 
-	string from_ids = "";
 	if (ids.size() > 0) {
-		from_ids = string("regions.gene_id IN (") +
-				Utility::Join<unordered_set<uint> >(ids, ",") + string(") ");
-		where_clause = string(" WHERE ") + from_ids;
+		stringstream id_stream;
+		unordered_set<uint>::const_iterator itr = ids.begin();
+		unordered_set<uint>::const_iterator end = ids.end();
+		id_stream << "regions.gene_id IN (" << *itr;
+		while(++itr != end){
+			id_stream << "," << *itr;
+		}
+		id_stream << ")";
+		where_clause = string(" WHERE ") + id_stream.str();
 	}
-	string from_aliases = "";
 	if (alias_list.size() > 0){
-		string from_aliases = string("region_aliases.alias IN (") +
-				Utility::Join<vector<string> >(alias_list, ",") + string(")");
+		stringstream alias_stream;
+		vector<string>::const_iterator itr = alias_list.begin();
+		vector<string>::const_iterator end = alias_list.end();
+		alias_stream << "region_aliases IN (" << *itr;
+		while(++itr != end){
+			alias_stream << "," << *itr;
+		}
+		alias_stream << ")";
 		if (ids.size() > 0){
-			where_clause += string("OR ") + from_aliases;
+			where_clause += string("OR ") + alias_stream.str();
 		}
 		else{
-			where_clause = string(" WHERE ") + from_aliases;
+			where_clause = string(" WHERE ") + alias_stream.str();
 		}
 	}
 
@@ -91,7 +106,7 @@ int RegionCollectionSQLite::parseRegionQuery(void* obj, int ncols, char** colVal
 	int start = atoi(colVals[start_idx]);
 	int end = atoi(colVals[end_idx]);
 
-	char chrom = Utility::ChromToInt(colVals[chrom_idx]);
+	short chrom = Locus::getChrom(colVals[chrom_idx]);
 
 	// In this case, no population ID was given
 	if (ncols == 6){

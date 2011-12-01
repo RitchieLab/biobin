@@ -8,11 +8,9 @@
 #ifndef KNOWLEDGE_REGIONCOLLECTIONSQLITE_H
 #define KNOWLEDGE_REGIONCOLLECTIONSQLITE_H_
 
-// Use the straight-up sqlite interface
-#include <sqlite3.h>
-
 #include "RegionCollection.h"
 
+class sqlite3;
 
 namespace Knowledge{
 
