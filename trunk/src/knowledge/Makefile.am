@@ -33,5 +33,6 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS)
+#AM_LDFLAGS=-lsqlite3
 
 libknowledge_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(SQLITE_LIBS)
