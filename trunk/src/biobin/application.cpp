@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
-//#include <sqlite3.h>
+#include <sqlite3.h>
 //#include <soci-sqlite3.h>
 //#include "utility/filetools.h"
 //#include "taskgenecoverage.h"

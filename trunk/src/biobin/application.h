@@ -200,10 +200,6 @@ protected:
 	///< the data associated with the user
 	vector<Knowledge::Locus*> dataset;
 
-	///< The file to be used to load phenotype values
-	vector<string> phenotypeFilenames;
-
-
 	///< The variation version (to guarantee that the variations file is correct for the database being used)
 	uint varVersion;
 	///< Filename for variation data-this might not be opened, depending on how the user loads their data

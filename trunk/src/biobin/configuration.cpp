@@ -196,6 +196,7 @@ void Configuration::ExecuteConfiguration(BinApplication* app) {
 
 	vector<string> pheno_files;
 	GetLines("PHENOTYPE_FILENAME", pheno_files);
+	app->loadPhenotypes(pheno_files);
 
 	Task::GenerateFiles::WriteBinData					= GetBoolean("WRITE_BIN_DATA");
 	Task::GenerateFiles::WriteGenotypeData				= GetBoolean("WRITE_GENOTYPE_DATA");

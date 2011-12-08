@@ -66,6 +66,9 @@ public:
 
 	//void ApplyPhenotypes();
 
+	template<class T_cont>
+	void loadPhenotypes(const T_cont& pheno_files){_pop_mgr.loadPhenotypes(pheno_files);}
+
 	void writeBinData(const string& filename, const string& sep=",") const;
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
 
@@ -122,7 +125,6 @@ private:
 	BinManager binData;
 
 	PopulationManager _pop_mgr;
-
 
 
 						///< Help to extract genotype data from vcf files
@@ -219,9 +221,6 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	// OK, now that we've loaded the dataset, we can load up the individuals
 	_pop_mgr.loadIndividuals(vcfimporter);
 	_pop_mgr.loadGenotypes(dataset, vcfimporter);
-
-	//TODO: check to ensure that we have loaded the filenames by this time
-	_pop_mgr.loadPhenotypes(phenotypeFilenames);
 
 }
 

@@ -29,12 +29,11 @@ dist_data_DATA=$(top_srcdir)/data/knowledge.bio \
 	$(top_srcdir)/data/example.cfg \
 	$(top_srcdir)/data/example.vcf 
    
-AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CPPFLAGS) -DDATA_DIR='"$(datadir)"'
-AM_LDFLAGS=$(BOOST_LDFLAGS) $(SQLITE_LDFLAGS)
+AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) -DDATA_DIR='"$(datadir)"'
+AM_LDFLAGS=$(BOOST_LDFLAGS) 
 
 biobin_LDADD=../utility/libutility.la \
 	../knowledge/libknowledge.la \
 	../vcftools/libvcftools.la \
-	$(BOOST_REGEX_LIB) $(SQLITE_LIB)
-	
+	$(BOOST_REGEX_LIB) $(SQLITE_LIBS)
 
