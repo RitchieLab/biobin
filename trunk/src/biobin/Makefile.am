@@ -1,24 +1,26 @@
 bin_PROGRAMS = biobin
 
-biobin_SOURCES=binapplication.cpp \
-   binmanager.cpp \
-   configuration.cpp \
-   dataimporter.cpp \
-   genotypestorage.cpp \
-   main.cpp \
-   individual.cpp \
-   taskbincollapse.cpp \
-   taskfilegeneration.cpp \
+biobin_SOURCES= \
+   application.h \
+   application.cpp \
+   Bin.h \
+   Bin.cpp \
    binapplication.h \
+   binapplication.cpp \
    binmanager.h \
+   binmanager.cpp \
    configuration.h \
+   configuration.cpp \
    dataimporter.h \
-   genotypestorage.h \
-   individual.h \
+   dataimporter.cpp \
    main.h \
-   taskbincollapse.h \
+   main.cpp \
+   task.h \
+   task.cpp \
    taskfilegeneration.h \
-   timestamp.h 
+   taskfilegeneration.cpp \
+   PopulationManager.h \
+   PopulationManager.cpp
    #../../data/knowledge.bio \
    #../../data/example.cfg \
    #../../data/example.vcf
@@ -27,12 +29,12 @@ dist_data_DATA=$(top_srcdir)/data/knowledge.bio \
 	$(top_srcdir)/data/example.cfg \
 	$(top_srcdir)/data/example.vcf 
    
-AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SOCI_CPPFLAGS) $(SOCI_SQLITE_CPPFLAGS) -DDATA_DIR='"$(datadir)"'
-AM_LDFLAGS=$(BOOST_LDFLAGS) $(SOCI_LDFLAGS) $(SOCI_SQLITE_LDFLAGS)
+AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CPPFLAGS) -DDATA_DIR='"$(datadir)"'
+AM_LDFLAGS=$(BOOST_LDFLAGS) $(SQLITE_LDFLAGS)
 
-biobin_LDADD=../utility/libutility.la ../biofilter/libbiofilter.la \
-	../knowledge/libknowledge.la ../liftover/libliftover.la \
-	../vcftools/libvcftools.la ../ldspline/libldspline.la \
-	$(BOOST_REGEX_LIB) $(SOCI_LIB) $(SOCI_SQLITE_LIB)
+biobin_LDADD=../utility/libutility.la \
+	../knowledge/libknowledge.la \
+	../vcftools/libvcftools.la \
+	$(BOOST_REGEX_LIB) $(SQLITE_LIB)
 	
 

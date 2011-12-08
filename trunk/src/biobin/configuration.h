@@ -12,9 +12,9 @@
 #ifndef BIOBINAPPCONFIGURATION_H
 #define BIOBINAPPCONFIGURATION_H
 
-#include "biofilter/application.h"
+#include "application.h"
 #include "utility/lineparser.h"
-#include "biofilter/task.h"
+#include "task.h"
 #include "binapplication.h"
 namespace BioBin {
 
@@ -39,7 +39,7 @@ public:
 	 */
 	void Init();
 	 
-	void AddTask(const char *key, Biofilter::Task::Task* item);
+	void AddTask(const char *key, Task::Task* item);
 
 	int RunTasks(uint taskType);
 

@@ -11,22 +11,22 @@
 //
 #include "configuration.h"
 #include <iomanip>
-#include "knowledge/genegenemodel.h"
-#include "knowledge/group.h"
-#include "knowledge/region.h"
-#include "knowledge/snpdataset.h"
+//#include "knowledge/genegenemodel.h"
+//#include "knowledge/group.h"
+//#include "knowledge/region.h"
+//#include "knowledge/snpdataset.h"
 
 #include "taskfilegeneration.h"
-#include "biofilter/taskgenereport.h"
-#include "biofilter/taskmarkerinfo.h"
-#include "biofilter/tasksnpgenemap.h"
-#include "biofilter/tasksnpreport.h"
-#include "biofilter/taskgenegenemodelreport.h"
-#include "biofilter/tasksnpsnpmodelarchive.h"
+//#include "biofilter/taskgenereport.h"
+//#include "biofilter/taskmarkerinfo.h"
+//#include "biofilter/tasksnpgenemap.h"
+//#include "biofilter/tasksnpreport.h"
+//#include "biofilter/taskgenegenemodelreport.h"
+//#include "biofilter/tasksnpsnpmodelarchive.h"
 #include <boost/algorithm/string.hpp>
 #include "binmanager.h"
 #include "dataimporter.h"
-#include "taskbincollapse.h"
+//#include "taskbincollapse.h"
 
 #ifdef LOCAL_RELEASE
 #define BIODB "/projects/ritchie/knowledge.bio"
@@ -160,21 +160,21 @@ int Configuration::CountTasks(uint taskType) {
 	return tasks.count(taskType);
 }
 
-void Configuration::AddTask(const char *key, Biofilter::Task::Task* item) {
+void Configuration::AddTask(const char *key, Task::Task* item) {
 	if (GetBoolean(key)) 
-		tasks.insert(TaskPair(item->taskType, item));
+		tasks.insert(std::make_pair(item->taskType, item));
 	else
 		delete item;
 }
 
 void Configuration::ExecuteConfiguration(BinApplication* app) {
 	//Write all of our settings to the relevant variables in memory
-	Knowledge::Region::DuplicateDD_Weight				= GetDouble("IMPLICATION_IDX_DUPLICATE_WEIGHT");
-	Knowledge::RegionManager::modelGenerationType	= Knowledge::ModelGenerationMode::ConvertType(GetString("DISEASE_DEPENDENT_LEVEL").c_str());
-	Knowledge::BinaryArchive								= GetBoolean("BINARY_MODEL_ARCHIVE");
-	Biofilter::Task::Task::detailedReport				= GetBoolean("DETAILED_REPORTS");
-	Knowledge::GeneGeneModelArchive::minImplicationIndex		= GetInteger("MINIMUM_IMPLICATION_INDEX");
-	Knowledge::GeneGeneModelArchive::maxModelCount	= GetInteger("MAX_SNP_MODEL_COUNT");
+	//Knowledge::Region::DuplicateDD_Weight				= GetDouble("IMPLICATION_IDX_DUPLICATE_WEIGHT");
+	//Knowledge::RegionManager::modelGenerationType	= Knowledge::ModelGenerationMode::ConvertType(GetString("DISEASE_DEPENDENT_LEVEL").c_str());
+	//Knowledge::BinaryArchive								= GetBoolean("BINARY_MODEL_ARCHIVE");
+	//Task::detailedReport				= GetBoolean("DETAILED_REPORTS");
+	//Knowledge::GeneGeneModelArchive::minImplicationIndex		= GetInteger("MINIMUM_IMPLICATION_INDEX");
+	//Knowledge::GeneGeneModelArchive::maxModelCount	= GetInteger("MAX_SNP_MODEL_COUNT");
 
 	BinManager::mafCutoff									= GetDouble("MAF_CUTOFF");
 	DataImporter::CompressedVCF							= GetBoolean("COMPRESSED_VCF");
@@ -183,7 +183,7 @@ void Configuration::ExecuteConfiguration(BinApplication* app) {
 	app->SetGeneExtension(GetInteger("GENE_BOUNDARY_EXTENSION"));
 	app->SetReportPrefix(GetString("REPORT_PREFIX").c_str());
 	app->UseHtmlReports(GetBoolean("HTML_REPORTS"));
-	Task::BinCollapse::maxSnpCount = GetInteger("BIN_COLLAPSE_THRESHOLD");
+	BinManager::maxSnpCount = GetInteger("BIN_COLLAPSE_THRESHOLD");
 	std::string sep = GetLine("OUTPUT_DELIMITER");
 	if (sep.length() > 0) {
 	    boost::replace_all(sep, std::string("\""), "");
@@ -194,30 +194,33 @@ void Configuration::ExecuteConfiguration(BinApplication* app) {
 	SetValue("OUTPUT_DELIMITER", std::string("'")+sep+"'");
 	Task::GenerateFiles::OutputDelimeter = sep;
 
-	GetLines("PHENOTYPE_FILENAME", app->phenotypeFilenames);
+	vector<string> pheno_files;
+	GetLines("PHENOTYPE_FILENAME", pheno_files);
 
 	Task::GenerateFiles::WriteBinData					= GetBoolean("WRITE_BIN_DATA");
 	Task::GenerateFiles::WriteGenotypeData				= GetBoolean("WRITE_GENOTYPE_DATA");
-	Task::BinCollapse::VisualizeGroupTrees				= GetBoolean("WRITE_COLLAPSABLE_BIN_REPORT");
-	Task::BinCollapse::WriteKnowledgeBins				= GetBoolean("WRITE_KNOWLEDGE_BINS") * 1000;
+
+	//TODO: Check to see what these options actually did
+	//Task::BinCollapse::VisualizeGroupTrees				= GetBoolean("WRITE_COLLAPSABLE_BIN_REPORT");
+	//Task::BinCollapse::WriteKnowledgeBins				= GetBoolean("WRITE_KNOWLEDGE_BINS");
 
 	//Build out the task list
 	if (Task::GenerateFiles::WriteBinData || Task::GenerateFiles::WriteGenotypeData) {
 		Task::GenerateFiles *t = new Task::GenerateFiles();
 		tasks.insert(TaskPair(t->taskType, t));
 	}
-	AddTask("GENE_REPORT", new Biofilter::Task::GeneReport());
-	AddTask("MARKER_INFO_REPORT", new Biofilter::Task::MarkerInfo());
-	AddTask("SNP_GENE_MAP", new Biofilter::Task::SnpReport());
-	AddTask("SNP_REPORT", new Biofilter::Task::SnpGeneMap());
-	AddTask("EXPORT_GENE_MODELS", new Biofilter::Task::GeneGeneModelReport());
-	AddTask("EXPORT_SNP_MODELS", new Biofilter::Task::SnpSnpModelArchive());
+	//AddTask("GENE_REPORT", new Biofilter::Task::GeneReport());
+	//AddTask("MARKER_INFO_REPORT", new Biofilter::Task::MarkerInfo());
+	//AddTask("SNP_GENE_MAP", new Biofilter::Task::SnpReport());
+	//AddTask("SNP_REPORT", new Biofilter::Task::SnpGeneMap());
+	//AddTask("EXPORT_GENE_MODELS", new Biofilter::Task::GeneGeneModelReport());
+	//AddTask("EXPORT_SNP_MODELS", new Biofilter::Task::SnpSnpModelArchive());
 	
 
-	BinManager::IntergenicBinWidth						= GetInteger("INTERGENIC_BIN_LENGTH")*1000;
-	BinManager::BinTraverseThreshold						= GetInteger("BIN_TRAVERSE_THRESHOLD");
-	BinManager::MinBinSize									= GetInteger("MINIMUM_BIN_SIZE");
-	BinManager::ExpandByExons								= GetInteger("EXPAND_INTO_SUBGENES");
+	BinManager::IntergenicBinWidth = GetInteger("INTERGENIC_BIN_LENGTH")*1000;
+	BinManager::BinTraverseThreshold = GetInteger("BIN_TRAVERSE_THRESHOLD");
+	BinManager::MinBinSize = GetInteger("MINIMUM_BIN_SIZE");
+	BinManager::ExpandByExons = GetInteger("EXPAND_INTO_SUBGENES");
 	
 	/*if (Task::BinCollapse::VisualizeGroupTrees || Task::BinCollapse::WriteKnowledgeBins) {
 		Task::BinCollapse *item = new Task::BinCollapse();

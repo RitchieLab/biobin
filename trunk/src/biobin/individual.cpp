@@ -8,6 +8,6 @@
 #include "individual.h"
 
 namespace BioBin {
-bool Individual::ConvertStatusToInteger = true;
+//bool Individual::ConvertStatusToInteger = true;
 }
 

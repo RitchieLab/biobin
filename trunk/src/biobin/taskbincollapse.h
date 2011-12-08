@@ -39,7 +39,7 @@
 namespace BioBin {
 namespace Task {
 	
-class BinCollapse : public Biofilter::Task::Task {
+class BinCollapse : public Task {
 public:
 	BinCollapse();
 	virtual ~BinCollapse();

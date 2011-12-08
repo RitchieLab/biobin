@@ -21,7 +21,7 @@ public:
 	void InitGroupData();
 	void InitRegionData();
 protected:
-	void LoadSNPs(std::vector<uint>& remap, DataImporter& vcf);
+	void LoadSNPs(DataImporter& vcf);
 	void InitGroups();
 
 	struct BiofilterAction {

@@ -7,6 +7,14 @@
 
 #include "binapplication.h"
 
+#include <iostream>
+
+#include "knowledge/Locus.h"
+#include "knowledge/Region.h"
+#include "knowledge/Group.h"
+
+#include "knowledge/liftover/ConverterSQLite.h"
+
 namespace BioBin {
 
 BinApplication::BinApplication() {
@@ -17,115 +25,36 @@ BinApplication::~BinApplication() {
 }
 
 
-void BinApplication::InitVcfDataset(std::string& filename, std::string& genomicBuild, Knowledge::SnpDataset& lostSnps, std::vector<uint>& locusRemap, DataImporter& vcfimporter) {
+
+void BinApplication::InitBins() {
 	
-	std::cerr<<"Loading VCF Data\n";
-	if (vcfimporter.Open(filename.c_str(), (char)-1)) {
-		std::vector<Utility::Locus> locusArray;
-		vcfimporter.GetAllAlleleFrequencies(locusArray);
-		locusRemap.clear();
-		locusRemap.reserve(locusArray.size());
-		//const std::vector<Utility::Locus>& locusArray = vcfimporter.GetLoci();
-		LiftOver::ConverterDB cnv;
-		int chainCount = cnv.LoadFromDB(genomicBuild.c_str(), sociDB);
-		
-		if (chainCount > 0) {
-			std::string conversionLog = this->AddReport("lift-over", "tsv", "SNPs that were lifted over to new build which differed dramatically or changed chromosome");
-			std::ofstream cnvLog(conversionLog.c_str());
-			cnvLog<<"RSID,Chrom(Orig),Pos(Orig),Chrom(New),Pos(New)\n";
-			
-			std::multimap<Utility::Locus, Utility::Locus> converted;
-			std::multimap<Utility::Locus, Utility::Locus>::iterator missing;
-			cnv.ConvertDataset(locusArray, converted);
-			Utility::SnpArray::iterator itr = locusArray.begin();
-			Utility::SnpArray::iterator end = locusArray.end();
-
-			uint i=0;
-			//uint validLocus = 0;
-			std::stringstream missingSNPs;
-			while (itr != end) {
-				Utility::Locus &orig = *itr;
-				
-				if (converted.find(orig) != missing) {
-					std::multimap<Utility::Locus, Utility::Locus>::iterator first = converted.lower_bound(orig);
-					std::multimap<Utility::Locus, Utility::Locus>::iterator last  = converted.upper_bound(orig);
-					
-					if (converted.count(orig) != 1)
-						std::cerr<<"It was observed that there are multiple hits returned by convert dataset: "<<orig.RSID()<<" has "<<converted.count(orig)<<" counterparts.\n";
-					while (first != last) {
-						if (first->second.pos == 0)
-							missingSNPs<<first->first.RSID()<<"\t"<<Utility::ChromFromIntChr(first->first.chrom)<<"\t"<<first->first.pos<<"\n";
-						else {
-							if (first->second.chrom > 0) {
-								if (first->first.Chrom() != first->second.Chrom() || ((float)abs((float)first->first.pos - (float)first->second.pos)/(float)first->first.pos)> 0.01)
-									cnvLog<<first->first.RSID()<<"\t"
-										<<first->first.Chrom()<<"\t"
-										 <<first->first.pos<<"\t"
-										 <<first->second.Chrom()<<"\t"
-										 <<first->second.pos<<"\t"
-										 <<first->second.RSID()<<"\n";
-								dataset.AddSNP(first->second);
-								//dataset.AddSNP(first->second.chrom, first->second.pos, first->second.RSID().c_str());
-								//locusRemap[first->second.chrom].push_back(validLocus++);
-								locusRemap.push_back(i);
-								locusArray[i] = first->second;
-							}		
-							else 
-								cnvLog<<first->first.RSID()<<"\t"
-									<<first->first.Chrom()<<"\t"
-									 <<first->first.pos<<"\t"
-									 <<" **** \n";
-						}
-						first++;
-					}
-				}
-				itr++;
-				i++;
-			}
-			if (missingSNPs.str().length() > 0) {
-				std::string filename = AddReport("missing-snps", "txt", "SNPs that were dropped during build conversion");
-				std::ofstream file(filename.c_str());
-				file<<missingSNPs.str();
-			}
-		} else {
-			uint locusCount = locusArray.size();
-			dataset.AddSNPs(locusArray);
-			for (uint i=0; i<locusCount; i++) 
-				locusRemap.push_back(i);	
-		}
-	}
-}
-//std::vector<uint> locusRemap;						///< Necessary to translate from local indexes to those in the vcf file
-
-
-std::pair<uint, uint> BinApplication::InitBins(std::vector<uint>& locusRemap, 
-			DataImporter& vcfimporter) {
-	
-	Utility::IdCollection variants;
-	Utility::IdCollection rareVariants;
+	//Utility::IdCollection variants;
+	//Utility::IdCollection rareVariants;
 
 	//if (vcfimporter.Open(filename.c_str(), (char)-1)) {
 		//We now have our snp dataset set up-so it's time to start the binning process
-	std::pair<uint, uint> binGenotypeCounts;
-	binGenotypeCounts = binData.InitBins(groups, regions, dataset, locusRemap);
-	binData.CollectVariantGroups(variants, rareVariants);
-	std::cerr<<"   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.Size()<<"\n"
-				<<"   Variants:     "<<std::setw(10)<<std::right<<variants.size()<<"\n"
-				<<" * Rare Variants:"<<std::setw(10)<<std::right<<rareVariants.size()<<"\n"
-				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binGenotypeCounts.first<<"\n";
+	//std::pair<uint, uint> binGenotypeCounts;
+	//binGenotypeCounts = binData.InitBins(groups, regions, dataset);
+
+	binData.InitBins(groups, *regions, dataset);
+
+	//binData.CollectVariantGroups(variants, rareVariants);
+	std::cerr<<"   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"
+				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
+				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
 
 	std::cerr<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n";
 
-	if (binGenotypeCounts.first < 500) {
+	if (binData.numBins() < 500) {
 		std::cerr<<"\n\nBin Name\tSNP Count\n";
-		std::vector<std::set<uint> > contributors;
-		binData.BuildContributorList(contributors);
-		uint count = contributors.size();
-		for (uint i=0; i<count; i++) 
-			std::cerr<<binData.BinName(i)<<"\t"<<contributors[i].size()<<"\n";
-
+		BinManager::const_iterator itr = binData.begin();
+		BinManager::const_iterator end = binData.end();
+		while(itr != end){
+			std::cerr << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+		}
 	}
-	
+	/*
 	Utility::IdCollection::iterator varItr = variants.begin();
 	Utility::IdCollection::iterator varEnd = variants.end();
 	while (varItr != varEnd) 
@@ -144,17 +73,36 @@ std::pair<uint, uint> BinApplication::InitBins(std::vector<uint>& locusRemap,
 		individuals[i++].Init(*iitr, binGenotypeCounts.second, binGenotypeCounts.first + 1);
 		iitr++;
 	}		
-
-	uint locusCount = dataset.Size();
+*/
 	std::string ofn = AddReport("locus", "csv", "Locus Description");
 	std::ofstream locusFile(ofn.c_str());
-	locusFile<<"Chromosome,Location,ID,all(1):freq(1),all(2):freq(2),type,gene(s),bin name(s)\n";
-	for (uint i=0; i<locusCount; i++) {
-		dataset[i].Print(locusFile, ",");
-		binData.DescribeLocus(i, locusFile, regions,dataset);
+	locusFile<<"Chromosome,Location,ID,type,gene(s),bin name(s)\n";
+	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
+	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+	while(itr != end){
+		locusFile << (**itr) << ",";
+		locusFile << string(((1.0 - (*itr)->majorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
+		locusFile << string("Variant") << string(",");
+		// Print the genes here
+		Knowledge::RegionCollection::const_region_iterator r_itr =
+				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
+		Knowledge::RegionCollection::const_region_iterator r_end =
+				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
+		if (r_itr != r_end){
+			locusFile << (*itr)->getID();
+			while(++r_itr != r_end){
+				locusFile << ":" << (*itr)->getID();
+			}
+		}
+		locusFile << ",";
+		// Now print the bins
+		binData.printBins(locusFile, *itr);
+		locusFile << "\n";
+		++itr;
 	}
 	locusFile.close();
 
+	/*
 	//binIDs.resize(locusArray.size(), (uint)-1);
 	for (uint i=0; i<locusCount; i++) {
 		std::vector<char> genotypes(individualCount, (char)-1);
@@ -169,9 +117,61 @@ std::pair<uint, uint> BinApplication::InitBins(std::vector<uint>& locusRemap,
 
 	//}
 	return binGenotypeCounts;
+	*/
+}
+
+void BinApplication::writeBinData(const string& filename, const string& sep) const{
+	std::ofstream file(filename.c_str());
+	_pop_mgr.printBins(file, binData, sep);
+	file.close();
+}
+
+void BinApplication::writeGenotypeData(const string& filename, const string& sep) const{
+	std::ofstream file(filename.c_str());
+	_pop_mgr.printGenotypes(file, sep);
+	file.close();
 }
 
 
+/*
+void BinApplication::GetMaxBinHits(std::vector<uint>& hits) {
+	std::vector<std::set<uint> > binContributors;
+	binData.BuildContributorList(binContributors);
+	uint binCount = binContributors.size();
+	hits = std::vector<uint>(binCount, 0);
+
+	for (uint i=0; i<binCount; i++) {
+		hits[i] = binContributors[i].size();
+	}
+}
+
+Utility::Locus& BinApplication::Locus(uint idx) {
+	return dataset[idx];
+}
+
+std::map<uint, uint> BinApplication::GetBinLookup() {
+	return binIndex;
+}
+
+const std::vector<Individual>& BinApplication::Individuals() {
+	return individuals;
+}
+
+const Utility::StringArray& BinApplication::BinNames() {
+	return binData.BinNames();
+}
+
+const Knowledge::Region& BinApplication::GetRegion(uint idx) {
+	return regions[idx];
+}
+
+void BinApplication::GetBinContributors(std::vector<std::set<uint> >& contributors) {
+	binData.BuildContributorList(contributors);
+}
+
+
+*/
+/*
 void BinApplication::ApplyPhenotypes() {
 	Utility::StringArray::iterator itr = phenotypeFilenames.begin();
 	Utility::StringArray::iterator end = phenotypeFilenames.end();
@@ -200,6 +200,8 @@ void BinApplication::ApplyPhenotypes() {
 		indItr++;
 	}
 }
+*/
+/*
 
 
 void BinApplication::GenerateBinContentLookup(std::multimap<uint, uint>& binContents) {
@@ -223,4 +225,6 @@ void BinApplication::GenerateBinContentLookup(std::multimap<uint, uint>& binCont
 		itr++;
 	}
 }
+*/
+
 }

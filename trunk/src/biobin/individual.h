@@ -11,12 +11,27 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "genotypestorage.h"
-#include "utility/strings.h"
+#include <map>
+
+//#include "genotypestorage.h"
+
+using std::string;
+using std::map;
+
+#include "knowledge/Locus.h"
 
 namespace BioBin {
 
+class Individual{
+
+public:
+	Individual(const string& name);
 	
+private:
+	map<Knowledge::Locus*, short> _genotype_map;
+};
+
+/*
 struct Individual {
 public:
 	Individual()																			
@@ -66,10 +81,10 @@ public:
 		genotypes.SetGenotype(index, value);
 	}
 	
-	/**
+
 	 * Allow us to avoid sticking .0s at the end of MDR style status (which might
 	 * mess up MDR...not sure)
-	 */
+	 /
 	static bool ConvertStatusToInteger;			
 
 	std::string indID;					///< Individual's ID from dataset
@@ -78,8 +93,8 @@ public:
 protected:
 	GenotypeStorage genotypes;			///< This is where we keep all of the genotype data
 	std::vector<uint> binData;			///< bin hits
-};
-
+};*/
+/*
 inline
 std::ostream& Individual::WriteBins(std::ostream& file, const char *sep) const {
 	if (ConvertStatusToInteger)
@@ -102,6 +117,7 @@ inline
 uint Individual::BinCount(uint index) const {
 	return binData[index];
 }
+*/
 
 }
 #endif	/* INDIVIDUAL_H */

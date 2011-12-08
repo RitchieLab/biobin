@@ -180,6 +180,25 @@ private:
 	const set<Region*> empty_region_set;
 
 };
+
+template <class T_iter>
+void RegionCollection::associateLoci(T_iter begin, const T_iter& end){
+	while (begin != end){
+		interval_map<uint, set<Region*> >& chrom_map =
+				_region_bounds[(*begin)->getChrom()];
+		interval_map<uint, set<Region*> >::const_iterator region_itr =
+				chrom_map.find((*begin)->getPos());
+		if (region_itr != chrom_map.end()){
+			set<Region*>::iterator set_itr=region_itr->second.begin();
+			set<Region*>::const_iterator set_end=region_itr->second.end();
+			while (set_itr != set_end){
+				(*set_itr)->addLocus(*begin);
+				++set_itr;
+			}
+		}
+		++begin;
+	}
+}
 }
 
 

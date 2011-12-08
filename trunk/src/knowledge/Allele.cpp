@@ -25,5 +25,8 @@ void Allele::print(ostream& o, const string& sep) const{
 
 }
 
-
+ostream& operator<<(ostream& o, const Knowledge::Allele& l){
+	l.print(o);
+	return o;
+}
 

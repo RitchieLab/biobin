@@ -79,7 +79,7 @@ public:
 			}
 		}
 
-		bool equal(const const_group_iterator& other){
+		bool equal(const const_group_iterator& other) const{
 			return this->_set_iter == other._set_iter;
 		}
 
@@ -116,7 +116,7 @@ public:
 	/**
 	 * Associate a single locus with this region
 	 */
-	void addLocus(const Locus& locus);
+	void addLocus(const Locus* locus);
 
 	/**
 	 * Add a whole lot of Loci (using iterators) with this region
@@ -231,6 +231,24 @@ private:
 	uint _eff_end;
 
 };
+template <class T_iter>
+void Region::addLoci(T_iter& begin, const T_iter& end){
+	while (begin != end){
+		addLocus(*(*begin));
+		++begin;
+	}
+}
+
+template <class T_iter>
+void Region::addGroups(uint type, T_iter& begin, const T_iter& end){
+	set<Group*>& group_set = _group_map[type];
+	while(begin != end){
+		group_set.insert(*begin);
+		++begin;
+	}
+}
+
+
 }
 
 // Overloading < operator for region pointers
@@ -239,10 +257,11 @@ namespace std{
 template<>
 struct less<Knowledge::Region*> {
 
-	bool operator()(const Knowledge::Region* x, const Knowledge::Region* y){
+	bool operator()(const Knowledge::Region* x, const Knowledge::Region* y) const{
 		return (*x) < (*y);
 	}
 };
+
 
 }
 #endif /* KNOWLEDGE_REGION_H */

@@ -29,157 +29,109 @@
 #define	DATAIMPORTER_H
 
 #include <vector>
-#include "utility/strings.h"
-#include "utility/types.h"
+#include <string>
+
+#include "knowledge/Locus.h"
+
 #include "vcftools/vcf_file.h"
+
 #include <boost/algorithm/string.hpp>
-#include "utility/locus.h"
+#include <boost/unordered_map.hpp>
+
+using std::string;
+using std::vector;
+using boost::unordered_map;
+
+using Knowledge::Locus;
+
 namespace BioBin {
 	
-
-
 class DataImporter {
 public:
-	DataImporter();
-	DataImporter(const DataImporter& orig);
-	virtual ~DataImporter();
-	
-	/* Open/Close really just manages the datasource object
-	 */
-	bool Open(const char *filename, char chrom);
-	bool Open(char chrom);
-	void Close();
-	
-	/**
-	 * Parses VCF file for allele frequencies
-    * @param freqs
-    * @return T/F for success
-	 * 
-	 * This is working under the assumption that we are doing all of this 
-	 * for one chromosome at a time. If all chromosomes are in a single file
-	 * then you can change chromosome and call these functions again...not
-	 * most efficient, but it's how I am doing it! ;)
-    */
-	std::vector<Utility::Locus> GetAlleleFrequencies();
-	void GetAllAlleleFrequencies(std::vector<Utility::Locus>& freq);
-	/**
-	 * returns array of count(Major alleles) for each locus
-    * @param genotypes
-    */
-	void ParseSNP(uint snpIndex, std::vector<char>& genotypes);
-	
-	/**
-	 * These are the biofilter style chromosomes...char indexes 1-25
-	 */
-	char chromosome;								///< Chromosome being parsed
-	static bool CompressedVCF;					///< gzipped file Y/N
-	void SetChromosome(char chrom);
-	
-	// Conversion for chromosomes['1','2',...'23','24','25'] 
-	// If the user needs to define them in some other way...they should have a 
-	// way to change this
-	Utility::StringArray chromosomeNames;	
-	
-	/**
-	 * Return the loci that have been scanned from this file
-    * @return reference to the local locus vector
-    */
-	const std::vector<Utility::Locus>& GetLoci();
-	
-	
-	uint IndividualCount();
-	
-	Utility::StringArray GetIndividualIDs();
-private:
-	uint totalIndividualEntries;				///< Number of individuals in the file(s)
-	VCF::vcf_file *vcf;							///< This represents the vcf object we will be using
-	VCF::vcf_entry *entry;						///< This is used to extract data out of the file
 
-	void InitChromosomeNames();				///< Initialize the defaults
-	std::vector<Utility::Locus> loci;		///< Help identify what is what within this region
-	std::string filename;						///< Remember what file we are reading from
+	DataImporter(const string& filename) : vcf(filename) {}
+	virtual ~DataImporter(){}
+	
+	//bool open(const string& filename);
+	
+	/**
+	 * Parses the VCF file for all variants.  Appends the variants to the input
+	 * parameter given (allowing for multiple files to be read)
+	 *
+	 * @param loci_out The vector of Locus objects to append to
+	 */
+	template <class T_cont>
+	void getLoci(T_cont& loci_out);
+
+	static bool CompressedVCF;					///< gzipped file Y/N
+
+	uint individualCount() {return vcf.N_indv;}
+	const vector<string>& getIndividualIDs() {return vcf.indv;}
+	
+	void parseSNP(Knowledge::Locus& loc, vector<short>& genotypes_out);
+
+private:
+
+	// No copying or assignment!
+	DataImporter(const DataImporter& orig);
+	DataImporter& operator=(const DataImporter& other);
+
+	//uint totalIndividualEntries;				///< Number of individuals in the file(s)
+	VCF::vcf_file vcf;							///< This represents the vcf object we will be using
+	//VCF::vcf_entry entry;						///< This is used to extract data out of the file
+
+	// A map to keep track of where
+	unordered_map<Knowledge::Locus*, int> _locus_position;
+
+	//std::vector<Utility::Locus> loci;		///< Help identify what is what within this region
 };
 
-inline
-DataImporter::DataImporter() : totalIndividualEntries(0), vcf(NULL), entry(NULL) { 
-	InitChromosomeNames();
-}
+template <class T_cont>
+void DataImporter::getLoci(T_cont& loci_out) {
 
-inline
-DataImporter::DataImporter(const DataImporter& orig) : totalIndividualEntries(orig.totalIndividualEntries), vcf(orig.vcf), entry(orig.entry) {
-	InitChromosomeNames();
-}
+	std::set<std::string> unknownChromosomes;
+	//T_cont::const_iterator pos = loci_out.end();
 
-inline
-DataImporter::~DataImporter() { 
-	if (entry)
-		delete entry;
-	if (vcf)
-		delete vcf;
-}
+	uint totalSiteCount	= vcf.N_entries;
 
-inline
-Utility::StringArray DataImporter::GetIndividualIDs() {
-	return vcf->indv;
-}
+	//TODO: preallocate the map for some speed here
+	//_locus_position.reserve(totalSiteCount);
 
-inline
-const std::vector<Utility::Locus>& DataImporter::GetLoci() {
-	return loci;
-}
+	std::string line;
+	std::vector<int> alleleCounts;
+	double nonMissingChrCount = 0.0;
+	uint nmcc = 0;					///< Just to avoid redundant conversions
+	VCF::vcf_entry entry(vcf.N_indv);
 
-inline
-uint DataImporter::IndividualCount() {
-	return totalIndividualEntries;
-}
+	for (uint i=0; i<totalSiteCount; i++) {
+		vcf.get_vcf_entry(i, line);
+		entry.reset(line);
+		entry.parse_basic_entry(true);
+		entry.parse_genotype_entries(true);
+		uint alleleCount = entry.get_N_alleles();
+		entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+		nonMissingChrCount = nmcc;
 
-inline
-void DataImporter::InitChromosomeNames() { 
-	for (uint i=0;i<26; i++) {
-		std::string s = Utility::ChromFromInt(i);
-		boost::trim(s);
-		chromosomeNames.push_back(s);
+		Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),entry.get_ID());
+
+		//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
+		//	unknownChromosomes.insert(entry->get_CHROM());
+
+		loc->addAllele(entry.get_REF(), alleleCounts[0] / nonMissingChrCount);
+
+		//From here, they are all "ALT" alleles. We would have to evaluate an
+		//if should we want to roll them all in together, since it's a different
+		//call (with a different index scheme...)
+		for (uint n = 1; n<alleleCount; n++)	{
+			loc->addAllele(
+					entry.get_ALT_allele(n-1),
+					alleleCounts[n] / nonMissingChrCount);
+		}
+
+		loci_out.insert(loci_out.end(), loc);
+		_locus_position[loc] = i;
 	}
-}
 
-inline
-bool DataImporter::Open(char chromosome) {
-	this->chromosome = chromosome;
-	
-	std::string chromosomeName = "";
-	if (chromosome != -1)
-		chromosomeName = chromosomeNames[chromosome];
-	//I'm assuming we never want to exclude chromosomes...we'll just not parse them
-	vcf = new VCF::vcf_file(std::string(filename), CompressedVCF, chromosomeName, "");
-	totalIndividualEntries						= vcf->N_indv;
-		
-	entry = new VCF::vcf_entry(totalIndividualEntries);
-	// VCF Tools allows the user to filter out individuals and SNPs based on certain 
-	// criterion...we might want to do the same
-	//vcf->apply_filters(params);
-	
-	return true;	
-}
-
-inline
-bool DataImporter::Open(const char *filename, char chromosome) {
-	if (entry)
-		Close();
-	this->filename = filename;
-	return Open(chromosome);
-}
-
-inline
-void DataImporter::Close() {
-	if (entry) {
-		delete entry;
-		entry  = NULL;
-	}
-	
-	if (vcf) {
-		delete vcf;
-		vcf = NULL;
-	}
 }
 
 }

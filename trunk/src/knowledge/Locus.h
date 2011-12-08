@@ -56,19 +56,19 @@ public:
 	/**
 	 * Return the ID of this Locus (passed in)
 	 */
-	const string& getID() const;
+	const string& getID() const {return _id;};
 	/**
 	 * Return the string identifying the chromosome (see _chrom_list)
 	 */
-	const string& getChromStr() const;
+	const string& getChromStr() const {return getChromStr(_chrom);};
 	/**
 	 * Return the chromosome index of this Locus (helpful for indexing)
 	 */
-	short getChrom() const;
+	short getChrom() const {return _chrom;};
 	/**
 	 * Return the position of this Locus
 	 */
-	uint getPos() const;
+	uint getPos() const {return _pos;};
 
 	/**
 	 * Determine if the given allele is a minor allele or not
@@ -142,17 +142,14 @@ private:
 
 }
 
-ostream& operator<<(ostream& o, const Knowledge::Locus& l){
-	l.print(o);
-	return o;
-}
+ostream& operator<<(ostream& o, const Knowledge::Locus& l);
 
 namespace std{
 
 template<>
 struct less<Knowledge::Locus*> {
 
-	bool operator()(const Knowledge::Locus* x, Knowledge::Locus* y){
+	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y) const{
 		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
 	}
 };
@@ -160,7 +157,7 @@ struct less<Knowledge::Locus*> {
 template<>
 struct less<const Knowledge::Locus*> {
 	
-	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y){
+	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y) const{
 		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
 	}
 };

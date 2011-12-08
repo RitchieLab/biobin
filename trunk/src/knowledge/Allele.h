@@ -40,9 +40,6 @@ private:
 
 }
 
-ostream& operator<<(ostream& o, const Knowledge::Allele& l){
-	l.print(o);
-	return o;
-}
+ostream& operator<<(ostream& o, const Knowledge::Allele& l);
 
 #endif /* ALLELE_H_ */

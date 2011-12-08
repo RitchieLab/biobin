@@ -26,7 +26,7 @@ namespace Knowledge{
 class Information{
 public:
 
-	virtual ~Information(){};
+	virtual ~Information(){}
 
 	virtual int getPopulationID(const string& pop_str) = 0;
 	virtual const string getResourceVersion(const string& resource) = 0;
@@ -34,9 +34,9 @@ public:
 	// The following models are abstractions of junk that I found in Biofilter's
 	// main application class.  See below for the biofilter code for these
 	// functions
-	virtual void listPopulationIDs(ostream& os);
-	virtual void listGroupIDs(ostream& os, const vector<string>& group_list);
-	virtual void listRegions(ostream& os, const vector<string>& alias_list, const vector<string>& alias_type);
+	virtual void listPopulationIDs(ostream& os){}
+	virtual void listGroupIDs(ostream& os, const vector<string>& group_list){}
+	virtual void listRegions(ostream& os, const vector<string>& alias_list, const vector<string>& alias_type){}
 
 	virtual void getGroupTypes(const vector<int>& group_ids,
 			map<int, string>& type_names_out) = 0;

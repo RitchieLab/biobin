@@ -20,58 +20,85 @@
 #ifndef BINAPPLICATION_H
 #define	BINAPPLICATION_H
 
+#include "application.h"
+
+#include "Bin.h"
+
 #include "binmanager.h"
-#include "biofilter/application.h"
+#include "PopulationManager.h"
+//#include "individual.h"
+
 #include "dataimporter.h"
-#include "individual.h"
+
 #include <utility>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
+
+#include "knowledge/Region.h"
+#include "knowledge/Locus.h"
+#include "knowledge/Group.h"
+#include "knowledge/liftover/ConverterSQLite.h"
 
 namespace BioBin {
 	
-class BinApplication : public Biofilter::Application {
+class BinApplication : public Application {
 public:
 	BinApplication();
 	virtual ~BinApplication();
-	void SetReportPrefix(const char *pref);
-	void InitVcfDataset(std::string& filename, 
-			std::string& genomicBuild, 
-			Knowledge::SnpDataset& lostSnps, 
-			std::vector<uint>& locusRemap, 
+
+	template <class SNP_cont>
+	void InitVcfDataset(string& genomicBuild,
+			SNP_cont& lostSnps,
 			DataImporter& vcfimporter);
-	//std::pair<uint, uint> _LoadVcfFile(std::string& filename, std::string& genomicBuild, Knowledge::SnpDataset& lostSnps);
+
+	/**
+	 * Initialize the bins.  After this call, the binmanager will have the final
+	 * bins set up and ready to output.
+     */
+	void InitBins();
+
+	//void ApplyPhenotypes();
+
+	void writeBinData(const string& filename, const string& sep=",") const;
+	void writeGenotypeData(const string& filename, const string& sep=",") const;
+
 
 	/**
 	 * Return the individuals that have been loaded 
     * @return
     */
-	const std::vector<Individual> &Individuals();
+	//const vector<Individual>& Individuals();
 
 	/**
 	 * Returns the number of SNPs that might contribute to a given bin
     * @param hits
     */
-	void GetMaxBinHits(std::vector<uint>& hits);
+	//void GetMaxBinHits(vector<uint>& hits);
 
-	void GetBinContributors(std::vector<std::set<uint> >& contributors);
+	//void GetBinContributors(vector<set<uint> >& contributors);
 
 	/**
 	 * Returns an array matching each of the bin names
     * @return
     */
-	const Utility::StringArray& BinNames();
+	//const Utility::StringArray& BinNames();
 
 	/**
 	 * Returns the region object at a given index
     * @param idx
     * @return
     */
-	const Knowledge::Region& GetRegion(uint idx);
+	//const Knowledge::Region& GetRegion(uint idx);
 
-	Utility::StringArray phenotypeFilenames;			///< The file to be used to load phenotype values
 
-	void ApplyPhenotypes();
-
-	Utility::Locus &Locus(uint idx);
+	//Utility::Locus &Locus(uint idx);
 
 	/**
 	 * Passes a list of genotypes (for all people at a given SNP) and returns the bin IDs 
@@ -81,78 +108,121 @@ public:
     * @param genotypes This is where we'll write genotype data
     * @return set of bin indexes for which this SNP applies
     */
-	std::set<uint> ParseSNP(uint snpIndex, std::vector<char>& genotypes, std::vector<Individual>& data);
+	//std::set<uint> ParseSNP(uint snpIndex, vector<char>& genotypes, vector<Individual>& data);
 	
-	/**
-	 * Initialize the snp dataset based on the contents of the VCF file (this only sets up the locus portion, not individual data or bins)
-    * @param filename
-    * @param genomicBuild
-    * @param lostSnps
-    */
-	std::pair<uint, uint> InitBins(std::vector<uint>& locusRemap, 
-			DataImporter& vcfimporter);
+
 	/**
 	 * returns lookup region index -> snp index
 	 */
-	void GenerateBinContentLookup(std::multimap<uint, uint>& binContents);
-	std::map<uint, uint> GetBinLookup();
+	//void GenerateBinContentLookup(multimap<uint, uint>& binContents);
+	//map<uint, uint> GetBinLookup();
 private:
-	BinManager binData;							///< Used to build and parse data into bins and genotypes
+	///< Used to build and parse data into bins and genotypes
+	// Also holds the actual bins!
+	BinManager binData;
+
+	PopulationManager _pop_mgr;
+
+
+
 						///< Help to extract genotype data from vcf files
-	std::vector<Individual> individuals;	///< This represents the actual data from the vcf files
-	std::set<uint> binnable;					///< Just a map into the regions that created the entries
-	std::map<uint, uint> binIndex;
+	//vector<Individual> individuals;	///< This represents the actual data from the vcf files
+	//set<uint> binnable;					///< Just a map into the regions that created the entries
+	//map<uint, uint> binIndex;
+
+
 	//std::vector<Utility::Locus> loci;		///< The loci associated with the dataset
 	//Knowledge::SnpDataset loci;			/// This is now dataset
 };
 
-inline
-void BinApplication::SetReportPrefix(const char *pref) {
-	if (strcmp(pref, "") == 0)
-		reportPrefix = "biobin";
-	else
-		reportPrefix = pref;
-}
 
-inline
-void BinApplication::GetMaxBinHits(std::vector<uint>& hits) {
-	std::vector<std::set<uint> > binContributors;
-	binData.BuildContributorList(binContributors);
-	uint binCount = binContributors.size();
-	hits = std::vector<uint>(binCount, 0);
-	
-	for (uint i=0; i<binCount; i++) {
-		hits[i] = binContributors[i].size();
+template <class SNP_cont>
+void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps, DataImporter& vcfimporter) {
+
+	std::cerr<<"Loading VCF Data\n";
+
+	//locusRemap.clear();
+	//locusRemap.reserve(locusArray.size());
+	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
+	int chainCount = cnv.Load();
+
+	if (chainCount > 0) {
+		vector <Knowledge::Locus*> locusArray;
+		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
+		vcfimporter.getLoci(locusArray);
+
+		std::string conversionLog = this->AddReport("lift-over", "tsv", "SNPs that were lifted over to new build which differed dramatically or changed chromosome");
+		std::ofstream cnvLog(conversionLog.c_str());
+		cnvLog<<"Chrom(Orig),Pos(Orig),RSID(Old),Chrom(New),Pos(New),RSID(New)\n";
+
+		multimap<Knowledge::Locus*, Knowledge::Locus*> converted;
+		cnv.ConvertDataset(locusArray.begin(), locusArray.end(), converted);
+		vector<Knowledge::Locus*>::iterator itr = locusArray.begin();
+		vector<Knowledge::Locus*>::iterator end = locusArray.end();
+		multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator missing =
+				converted.end();
+
+
+		uint i=0;
+		//uint validLocus = 0;
+		std::stringstream missingSNPs;
+		while (itr != end) {
+			Knowledge::Locus &orig = **itr;
+
+			if (converted.find(&orig) != missing) {
+				multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator map_itr =
+						converted.lower_bound(&orig);
+				multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator last  =
+						converted.upper_bound(&orig);
+
+				if (converted.count(&orig) != 1){
+					std::cerr<<"It was observed that there are multiple hits returned by convert dataset: "<<orig.getID()<<" has "<<converted.count(&orig)<<" counterparts.\n";
+				}
+
+				while (map_itr != last) {
+					if (!((*map_itr).second) || (*map_itr).second->getPos() == 0){
+						missingSNPs<<*((*map_itr).first)<<"\n";
+					}else {
+						if ((*map_itr).second->getChrom() != -1) {
+							if ((*map_itr).first->getChrom() != (*map_itr).second->getChrom() ||
+									((float)abs((float)(*map_itr).first->getPos() - (float)(*map_itr).second->getPos())/(float)(*map_itr).first->getPos())> 0.01){
+								cnvLog<<*((*map_itr).first)<<","
+										<<*((*map_itr).second)<<"\n";
+							}
+
+							dataset.push_back((*map_itr).second);
+							//dataset.AddSNP(first->second.chrom, itr->second.pos, first->second.RSID().c_str());
+							//locusRemap[itr->second.chrom].push_back(validLocus++);
+							//locusArray[i] = itr->second;
+						}
+						else{
+							cnvLog<<*((*map_itr).first)<<","
+							<<" **** \n";
+						}
+					}
+					++map_itr;
+				}
+			}
+			delete *itr;
+			++itr;
+			++i;
+		}
+		if (missingSNPs.str().length() > 0) {
+			std::string filename = AddReport("missing-snps", "txt", "SNPs that were dropped during build conversion");
+			std::ofstream file(filename.c_str());
+			file<<missingSNPs.str();
+		}
+	} else {
+		vcfimporter.getLoci(dataset);
 	}
-}
 
-inline
-Utility::Locus& BinApplication::Locus(uint idx) {
-	return dataset[idx];
-}
-inline
-std::map<uint, uint> BinApplication::GetBinLookup() {
-	return binIndex;
-}
-inline
-const std::vector<Individual>& BinApplication::Individuals() {
-	return individuals;
-}
+	// OK, now that we've loaded the dataset, we can load up the individuals
+	_pop_mgr.loadIndividuals(vcfimporter);
+	_pop_mgr.loadGenotypes(dataset, vcfimporter);
 
-inline
-const Utility::StringArray& BinApplication::BinNames() {
-	return binData.BinNames();
-}
+	//TODO: check to ensure that we have loaded the filenames by this time
+	_pop_mgr.loadPhenotypes(phenotypeFilenames);
 
-inline
-const Knowledge::Region& BinApplication::GetRegion(uint idx) {
-	return regions[idx];
-}
-
-
-inline
-void BinApplication::GetBinContributors(std::vector<std::set<uint> >& contributors) {
-	binData.BuildContributorList(contributors);
 }
 
 }

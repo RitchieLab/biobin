@@ -19,6 +19,8 @@ string __vinit[] = {"1","2","3","4","5","6","7","8","9","10",
 // Make sure the # below matches the # of elements in the array above!!
 const vector<string> Locus::_chrom_list(__vinit, __vinit + (sizeof(__vinit) / sizeof(__vinit[0])));
 
+const string Locus::invalid_chrom("");
+
 Locus::Locus(short chrom, uint pos, const string& id):
 		_chrom(chrom), _pos(pos), _id(id){
 	if (id.size() == 0){
@@ -131,6 +133,12 @@ void Locus::print(ostream& o, const string& sep, bool printAlleles) const{
 }
 
 }
+
+ostream& operator<<(ostream& o, const Knowledge::Locus& l){
+	l.print(o);
+	return o;
+}
+
 
 
 

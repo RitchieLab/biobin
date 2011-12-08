@@ -8,19 +8,22 @@
 #ifndef TASKFILEGENERATION_H
 #define	TASKFILEGENERATION_H
 
-#include "biofilter/task.h"
+#include "task.h"
 #include "binapplication.h"
 
 namespace BioBin {
+
+class Application;
+
 namespace Task {
 
 
-class GenerateFiles : public Biofilter::Task::Task {
+class GenerateFiles : public Task {
 public:
 	GenerateFiles();
 	virtual ~GenerateFiles();
 
-	virtual void Init(Biofilter::Application* app);
+	virtual void Init(Application* app);
 
 	void ExecuteTask();
 
@@ -32,16 +35,7 @@ protected:
 };
 
 
-inline
-GenerateFiles::GenerateFiles() : Task(3), app(NULL) {}
 
-inline
-GenerateFiles::~GenerateFiles() { }
-
-inline
-void GenerateFiles::Init(Biofilter::Application* app) {
-	this->app = (BinApplication*)app;
-}
 
 
 }

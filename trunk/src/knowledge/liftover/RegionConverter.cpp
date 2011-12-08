@@ -38,32 +38,7 @@ bool RegionConverter::operator<(const RegionConverter& other) const  {
 	return _localStart < other._localStart;
 }
 
-template <class T_iter>
-bool RegionConverter::estimateConversion(T_iter itr, T_iter end,
-		bool direction, int start, int stop, BuildConversion& c_out){
-	bool ret_val = false;
-	if (itr != end){
-		//BuildConversion c(lchrom, start, stop);
-		//c.rChrom = rchrom;
-		c_out.setStarts(itr->getLocalStart(start),
-				itr->estimate(start, direction));
 
-		if (++itr == end) {
-			--itr;
-			c_out.setStops(itr->getLocalStop(stop),
-					itr->estimate(stop, direction));
-		}
-		else {
-			--end;
-			c_out.setStops(end->getLocalStop(stop),
-					end->estimate(stop, direction));
-		}
-		//conversionOptions.insert(c);
-		c_out.align();
-		return true;
-	}
-	return false;
-}
 
 }
 }

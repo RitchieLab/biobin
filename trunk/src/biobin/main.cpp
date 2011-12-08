@@ -20,50 +20,56 @@ void Main::LoadConfiguration(const char *cfgFilename) {
 
 
 void Main::InitRegionData() {
-	Utility::StringArray missingAliases;
-	Utility::StringArray aliasList;
+	vector<string> missingAliases;
+	vector<string> aliasList;
 
-	app.LoadRegionData(cfg.GetLine("POPULATION").c_str(), missingAliases, aliasList);
+	app.LoadRegionData(cfg.GetLine("POPULATION"), missingAliases, aliasList);
 }
 
+// TODO: deal w/ schizophrenic vector/string uint/int decisions
 void Main::InitGroupData() {
 	//User defined groups
 	Utility::StringArray udGroups;
 	cfg.GetLines("ADD_GROUP", udGroups);
 
 	//Any specialized searches are defined here
-	Utility::StringArray lines;
-	std::vector<uint> groupIDs;
+	vector<string> lines;
+	vector<uint> groupIDs;
 	cfg.GetIntegers("INCLUDE_GROUPS", groupIDs);
 //	std::cerr<<"ASDFASDF: "<<lines.size()<<"\n";
-	Utility::IdCollection ids;
+	set<uint> ids;
 	ids.insert(groupIDs.begin(), groupIDs.end());
 
 	cfg.LoadFileContents("INCLUDE_GROUP_FILE", ids);
 
 	//Now, let's do the same for names
 	
-	Utility::StringArray groups;
+	vector<string> groups;
 	cfg.GetLines("INCLUDE_GROUP_NAMES", groups);
 	cfg.LoadFileContents("INCLUDE_GROUP_NAME_FILE", groups);
-	app.LoadGroupDataByName(udGroups, groups, ids);
+
+	vector<int> group_id_input;
+	group_id_input.reserve(ids.size());
+	set<uint>::const_iterator itr = ids.begin();
+	set<uint>::const_iterator end = ids.end();
+	while(itr != end){
+		group_id_input.push_back(*itr);
+		++itr;
+	}
+	app.LoadGroupDataByName(udGroups, groups, group_id_input);
 
 }
 
 void Main::RunCommands() {
 	VCF::LOG.open("vcf-responses.log");
 
-	app.InitBiofilter(cfg.GetLine("SETTINGS_DB").c_str(), !silentRun);
+	app.Init(cfg.GetLine("SETTINGS_DB"), !silentRun);
 	std::string genomicBuild = cfg.GetString("GENOMIC_BUILD");
 	if (genomicBuild != "") {
-		app.LoadBuildConverter(genomicBuild.c_str());
+		app.LoadBuildConverter(genomicBuild);
 	}
+	/* This is biofilter specific, not for biobin
 	switch (action) {
-		case BiofilterAction::SetVariationFilename:
-		{
-			app.SetVariationFilename(cfg.GetLine("VARIATIONS_FILENAME").c_str());
-			return;
-		}
 		case BiofilterAction::ListGroups:
 			{
 				std::vector<std::string> keywords;
@@ -89,19 +95,18 @@ void Main::RunCommands() {
 			app.ListGenes(std::cout, aliasList, aliasTypeList);
 			return;
 		}
-		case BiofilterAction::ListMetaGroups:
-			{
-/*				InitGroupData();
-				app.ListMetaGroups(cout);
-*/			}
+		case BiofilterAction::ListMetaGroups:{
+//				InitGroupData();
+//				app.ListMetaGroups(cout);
+//
 			return;
-		default: {}
-	}
+		}
+	}*/
 	
 	//Tasks that run before SNPs load (not sure what those would be)
 	cfg.RunTasks(0);
 
-	Utility::StringArray genes;
+	vector<string> genes;
 	std::string geneFilename = cfg.GetLine("GENE_COVERAGE");
 	if (geneFilename != "")
 		cfg.LoadFileContents("GENE_COVERAGE", genes);
@@ -113,26 +118,34 @@ void Main::RunCommands() {
 	//preload the groups-then we will handle the dataset merging/squeeze
 	//This sort of makes tasks type 2 and 3 redundant....and is backward
 	//from our previous approach
-	{
-		std::vector<uint> locusRemap;
-		DataImporter vcfimporter;
 
-		LoadSNPs(locusRemap, vcfimporter);
-		//std::multimap<uint, uint> geneLookup = app.BuildSnpGeneMap();
-		cfg.RunTasks(1);
-
-		InitRegionData();
-
-		cfg.RunTasks(2);
-		InitGroupData();
-		app.InitBins(locusRemap, vcfimporter);
-		cfg.RunTasks(3);
+	// TODO: check for existence of the file here!
+	string fn = cfg.GetLine("VCF_FILE");
+	if(fn.size() == 0){
+		std::cerr<<"No SNP dataset available. Unable to continue.\n";
+		exit(1);
 	}
+
+	DataImporter vcfimporter(fn);
+	LoadSNPs(vcfimporter);
+
+	cfg.RunTasks(1);
+
+	InitRegionData();
+
+	cfg.RunTasks(2);
+
+	InitGroupData();
+	app.InitBins();
+
+	cfg.RunTasks(3);
+
 	//We need to make sure that there is one or more tasks at level four before we generate the models
-	if (cfg.CountTasks(4)) {
-		app.ProduceModels(std::cout);
-		cfg.RunTasks(4);
-	}
+	// We should NOT be here in biobin!!  There's no model generation going on!
+	//if (cfg.CountTasks(4)) {
+	//	app.ProduceModels(std::cout);
+	//	cfg.RunTasks(4);
+	//}
 }
 
 
@@ -216,23 +229,12 @@ void Main::PrintHelp() {
 }
 
 
-void Main::LoadSNPs(std::vector<uint>& remap, DataImporter& vcf) {
-	std::string snpFilename = cfg.GetLine("VCF_FILE");
-	if (snpFilename.size() > 0) {
+void Main::LoadSNPs(DataImporter& vcf) {
 		std::string genomicBuild = cfg.GetLine("GENOMIC_BUILD");
-
-		Knowledge::SnpDataset lostSnps;
-		app.InitVcfDataset(snpFilename, genomicBuild, lostSnps, remap, vcf);
-		std::cerr<<lostSnps.Size()<<" SNPs were not able to be found in the variations database.\n";
-	}  else {
-		std::cerr<<"No SNP dataset available. Unable to continue.\n";
-		exit(1);
-	}
+		vector<string> lostSnps;
+		app.InitVcfDataset(genomicBuild, lostSnps, vcf);
+		std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
 }
-
-
-
-
 
 void Main::InitGroups() {
 

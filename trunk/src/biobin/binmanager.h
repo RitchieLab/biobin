@@ -10,30 +10,58 @@
 
 #include <vector>
 #include <map>
+#include <set>
+#include <string>
+#include <utility>
 
-#include "individual.h"
-#include "knowledge/snpdataset.h"
-#include "knowledge/groupmanagerdb.h"
-#include "knowledge/regionmanagerdb.h"
+//#include "individual.h"
+#include "knowledge/GroupCollection.h"
+#include "knowledge/RegionCollection.h"
+#include "knowledge/Group.h"
+#include "knowledge/Locus.h"
+
+#include "Bin.h"
+
+//#include "knowledge/snpdataset.h"
+//#include "knowledge/groupmanagerdb.h"
+//#include "knowledge/regionmanagerdb.h"
+
+using std::map;
+using std::vector;
+using std::string;
+using std::pair;
+using std::set;
 
 namespace BioBin {
 
+class Bin;
+
 class BinManager {
 public:
+	typedef set<Bin*>::const_iterator const_iterator;
+
 	BinManager();
-	BinManager(const BinManager& orig);
-	
-/*	uint InitBins(std::map<uint, Knowledge::GroupManagerDB> &groups, 
-			Knowledge::RegionManagerDB& regions, 
-			Knowledge::SnpDataset& snps);
- */
-	
-	std::pair<uint, uint> InitBins(std::map<uint, Knowledge::GroupManagerDB> &groups, 
-			Knowledge::RegionManagerDB& regions, 
-			Knowledge::SnpDataset& snps,
-			std::vector<uint> locusRemap);
+
 	virtual ~BinManager();
-	void GenerateBins(std::map<Knowledge::Group*, Utility::IdCollection>& groups, 
+	//BinManager(const BinManager& orig);
+	
+	void InitBins(const map<uint, Knowledge::GroupCollection*> &groups,
+			const Knowledge::RegionCollection& regions,
+			const vector<Knowledge::Locus*>& loci);
+
+	int numRareVariants() const { return _rare_variants.size();}
+	int numVariants() const {return _total_variants;}
+	int numBins() const {return _bin_list.size();}
+	//int numTotalVariants() const {return _total_variants;}
+
+	const_iterator begin() const {return _bin_list.begin();}
+	const_iterator end() const {return _bin_list.end();}
+
+	void printBins(std::ostream& os, Knowledge::Locus* locus, const string& sep=":");
+
+
+
+/*	void GenerateBins(std::map<Knowledge::Group*, Utility::IdCollection>& groups,
 					std::map<uint, std::set<uint> > binnables, 
 					std::vector<uint>& indexLookup, 
 					uint &binID);
@@ -62,7 +90,7 @@ public:
 	std::string BinName(uint index);
 
 	const std::vector<uint>& ImplicationIndex();
-	
+*/
 	
 	static uint IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
 	static uint BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing
@@ -70,9 +98,33 @@ public:
 	static bool ExpandByGenes;						///< Do we want to drop down to genes, if the group is large enough?
 	static bool ExpandByExons;						///< Do we want to drop to to introns and exons, if the group is large enough
 	static bool ExpandByFunction;					///< Indicate that we do want to use function 
-	static float mafCutoff;							///< Max maf to produce result in a bin
+	static float mafCutoff; 	///< Max maf to produce result in a bin
+
+	// Carried this over from taskbincollapse, but I'm not sure what it does
+	static uint maxSnpCount;
 private:
-	void CollectGroupLeaves(Knowledge::GroupManagerDB& gmgr,
+
+	// Collapses all of the bins according to the preferences we set.
+	void collapseBins();
+
+	// The authoritative list of all of the bins.  Everything else holds pointers
+	// to bins in this set.
+	set<Bin*> _bin_list;
+	// Mappint of Region IDs to bins
+	map<int, Bin*> _region_bins;
+	// Mapping of group IDs to bins
+	map<int, Bin*> _group_bins;
+	// List of intergenic bins
+	map<pair<short, int>, Bin*> _intergenic_bins;
+	// List of bins by locus
+	map<Knowledge::Locus*, set<Bin*> > _locus_bins;
+
+	// List of all rare variants
+	set<Knowledge::Locus*> _rare_variants;
+	int _total_variants;
+
+
+/*	void CollectGroupLeaves(Knowledge::GroupManagerDB& gmgr,
 		std::map<uint, Utility::IdCollection>& regionLookup,
 		std::map<uint, std::set<uint> >& regionToBinnable,
 		std::map<Knowledge::Group*, Utility::IdCollection>& leaves,
@@ -91,18 +143,10 @@ private:
 		std::map<uint, uint> locusRemap, 
 		std::string& name,
 		uint &binID);
-	/**
-	 * All but a small few will point to only one bin
-	 */
-	std::map<uint, uint> genotypeMap;			///< snp index to genotype index
-	std::vector<uint> binIDs;						///< The general bin
-	std::vector<uint> sourceIndex;				///< where to get the raw data
-	std::multimap<uint, uint> multiBins;		///< Handle rare SNPs in more than one bin
-	Utility::StringArray binNames;
-	std::vector<uint> implicationIndex;			///< Bin's implication score
+*/
 };
 
-
+/*
 inline
 void BinManager::BuildContributorList(std::vector<std::set<uint> >& contributors) {
 	uint binCount = binNames.size();
@@ -141,13 +185,13 @@ inline
 const Utility::StringArray& BinManager::BinNames() {
 	return binNames;
 }
+*/
+//inline
 
-inline
-/**
- * Sorts all of the variants found into either a "standard" variant or a "rare" variant.
- *
- * variants and rareVariants are sets of uints that are initially empty
- */
+// * Sorts all of the variants found into either a "standard" variant or a "rare" variant.
+// *
+// * variants and rareVariants are sets of uints that are initially empty
+/*
 void BinManager::CollectVariantGroups(Utility::IdCollection& variants, Utility::IdCollection& rareVariants) {
 	uint count = binIDs.size(); 
 	uint notRare = (uint)-1;
@@ -161,8 +205,9 @@ void BinManager::CollectVariantGroups(Utility::IdCollection& variants, Utility::
 	}
 	
 }
+*/
 
-}
+} //namespace BioBin
 
 #endif	/* BINMANAGER_H */
 

@@ -29,10 +29,10 @@
 using std::set;
 using std::string;
 
+#include "BuildConversion.h"
+
 namespace Knowledge {
 namespace Liftover {
-
-class BuildConversion;
 
 class RegionConverter {
 public:
@@ -70,6 +70,32 @@ private:
 
 	int _lineNumber;			///< For debugging
 };
+
+template <class T_iter>
+bool RegionConverter::estimateConversion(T_iter itr, T_iter end,
+		bool direction, int start, int stop, BuildConversion& c_out){
+	if (itr != end){
+		//BuildConversion c(lchrom, start, stop);
+		//c.rChrom = rchrom;
+		c_out.setStarts(itr->getLocalStart(start),
+				itr->estimate(start, direction));
+
+		if (++itr == end) {
+			--itr;
+			c_out.setStops(itr->getLocalStop(stop),
+					itr->estimate(stop, direction));
+		}
+		else {
+			--end;
+			c_out.setStops(end->getLocalStop(stop),
+					end->estimate(stop, direction));
+		}
+		//conversionOptions.insert(c);
+		c_out.align();
+		return true;
+	}
+	return false;
+}
 
 }
 }

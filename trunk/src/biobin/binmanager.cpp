@@ -7,6 +7,15 @@
 
 #include "binmanager.h"
 
+#include "Bin.h"
+
+#include "knowledge/RegionCollection.h"
+#include "knowledge/Region.h"
+
+using Knowledge::RegionCollection;
+using Knowledge::Region;
+using std::make_pair;
+
 namespace BioBin {
 
 uint BinManager::IntergenicBinWidth = 50000;
@@ -15,14 +24,18 @@ uint BinManager::MinBinSize = 1;
 bool BinManager::ExpandByExons = true;
 bool BinManager::ExpandByFunction = true;
 float BinManager::mafCutoff = 0.05;
+uint BinManager::maxSnpCount = 200;
 
-BinManager::BinManager() {
-}
-
-BinManager::BinManager(const BinManager& orig) {
+BinManager::BinManager() : _total_variants(0){
 }
 
 BinManager::~BinManager() {
+	set<Bin*>::const_iterator itr = _bin_list.begin();
+	set<Bin*>::const_iterator end = _bin_list.end();
+	while(itr != end){
+		delete *itr;
+		++itr;
+	}
 }
 
 /**
@@ -57,11 +70,10 @@ BinManager::~BinManager() {
  * That is the index we actually store the index->bin/genotype
  * information for
  */
-std::pair<uint, uint> BinManager::InitBins(
-		std::map<uint, Knowledge::GroupManagerDB> &groups,
-		Knowledge::RegionManagerDB& regions,
-		Knowledge::SnpDataset& snps,
-		std::vector<uint> locusRemap) {
+void BinManager::InitBins(
+		const map<uint, Knowledge::GroupCollection*> &groups,
+		const Knowledge::RegionCollection& regions,
+		const vector<Knowledge::Locus*>& loci) {
 	/**
 	 * The following items will result in a bin once we reach the end of the 
 	 * function. So, if we refine an item at one level, we should remove it from
@@ -69,39 +81,116 @@ std::pair<uint, uint> BinManager::InitBins(
 	 * the vcf file (the locusRemap is used at the very last step only)
 	 */
 	/** Group -> snpIdx*/
-	std::map<Knowledge::Group*, Utility::IdCollection> leaves;
-	std::map<uint, Utility::IdCollection> regionBins; ///< region idx -> snpIdxs
-	std::map<uint, Utility::IdCollection> exonBinIdx; ///< region idx -> snpIdxs
-	std::map<uint, Utility::IdCollection> intronBinIdx; ///< region idx -> snpIdxs
-	std::map<uint, Utility::IdCollection> regulatoryBinIdx; ///< region idx -> snpIdxs
-	std::map<uint, Utility::IdCollection> unknownBinIdx; ///< region idx -> snpIdxs
-	std::map<uint, Utility::IdCollection> expandedRegionBins; ///< regions that are derived from groups. The collection points to the unique meta group IDs
 
-	//The first thing we have to do is figure out
-	//which SNPs are binnable and to which genes they are attributed
-	/** chrom -> {block -> snpIdxs} */
-	std::map<uint, std::map<uint, Utility::IdCollection> > intergenic;
-	std::map<uint, std::set<uint> > regionToBinnable; ///< for any region, this is the set of indexes we are interested in
-	uint snpCount = snps.Size();
-	for (uint i = 0; i < snpCount; i++) {
-		Utility::Locus& l = snps[i];
-		if ((1.0 - l.MajorAlleleFreq()) < mafCutoff) {
-			Utility::IdCollection regionIDs;
-			snps.GetRegionCoverage(i, regionIDs);
-			Utility::IdCollection::iterator itr = regionIDs.begin();
-			Utility::IdCollection::iterator end = regionIDs.end();
-			//std::cerr<<"\tBinnable Region >> "<<i<<"\t"<<snps[i].RSID()<<"\t"<<snps[i].pos<<" - \n";
-			if (regionIDs.size() == 0) {
-				intergenic[l.chrom][(l.pos / IntergenicBinWidth)].insert(i);
+	vector<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
+	vector<Knowledge::Locus*>::const_iterator l_end = loci.end();
+
+	_total_variants = loci.size();
+
+	while(l_itr != l_end){
+		Knowledge::Locus& l = **l_itr;
+		if ((1.0 - l.majorAlleleFreq()) < mafCutoff) {
+
+			_rare_variants.insert(&l);
+
+			// First, find all of the regions that contain this locus
+			RegionCollection::const_region_iterator r_itr =
+					regions.positionBegin(l.getChrom(), l.getPos());
+			RegionCollection::const_region_iterator r_end =
+					regions.positionBegin(l.getChrom(), l.getPos());
+
+			Bin* curr_bin;
+			if (r_itr == r_end){
+				//Add to intergenic
+				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / IntergenicBinWidth);
+				map<pair<short, int>, Bin*>::const_iterator i_bin =
+						_intergenic_bins.find(key);
+
+				if (i_bin == _intergenic_bins.end()){
+					// OK, this bin is nonexistent
+					curr_bin = new Bin(key.first, key.second);
+					_intergenic_bins.insert(make_pair(key, curr_bin));
+					_bin_list.insert(curr_bin);
+				}else{
+					curr_bin = (*i_bin).second;
+				}
+				curr_bin->addLocus(&l);
+				_locus_bins[&l].insert(curr_bin);
 			}
-			while (itr != end) {
-				//std::cerr<<"\tBinnable Region : "<<i<<"\t"<<snps[i].RSID()<<"\t"<<regions[*itr].name<<"\n";
-				//std::cerr<<"\t\t\t"<<*itr<<"\t"<<regions[*itr].name<<"\t"<<regions[*itr].effStart<<"-"<<regions[*itr].effEnd<<"\n";
-				regionToBinnable[*itr++].insert(i);
+			while (r_itr != r_end){
+				// For each region, get all of the groups it is in
+				Region::const_group_iterator g_itr = (*r_itr)->groupBegin();
+				Region::const_group_iterator g_end = (*r_itr)->groupEnd();
+
+				// If not in any groups, add to region bins
+				if(g_itr == g_end){
+					int id = (*r_itr)->getID();
+					map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
+					if (rm_itr == _region_bins.end()){
+						curr_bin = new Bin(*r_itr);
+						_bin_list.insert(curr_bin);
+						_region_bins.insert(make_pair(id, curr_bin));
+					}else{
+						curr_bin = (*rm_itr).second;
+					}
+					curr_bin->addLocus(&l);
+					_locus_bins[&l].insert(curr_bin);
+				}
+
+				// add to all group bins that it is a member of
+				while(g_itr != g_end){
+					int id = (*g_itr)->getID();
+					map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
+					if (gm_itr == _group_bins.end()){
+						curr_bin = new Bin(*g_itr);
+						_bin_list.insert(curr_bin);
+						_group_bins.insert(make_pair(id,curr_bin));
+					}else{
+						curr_bin = (*gm_itr).second;
+					}
+					curr_bin->addLocus(&l);
+					_locus_bins[&l].insert(curr_bin);
+					++g_itr;
+				}
+				++r_itr;
 			}
-		} else {
-			genotypeMap[i] = genotypeMap.size();
 		}
+	}
+
+	// At this point, we have all of the top level bins constructed and
+	// stored in the variable _bin_list.  We should now collapse the
+	// bins according to the preferences given
+	collapseBins();
+}
+
+void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
+		const string& sep){
+	map<Knowledge::Locus*, set<Bin*> >::const_iterator m_itr = _locus_bins.find(l);
+
+	if(m_itr != _locus_bins.end()){
+		set<Bin*>::const_iterator s_itr = (*m_itr).second.begin();
+		set<Bin*>::const_iterator s_end = (*m_itr).second.end();
+		if (s_itr != s_end){
+			os << (*s_itr)->getName();
+			while(++s_itr != s_end){
+				os << sep << (*s_itr)->getName();
+			}
+		}
+	}
+
+}
+
+void BinManager::collapseBins(){
+	return;
+}
+
+} // namespace BioBin;
+
+
+
+
+/*	for (uint i = 0; i < snpCount; i++) {
+
 	}
 	Utility::IdCollection genesUsed;
 	std::map<uint, Knowledge::GroupManagerDB>::iterator meta = groups.begin();
@@ -191,9 +280,10 @@ std::pair<uint, uint> BinManager::InitBins(
 
 	return std::make_pair(binID + 1, genotypeMap.size()+1);
 
-}
+ */
 
-void BinManager::GenerateIntergenicBins(
+
+/*void BinManager::GenerateIntergenicBins(
 		std::map<uint, std::map<uint, Utility::IdCollection> >& intergenic,
 		std::vector<uint>& indexLookup,
 		uint& binID) {
@@ -395,8 +485,8 @@ void BinManager::DescribeLocus(uint snpIndex, std::ostream& os,
 			<< Utility::Join(bins, ":") << "\n";
 
 }
-
-/*
+ */
+/* THIS WAS COMMENTED OUT PREVIOUSLY!
  void BinManager::BinSNPs(Utility::IdCollection& snpIdx,
  Knowledge::SnpDataset& snps,
  std::map<uint, uint> locusRemap,
@@ -437,4 +527,3 @@ void BinManager::DescribeLocus(uint snpIndex, std::ostream& os,
  }
 
  */
-}
