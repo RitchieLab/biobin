@@ -20,7 +20,8 @@ biobin_SOURCES= \
    taskfilegeneration.h \
    taskfilegeneration.cpp \
    PopulationManager.h \
-   PopulationManager.cpp
+   PopulationManager.cpp \
+   timestamp.h 
    #../../data/knowledge.bio \
    #../../data/example.cfg \
    #../../data/example.vcf
