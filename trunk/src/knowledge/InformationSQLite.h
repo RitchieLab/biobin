@@ -9,6 +9,7 @@
 #define KNOWLEDGE_INFORMATIONSQLITE_H
 
 #include <string>
+#include <stdlib.h>
 
 #include <sqlite3.h>
 
