@@ -9,14 +9,11 @@ AM_INIT_AUTOMAKE([1.9 foreign])
 AC_CONFIG_SRCDIR([src/biobin/main.cpp])
 AC_CONFIG_HEADER([config.h])
 
-RL_CONFIGURE([1.20.0],[HAVE_BOOST HAVE_BOOST_THREAD HAVE_SQLITE])
+RL_CONFIGURE([1.46.0],[HAVE_BOOST HAVE_BOOST_THREAD HAVE_SQLITE])
 
 AC_CONFIG_FILES([Makefile
                  src/biobin/Makefile
-                 src/biofilter/Makefile
                  src/knowledge/Makefile
-                 src/ldspline/Makefile
-                 src/liftover/Makefile
                  src/utility/Makefile
                  src/vcftools/Makefile])
 AC_OUTPUT
