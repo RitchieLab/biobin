@@ -47,35 +47,40 @@ void Converter::addChain(const string& chainDetails) {
 	}
 }
 
-void Converter::ConvertDataset(const string& mapFilename, multimap<Locus, Locus>& converted) {
+void Converter::ConvertDataset(const string& mapFilename, multimap<Locus*, Locus*>& converted) {
 
-	vector<Locus> loci;
+	vector<Locus*> loci;
 	readMapFile(mapFilename, loci);
-
 	ConvertDataset(loci.begin(), loci.end(), converted);
 }
 
 template <class T_cont>
 void Converter::ConvertDataset(const string& mapFilename, T_cont& newBuild, std::ostream& droppedLog) {
 	
-	vector<Locus> loci;
+	vector<Locus*> loci;
 	readMapFile(mapFilename, loci);
 	
 	ConvertDataset(loci.begin(), loci.end(), newBuild, droppedLog);
+	vector<Locus*>::iterator itr = loci.begin();
+	vector<Locus*>::iterator end = loci.end();
+	while(itr != end){
+		delete *itr;
+		++itr;
+	}
 }
 
 template <class T_iter, class T_cont>
 void Converter::ConvertDataset(T_iter itr, const T_iter& end, T_cont& newBuild, std::ostream& droppedLog) {
-	multimap<Locus, Locus> converted;
+	multimap<Locus*, Locus*> converted;
 	ConvertDataset(itr, end, converted);
-	multimap<Locus, Locus>::const_iterator map_itr = converted.begin();
-	multimap<Locus, Locus>::const_iterator map_end = converted.end();
+	multimap<Locus*, Locus*>::const_iterator map_itr = converted.begin();
+	multimap<Locus*, Locus*>::const_iterator map_end = converted.end();
 
 	std::stringstream missingSNPs;
 	while (map_itr != map_end) {
 		//Report any bad SNPS
-		if (map_itr->second.getPos() == 0){
-			missingSNPs<<itr->first;
+		if (map_itr->second && map_itr->second->getPos() == 0){
+			missingSNPs<<*(itr->first);
 		}else{
 			newBuild.insert(itr->second);
 		}
@@ -90,7 +95,7 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end, T_cont& newBuild, 
 
 template <class T_iter>
 void Converter::ConvertDataset(T_iter itr, const T_iter& end,
-		multimap<Locus, Locus>& converted) {
+		multimap<Locus*, Locus*>& converted) {
 	//If there are no chains, then there is nothing to convert and we'll assume we
 	//are at the right build already
 
@@ -98,17 +103,18 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 	//SnpArray::const_iterator itr = originalBuild.begin();
 	//SnpArray::const_iterator end = originalBuild.end();
 
-	Locus unconvertable(-1,0,"Unconvertable");
+	Locus* not_found = NULL;
 	while (itr != end) {
-		const Locus &s = *itr;
-		if (_chains.size() == 0)
-			converted.insert(std::make_pair(s, s));
-		else {
+		Locus& s = **itr;
+		if (_chains.size() == 0){
+			converted.insert(std::make_pair(&s,
+							new Locus(s.getChrom(), s.getPos(), s.getID())));
+		} else {
 
 			multimap<short,Chain*>::const_iterator citr =
-					_chains.lower_bound(itr->getChrom());
+					_chains.lower_bound(s.getChrom());
 			multimap<short,Chain*>::const_iterator cend =
-					_chains.upper_bound(itr->getChrom());
+					_chains.upper_bound(s.getChrom());
 
 			set<BuildConversion> con;
 
@@ -121,34 +127,34 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 			//The best should "float" to the top
 			if (con.size() > 0) {
 				set<BuildConversion>::iterator bc = con.begin();
-				Locus newSNP(bc->getRemoteChrom(), bc->getRemoteStart(), s.getID());
+				Locus* newSNP = new Locus(bc->getRemoteChrom(), bc->getRemoteStart(), s.getID());
 				
 				//std::cerr<<"ASDFASDF:"<<bc->rChrom.c_str()<<"\t"<<(int)newSNP.chr<<" "<<newSNP.pos<<" "<<newSNP.RSID()<<"\n";
-				converted.insert(std::make_pair(s, newSNP));
+				converted.insert(std::make_pair(&s, newSNP));
 			} else {
-				converted.insert(std::make_pair(s, unconvertable));
+				converted.insert(std::make_pair(&s, not_found));
 			}
 		}
 		++itr;
 	}
 }
 
-void Converter::readMapFile(const string& mapFilename, vector<Locus>& array_out) const{
+void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out) const{
 
 	std::ifstream file(mapFilename.c_str());
 	if (!file.good())
 		throw Utility::Exception::FileNotFound(mapFilename.c_str());
 
-	char line[4096];
+	string line;
 	vector<string> words;
 
 	while (file.good()) {
 		words.clear();
-		file.getline(line, 4096);
+		getline(file, line);
 		split(words, line, is_any_of(" \n\t"));
 
 		if (words.size() > 3){
-			array_out.push_back(Locus(words[0], atoi(words[3].c_str()), words[1]));
+			array_out.push_back(new Locus(words[0], atoi(words[3].c_str()), words[1]));
 		}
 	}
 }

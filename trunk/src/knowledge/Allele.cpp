@@ -13,10 +13,10 @@ bool Allele::operator<(const Allele& other) const{
 	return (_freq==other._freq ? _data < other._data : _freq < other._freq);
 }
 bool Allele::operator>(const Allele& other) const{
-	return !(*this < other || *this == other);
+	return (other < *this);
 }
 bool Allele::operator==(const Allele& other) const{
-	return (_freq==other._freq && _data == other._data);
+	return (!(*this < other) && !(other < *this));
 }
 
 void Allele::print(ostream& o, const string& sep) const{

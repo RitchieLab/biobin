@@ -11,6 +11,7 @@
 #include <string>
 #include <set>
 #include <boost/unordered_map.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 
 using std::string;
 using std::set;
@@ -26,6 +27,76 @@ class Group;
 class Region{
 
 public:
+
+	// TODO: templatize this if needed
+	class const_group_iterator : public boost::iterator_facade<const_group_iterator, Group* const, boost::forward_traversal_tag>{
+	public:
+		const_group_iterator() {}
+		const_group_iterator(const unordered_map<uint, set<Group*> >::const_iterator& group_itr,
+				const unordered_map<uint, set<Group*> >::const_iterator& map_end) : _is_global(true){
+			_map_iter = group_itr;
+			_map_end = map_end;
+			if(_map_iter == _map_end){
+				// In this case, we don't iterate over anything!
+				_set_iter = _empty_set.begin();
+				_curr_end = _empty_set.end();
+			}else{
+				_set_iter = (*_map_iter).second.begin();
+				_curr_end = (*_map_iter).second.end();
+			}
+		}
+		const_group_iterator(const unordered_map<uint, set<Group*> >& group_map, uint group_id, bool begin) : _is_global(false) {
+			// We don't need the _map_iter here
+			unordered_map<uint, set<Group*> >::const_iterator g_itr = group_map.find(group_id);
+			if(g_itr == group_map.end()){
+				if(begin){
+					_set_iter = _empty_set.begin();
+				}else{
+					_set_iter = _empty_set.end();
+				}
+				_curr_end = _empty_set.end();
+			}else{
+				if (begin){
+					_set_iter = (*g_itr).second.begin();
+				}else{
+					_set_iter = (*g_itr).second.end();
+				}
+				_curr_end = (*g_itr).second.end();
+			}
+		}
+
+	private:
+		friend class boost::iterator_core_access;
+
+		void increment() {
+			++_set_iter;
+			if(_is_global && _set_iter == _curr_end){
+				++_map_iter;
+				if(_map_iter != _map_end){
+					_set_iter = (*_map_iter).second.begin();
+					_curr_end = (*_map_iter).second.end();
+				}
+			}
+		}
+
+		bool equal(const const_group_iterator& other){
+			return this->_set_iter == other._set_iter;
+		}
+
+		Group* const dereference() const {return *_set_iter;}
+
+		// This should ALWAYS be empty!
+		static const set<Group*> _empty_set;
+
+		set<Group*>::const_iterator _set_iter;
+		set<Group*>::const_iterator _curr_end;
+		unordered_map<uint, set<Group*> >::const_iterator _map_iter;
+		unordered_map<uint, set<Group*> >::const_iterator _map_end;
+		unordered_map<uint, set<Group*> >::const_iterator _look_ahead;
+		bool _is_global;
+
+
+	};
 
 	// If I need a non-const iterator, I'll use it here
 	//typedef set<string>::iterator alias_iterator;
@@ -109,6 +180,8 @@ public:
 	 */
 	uint getEffEnd() const {return _eff_end;}
 
+	const string& getName() const {return _name;}
+
 	/**
 	 * Check if this region contains the given Locus (IDs must match)
 	 */
@@ -119,6 +192,14 @@ public:
 	 */
 	const_alias_iterator aliasBegin() const {return _aliases.begin();}
 	const_alias_iterator aliasEnd() const {return _aliases.end();}
+
+	/**
+	 * Iterators over groups
+	 */
+	const_group_iterator groupBegin() const {return const_group_iterator(_group_map.begin(), _group_map.end());}
+	const_group_iterator groupBegin(uint group) const {return const_group_iterator(_group_map, group, true);}
+	const_group_iterator groupEnd() const {return const_group_iterator(_group_map.end(), _group_map.end());}
+	const_group_iterator groupEnd(uint group) const {return const_group_iterator(_group_map, group, false);}
 
 	/**
 	 * Comparison operator, for any STL as needed
@@ -152,5 +233,16 @@ private:
 };
 }
 
+// Overloading < operator for region pointers
+namespace std{
 
+template<>
+struct less<Knowledge::Region*> {
+
+	bool operator()(const Knowledge::Region* x, const Knowledge::Region* y){
+		return (*x) < (*y);
+	}
+};
+
+}
 #endif /* KNOWLEDGE_REGION_H */

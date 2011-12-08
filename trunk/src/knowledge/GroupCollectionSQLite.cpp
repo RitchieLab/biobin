@@ -20,11 +20,14 @@ GroupCollectionSQLite::GroupCollectionSQLite(uint type, const string& name,
 		const string& fn) :
 			GroupCollection(type, name), _self_open(true){
 	sqlite3_open(fn.c_str(),&_db);
+	_max_group = getMaxGroup();
 }
 
 GroupCollectionSQLite::GroupCollectionSQLite(uint type, const string& name,
 		sqlite3 *db_conn) :
-			GroupCollection(type, name), _self_open(false), _db(db_conn){}
+			GroupCollection(type, name), _self_open(false), _db(db_conn){
+	_max_group = getMaxGroup();
+}
 
 GroupCollectionSQLite::~GroupCollectionSQLite(){
 	if (_self_open){
@@ -32,19 +35,47 @@ GroupCollectionSQLite::~GroupCollectionSQLite(){
 	}
 }
 
-uint GroupCollectionSQLite::Load(RegionCollection& regions, const unordered_set<uint>& ids){
+uint GroupCollectionSQLite::Load(RegionCollection& regions,
+		const vector<string>& group_names, const unordered_set<uint>& ids){
 
 	stringstream where_stream;
 	where_stream << "WHERE groups.group_type_id = " << _id;
 
-	if (ids.size() != 0){
-		unordered_set<uint>::const_iterator itr = ids.begin();
-		unordered_set<uint>::const_iterator end = ids.end();
-		where_stream << " AND groups.group_id IN (" << *itr;
+	bool two_constraint = false;
+	if (group_names.size() != 0 && ids.size() != 0){
+		two_constraint = true;
+	}
+
+	if (group_names.size() != 0){
+		vector<string>::const_iterator itr = group_names.begin();
+		vector<string>::const_iterator end = group_names.end();
+		where_stream << " AND ";
+		if (two_constraint){
+			where_stream << "(";
+		}
+		where_stream << "groups.group_name IN (" << *itr;
 		while (++itr != end){
 			where_stream << "," << *itr;
 		}
 		where_stream << ")";
+	}
+
+	if (ids.size() != 0){
+		unordered_set<uint>::const_iterator itr = ids.begin();
+		unordered_set<uint>::const_iterator end = ids.end();
+		if (two_constraint){
+			where_stream << " OR ";
+		}else{
+			where_stream << " AND ";
+		}
+		where_stream << "groups.group_id IN (" << *itr;
+		while (++itr != end){
+			where_stream << "," << *itr;
+		}
+		where_stream << ")";
+		if (two_constraint){
+			where_stream << ")";
+		}
 	}
 
 	string where_clause = where_stream.str();
@@ -75,6 +106,15 @@ uint GroupCollectionSQLite::Load(RegionCollection& regions, const unordered_set<
 	}
 
 	return result;
+
+}
+
+uint GroupCollectionSQLite::getMaxGroup() {
+	string query_str = "SELECT MAX(group_id) FROM groups";
+
+	sqlite3_exec(_db, query_str.c_str(), parseMaxGroupQuery, &_max_group, NULL);
+
+	return _max_group;
 
 }
 
@@ -121,6 +161,18 @@ int GroupCollectionSQLite::parseGroupAssociationQuery(void* obj, int n_cols, cha
 
 	input->first->addAssociation(group_id, region_id, *(input->second));
 
+	return 0;
+}
+
+int GroupCollectionSQLite::parseMaxGroupQuery(void* obj, int n_cols,
+		char** col_vals, char** col_names){
+
+	if (n_cols != 1){
+		return 2;
+	}
+
+	int* result = (int*) obj;
+	(*result) = atoi(col_vals[0]);
 	return 0;
 }
 

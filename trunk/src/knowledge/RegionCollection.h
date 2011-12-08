@@ -83,6 +83,16 @@ public:
 	const_region_iterator aliasBegin(const string&) const;
 	const_region_iterator aliasEnd(const string&) const;
 
+
+	const_region_iterator positionBegin(short chrom, uint pos) const;
+	const_region_iterator positionEnd(short chrom, uint pos) const;
+	/**
+	 * Determine if a given alias is valid
+	 */
+	bool isValid(const string& alias) const {
+		return _alias_map.find(alias) != _alias_map.end();
+	}
+
 	/**
 	 * Compares the region agains the private flagged region
 	 */

@@ -113,6 +113,9 @@ public:
 	static const string invalid_chrom;
 
 private:
+	// No copying or assigning - use pointers, please!
+	Locus(const Locus&);
+	Locus& operator=(const Locus&);
 
 	/**
 	 * Method that creates an ID based on the chromosome and position and saves
@@ -144,6 +147,24 @@ ostream& operator<<(ostream& o, const Knowledge::Locus& l){
 	return o;
 }
 
+namespace std{
 
+template<>
+struct less<Knowledge::Locus*> {
+
+	bool operator()(const Knowledge::Locus* x, Knowledge::Locus* y){
+		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
+	}
+};
+
+template<>
+struct less<const Knowledge::Locus*> {
+	
+	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y){
+		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
+	}
+};
+
+}
 
 #endif /* KNOWLEDGE_LOCUS_H */

@@ -36,9 +36,9 @@ public:
 
 	void addChain(const string& chainDetails);
 	
-	void ConvertDataset(const string& mapFilename, multimap<Locus, Locus>& converted);
+	void ConvertDataset(const string& mapFilename, multimap<Locus*, Locus*>& converted);
 	/**
-	 * Takes a list (iterable) of Locus objects, applies the chaining and
+	 * Takes a list (iterable) of Locus object ptrs, applies the chaining and
 	 * returns the converted Locus objects in the supplied container.  Also
 	 * logs any dropped Locus objects to the supplied ostream object.
 	 */
@@ -53,12 +53,12 @@ public:
 	void ConvertDataset(const string& mapFilename, T_cont& newBuild, std::ostream& droppedLog);
 
 	/**
-	 * Takes a list (iterable) of Locus objects and chains them together and
+	 * Takes a list (iterable) of Locus object ptrs and chains them together and
 	 * returns the result as a multimap
 	 */
 	template <class T_iter>
 	void ConvertDataset(T_iter itr, const T_iter& end,
-			multimap<Locus, Locus>& converted);
+			multimap<Locus*, Locus*>& converted);
 
 	/**
 	 * Loads all of the chain files from a given source (pure virtual)
@@ -78,7 +78,7 @@ private:
 
 	// Function to read a map filename and return the results in a vector of
 	// Locus Objects
-	void readMapFile(const string& mapFilename, vector<Locus>& array_out) const;
+	void readMapFile(const string& mapFilename, vector<Locus*>& array_out) const;
 };
 
 

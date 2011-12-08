@@ -43,6 +43,9 @@ libknowledge_la_SOURCES=chromosome.cpp \
 	GroupCollection.cpp \
 	GroupCollectionSQLite.h \
 	GroupCollectionSQLite.cpp \
+	Information.h \
+	InformationSQLite.h \
+	InformationSQLite.cpp \
 	liftover/BuildConversion.h \
 	liftover/BuildConversion.cpp \
 	liftover/Chain.h \

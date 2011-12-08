@@ -11,13 +11,15 @@
 #include <string>
 #include <set>
 
+#include "Region.h"
+
 using std::string;
 using std::set;
 
 
 namespace Knowledge{
 
-class Region;
+//class Region;
 
 class Group{
 
@@ -51,6 +53,9 @@ public:
 	const string& getName() const {return _name;}
 	const string& getDescription() const {return _description;}
 
+	// Arbitrary ordering by ID
+	bool operator<(const Group& other) const {return _id < other._id;}
+
 
 private:
 	// Prohibit copying and assignment
@@ -68,6 +73,5 @@ private:
 };
 
 }
-
 
 #endif /* KNOWLEDGE_GROUP_H */

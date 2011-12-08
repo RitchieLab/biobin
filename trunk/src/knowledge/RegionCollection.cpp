@@ -72,6 +72,33 @@ RegionCollection::const_region_iterator RegionCollection::aliasEnd(const string&
 	return empty_region_set.end();
 }
 
+RegionCollection::const_region_iterator RegionCollection::positionBegin(short chrom, uint pos) const{
+	unordered_map<short,interval_map<uint, set<Region*> > >::const_iterator idx_itr =
+			_region_bounds.find(chrom);
+	if (idx_itr != _region_bounds.end()){
+		interval_map<uint, set<Region*> >::const_iterator interval_itr =
+				(*idx_itr).second.find(pos);
+		if (interval_itr != (*idx_itr).second.end()){
+			return (*interval_itr).second.begin();
+		}
+	}
+	return empty_region_set.begin();
+}
+
+RegionCollection::const_region_iterator RegionCollection::positionEnd(short chrom, uint pos) const{
+	unordered_map<short,interval_map<uint, set<Region*> > >::const_iterator idx_itr =
+			_region_bounds.find(chrom);
+	if (idx_itr != _region_bounds.end()){
+		interval_map<uint, set<Region*> >::const_iterator interval_itr =
+				(*idx_itr).second.find(pos);
+		if (interval_itr != (*idx_itr).second.end()){
+			return (*interval_itr).second.end();
+		}
+	}
+	return empty_region_set.end();
+}
+
+
 /**
  * Erases all regions which are not associated with any SNPs in the dataset
  * This should be called only by AssociateSNPs

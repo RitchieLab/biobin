@@ -9,6 +9,7 @@
 #define KNOWLEDGE_GROUPCOLLECTION_H
 
 #include <string>
+#include <vector>
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -18,6 +19,7 @@
 using boost::unordered_map;
 using boost::unordered_set;
 using std::string;
+using std::vector;
 
 namespace Knowledge{
 
@@ -33,7 +35,7 @@ public:
 	 * @param id The database ID for the group collection (category)
 	 * @param name The name of the group collection (category)
 	 */
-	GroupCollection(uint id, const string& name);
+	GroupCollection(uint id, const string& name="");
 	/**
 	 * Destroys the collection.  This must go through the map and destroy all
 	 * of the created groups.
@@ -95,18 +97,30 @@ public:
 	 * through to the addAssociation method.  NOTE: this function must be
 	 * defined in an inherited class.
 	 */
-	virtual uint Load(RegionCollection& regions, const unordered_set<uint>& ids) = 0;
+	virtual uint Load(RegionCollection& regions, const vector<string>& groupNames,
+			const unordered_set<uint>& ids) = 0;
+
+	virtual uint Load(RegionCollection& regions, const vector<string>& groupNames);
 	/**
 	 * Load all IDs into memory.  Calls Load(regions, ids) with an empty set of
 	 * ids
 	 */
 	virtual uint Load(RegionCollection& regions);
 
+	uint LoadArchive(RegionCollection& regions, const string& filename,
+			vector<string>& unmatched_aliases);
+
+	virtual uint getMaxGroup() = 0;
+
+	uint size() { return _group_map.size(); }
+
 protected:
 	// The ID of the type (source) of groups
 	uint _id;
-	// The name of the set og groups
+	// The name of the set of groups
 	string _name;
+	// The maximum group number (for loading from archive)
+	uint _max_group;
 	// Mapping of ids -> Groups
 	unordered_map<uint, Group*> _group_map;
 	// mapping of parent->child relationships
@@ -116,6 +130,8 @@ protected:
 
 private:
 	Group _group_not_found;
+
+	uint initGroupFromArchive(const vector<string>& split_line);
 };
 
 }

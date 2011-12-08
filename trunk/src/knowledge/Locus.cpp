@@ -60,7 +60,7 @@ uint Locus::distance(const Locus& other) const{
 }
 
 short Locus::encodeGenotype(uint a1, uint a2) const{
-	if (a1 == -1 || a2 == -1){
+	if (a1 == (uint)-1 || a2 == (uint)-1){
 		return -1;
 	}
 	return a1 * _alleles.size() + a2;
@@ -77,7 +77,7 @@ pair<uint, uint> Locus::decodeGenotype(short encoded_type) const{
 
 
 const string& Locus::getChromStr(short chrom){
-	if (chrom < 0 || chrom > _chrom_list.size()-1){
+	if (chrom < 0 || (uint) chrom > _chrom_list.size()-1){
 		return invalid_chrom;
 	}else{
 		return _chrom_list[chrom];
