@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES=libknowledge.la
 
-libknowledge_la_SOURCES=chromosome.cpp \
+libknowledge_la_SOURCES=\
 	RegionCollection.h \
 	RegionCollection.cpp \
 	RegionCollectionSQLite.h \
