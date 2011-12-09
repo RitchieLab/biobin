@@ -13,7 +13,6 @@
 #include <vector>
 #include <utility>
 #include <ostream>
-//#include <types.h>
 #include <stdlib.h>
 
 #include "Allele.h"

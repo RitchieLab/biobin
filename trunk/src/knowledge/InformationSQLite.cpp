@@ -8,6 +8,7 @@
 #include "InformationSQLite.h"
 
 #include <sstream>
+#include <stdlib.h>
 
 using std::stringstream;
 

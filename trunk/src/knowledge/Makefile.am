@@ -5,7 +5,7 @@ libknowledge_la_SOURCES=\
 	RegionCollection.cpp \
 	RegionCollectionSQLite.h \
 	RegionCollectionSQLite.cpp \
-	Region.h \
+	Region.h  \
 	Region.cpp \
 	Allele.h \
 	Allele.cpp \

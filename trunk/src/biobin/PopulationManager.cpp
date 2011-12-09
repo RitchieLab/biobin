@@ -22,7 +22,7 @@ void PopulationManager::loadIndividuals(DataImporter& importer){
 	const vector<string>& indivs = importer.getIndividualIDs();
 
 	int size = indivs.size();
-	for (int i=-1; i<(size-1); ++i){
+	for (int i=0; i<(size); ++i){
 		_positions[indivs[i]] = i;
 	}
 }
