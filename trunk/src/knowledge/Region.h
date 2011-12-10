@@ -10,11 +10,13 @@
 
 #include <string>
 #include <set>
+#include <map>
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 using std::string;
 using std::set;
+using std::map;
 using boost::unordered_map;
 
 
@@ -32,22 +34,37 @@ public:
 	class const_group_iterator : public boost::iterator_facade<const_group_iterator, Group* const, boost::forward_traversal_tag>{
 	public:
 		const_group_iterator() {}
-		const_group_iterator(const unordered_map<uint, set<Group*> >::const_iterator& group_itr,
-				const unordered_map<uint, set<Group*> >::const_iterator& map_end) : _is_global(true){
-			_map_iter = group_itr;
-			_map_end = map_end;
-			if(_map_iter == _map_end){
-				// In this case, we don't iterate over anything!
-				_set_iter = _empty_set.begin();
+		const_group_iterator(const map<uint, set<Group*> >& group_map, bool begin) :
+				_is_global(true){
+			_map_iter = group_map.begin();
+			_map_end = group_map.end();
+			
+			if(_map_end == _map_iter){
+				//OK, we got passed an empty map!
+				if(begin){
+					_set_iter = _empty_set.begin();
+				} else {
+					_set_iter = _empty_set.end();
+				}
 				_curr_end = _empty_set.end();
 			}else{
-				_set_iter = (*_map_iter).second.begin();
-				_curr_end = (*_map_iter).second.end();
+				// Not empty
+				if (begin){
+					_set_iter = (*_map_iter).second.begin();
+					_curr_end = (*_map_iter).second.end();
+				} else {
+					_map_iter = _map_end;
+					--_map_iter;
+					_set_iter = (*_map_iter).second.end();
+					_curr_end = (*_map_iter).second.end();
+					++_map_iter;
+				}
+				
 			}
 		}
-		const_group_iterator(const unordered_map<uint, set<Group*> >& group_map, uint group_id, bool begin) : _is_global(false) {
+		const_group_iterator(const map<uint, set<Group*> >& group_map, uint group_id, bool begin) : _is_global(false) {
 			// We don't need the _map_iter here
-			unordered_map<uint, set<Group*> >::const_iterator g_itr = group_map.find(group_id);
+			map<uint, set<Group*> >::const_iterator g_itr = group_map.find(group_id);
 			if(g_itr == group_map.end()){
 				if(begin){
 					_set_iter = _empty_set.begin();
@@ -90,9 +107,8 @@ public:
 
 		set<Group*>::const_iterator _set_iter;
 		set<Group*>::const_iterator _curr_end;
-		unordered_map<uint, set<Group*> >::const_iterator _map_iter;
-		unordered_map<uint, set<Group*> >::const_iterator _map_end;
-		unordered_map<uint, set<Group*> >::const_iterator _look_ahead;
+		map<uint, set<Group*> >::const_iterator _map_iter;
+		map<uint, set<Group*> >::const_iterator _map_end;
 		bool _is_global;
 
 
@@ -196,9 +212,9 @@ public:
 	/**
 	 * Iterators over groups
 	 */
-	const_group_iterator groupBegin() const {return const_group_iterator(_group_map.begin(), _group_map.end());}
+	const_group_iterator groupBegin() const {return const_group_iterator(_group_map,  true);}
 	const_group_iterator groupBegin(uint group) const {return const_group_iterator(_group_map, group, true);}
-	const_group_iterator groupEnd() const {return const_group_iterator(_group_map.end(), _group_map.end());}
+	const_group_iterator groupEnd() const {return const_group_iterator(_group_map, false);}
 	const_group_iterator groupEnd(uint group) const {return const_group_iterator(_group_map, group, false);}
 
 	/**
@@ -220,7 +236,7 @@ private:
 	set<string> _aliases;
 
 	// A list / mapping of all groups associated w/ this region
-	unordered_map<uint, set<Group*> > _group_map;
+	map<uint, set<Group*> > _group_map;
 
 	string _name;
 	short _chrom;

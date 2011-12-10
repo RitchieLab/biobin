@@ -65,21 +65,21 @@ uint RegionCollectionSQLite::Load(const uint popID,
 	}
 
 	string bound_vals = "DefBounds.start, DefBounds.end";
-	string bound_tables = "left outer join region_bounds DefBounds"
-			"on regions.gene_id=DefBounds.gene_id and "
+	string bound_tables = "LEFT OUTER JOIN region_bounds DefBounds "
+			"ON regions.gene_id=DefBounds.gene_id AND "
 			"DefBounds.population_id=0";
 	if (popID != 0){
 		bound_vals += " PopBounds.start, PopBounds.end";
-		bound_tables += " left outer join region_bounds PopBounds"
-				"on regions.gene_id=PopBounds.gene_id and "
+		bound_tables += " LEFT OUTER JOIN region_bounds PopBounds "
+				"ON regions.gene_id=PopBounds.gene_id AND "
 				"PopBounds.population_id=";
 		bound_tables += popID;
 	}
-	string command = string("select regions.gene_id, chrom, primary_name, ") +
-			bound_vals + string(", group_concat(alias) from regions ") +
-			bound_tables + string(" left outer join region_alias on "
+	string command = string("SELECT regions.gene_id, chrom, primary_name, ") +
+			bound_vals + string(", group_concat(alias) FROM regions ") +
+			bound_tables + string(" LEFT OUTER JOIN region_alias ON "
 				"regions.gene_id=region_alias.gene_id") + where_clause +
-				string(" group by regions.gene_id");
+				string(" GROUP BY regions.gene_id");
 
 	return sqlite3_exec(db, command.c_str(), parseRegionQuery, this, NULL);
 }

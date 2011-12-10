@@ -119,7 +119,7 @@ void RegionCollection::Squeeze(){
 }
 
 void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
-	assert(chrom > 0);
+	//assert(chrom > 0);
 	// Insert the region into the map
 
 	Region& new_region = *(new Region(name, id, chrom, effStart, effStop, trueStart, trueStop));
@@ -170,7 +170,7 @@ uint RegionCollection::Load(const uint pop_id, const vector<string>& alias_list)
 }
 
 bool RegionCollection::isValid(const Region& other) const{
-	return (region_not_found.getID() == other.getID());
+	return (region_not_found.getID() != other.getID());
 }
 
 

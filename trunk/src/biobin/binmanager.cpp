@@ -97,7 +97,7 @@ void BinManager::InitBins(
 			RegionCollection::const_region_iterator r_itr =
 					regions.positionBegin(l.getChrom(), l.getPos());
 			RegionCollection::const_region_iterator r_end =
-					regions.positionBegin(l.getChrom(), l.getPos());
+					regions.positionEnd(l.getChrom(), l.getPos());
 
 			Bin* curr_bin;
 			if (r_itr == r_end){
@@ -155,6 +155,7 @@ void BinManager::InitBins(
 				++r_itr;
 			}
 		}
+		++l_itr;
 	}
 
 	// At this point, we have all of the top level bins constructed and

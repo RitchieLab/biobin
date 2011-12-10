@@ -85,16 +85,16 @@ uint GroupCollectionSQLite::Load(RegionCollection& regions,
 
 	uint result = sqlite3_exec(_db, group_query.c_str(), parseGroupQuery, this, NULL);
 
-	if (result != 0){
+	if (result == 0){
 		string relationship_query = "SELECT parent_id, child_id FROM group_relationships "
-				" INNER JOIN groups ON group_relationships.parent_id = groups.group_id " +
+				"INNER JOIN groups ON group_relationships.parent_id = groups.group_id " +
 				where_clause;
 
 		result = sqlite3_exec(_db, relationship_query.c_str(),
 				parseGroupRelationshipQuery, this, NULL);
 	}
 
-	if (result != 0){
+	if (result == 0){
 		string association_query = "SELECT group_id, gene_id FROM group_associations "
 				"INNER JOIN groups USING (group_id) " + where_clause;
 
@@ -158,7 +158,6 @@ int GroupCollectionSQLite::parseGroupAssociationQuery(void* obj, int n_cols, cha
 
 	int group_id = atoi(col_vals[0]);
 	int region_id = atoi(col_vals[1]);
-
 	input->first->addAssociation(group_id, region_id, *(input->second));
 
 	return 0;

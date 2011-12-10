@@ -42,7 +42,7 @@ int InformationSQLite::getPopulationID(const string& pop_str){
 
 const string InformationSQLite::getResourceVersion(const string& resource){
 	string queryStr = string("SELECT version FROM versions WHERE element='") +
-			resource = string("')");
+			resource + string("'");
 
 	string result;
 	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,

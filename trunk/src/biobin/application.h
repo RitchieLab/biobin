@@ -273,6 +273,7 @@ uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups,
 		groups[curr_id] = new_group;
 		totalGroupsLoaded += new_group->size();
 		max_id = curr_id > max_id ? curr_id : max_id;
+		++itr;
 	}
 
 	vector<string> unmatchedAliases;
