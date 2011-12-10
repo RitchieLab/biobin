@@ -52,6 +52,7 @@ void BinApplication::InitBins() {
 		BinManager::const_iterator end = binData.end();
 		while(itr != end){
 			std::cerr << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+			++itr;
 		}
 	}
 	/*

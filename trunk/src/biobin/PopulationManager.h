@@ -129,7 +129,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 				++l_itr;
 			}
 			os << sep << bin_count;
-			++l_itr;
+			++b_itr;
 		}
 
 		os << "\n";

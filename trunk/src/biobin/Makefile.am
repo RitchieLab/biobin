@@ -39,5 +39,7 @@ biobin_LDADD=../utility/libutility.la \
 	../knowledge/libknowledge.la \
 	../vcftools/libvcftools.la \
 	$(SQLITE_LIBS) \
-	$(BOOST_REGEX_LIB) 
+	$(BOOST_REGEX_LIB) \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_SYSTEM_LIB)
 
