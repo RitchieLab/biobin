@@ -17,7 +17,7 @@
 
 namespace BioBin {
 
-BinApplication::BinApplication() {
+BinApplication::BinApplication() : binData(_pop_mgr) {
 }
 
 
@@ -28,17 +28,8 @@ BinApplication::~BinApplication() {
 
 void BinApplication::InitBins() {
 	
-	//Utility::IdCollection variants;
-	//Utility::IdCollection rareVariants;
-
-	//if (vcfimporter.Open(filename.c_str(), (char)-1)) {
-		//We now have our snp dataset set up-so it's time to start the binning process
-	//std::pair<uint, uint> binGenotypeCounts;
-	//binGenotypeCounts = binData.InitBins(groups, regions, dataset);
-
 	binData.InitBins(groups, *regions, dataset);
 
-	//binData.CollectVariantGroups(variants, rareVariants);
 	std::cerr<<"   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
 				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"
 				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
@@ -55,44 +46,6 @@ void BinApplication::InitBins() {
 			++itr;
 		}
 	}
-	/*
-	Utility::IdCollection::iterator varItr = variants.begin();
-	Utility::IdCollection::iterator varEnd = variants.end();
-	while (varItr != varEnd) 
-		GenotypeStorage::alleleCount.push_back(dataset[*varItr++].alleles.size());
-
-
-	Utility::StringArray individualIDs = vcfimporter.GetIndividualIDs();
-	Utility::StringArray::iterator iitr = individualIDs.begin();
-	Utility::StringArray::iterator iend = individualIDs.end();
-
-	uint individualCount = individualIDs.size();
-	individuals = std::vector<Individual>(individualCount);
-
-	uint i=0;
-	while (iitr != iend) {
-		individuals[i++].Init(*iitr, binGenotypeCounts.second, binGenotypeCounts.first + 1);
-		iitr++;
-	}		
-*/
-
-
-	/*
-	//binIDs.resize(locusArray.size(), (uint)-1);
-	for (uint i=0; i<locusCount; i++) {
-		std::vector<char> genotypes(individualCount, (char)-1);
-		if (dataset[i].chrom > 0) {
-			vcfimporter.ParseSNP(locusRemap[i], genotypes);
-			binData.ParseSNP(i, genotypes, individuals);
-		}
-	}
-
-	//We should have binned data and genotypes sorted out
-	ApplyPhenotypes();
-
-	//}
-	return binGenotypeCounts;
-	*/
 }
 
 void BinApplication::writeBinData(const string& filename, const string& sep) const{

@@ -64,8 +64,6 @@ public:
      */
 	void InitBins();
 
-	//void ApplyPhenotypes();
-
 	template<class T_cont>
 	void loadPhenotypes(const T_cont& pheno_files){_pop_mgr.loadPhenotypes(pheno_files);}
 
@@ -74,68 +72,14 @@ public:
 	void writeLoci(const string& filename, const string& sep=",") const;
 
 
-	/**
-	 * Return the individuals that have been loaded 
-    * @return
-    */
-	//const vector<Individual>& Individuals();
-
-	/**
-	 * Returns the number of SNPs that might contribute to a given bin
-    * @param hits
-    */
-	//void GetMaxBinHits(vector<uint>& hits);
-
-	//void GetBinContributors(vector<set<uint> >& contributors);
-
-	/**
-	 * Returns an array matching each of the bin names
-    * @return
-    */
-	//const Utility::StringArray& BinNames();
-
-	/**
-	 * Returns the region object at a given index
-    * @param idx
-    * @return
-    */
-	//const Knowledge::Region& GetRegion(uint idx);
-
-
-	//Utility::Locus &Locus(uint idx);
-
-	/**
-	 * Passes a list of genotypes (for all people at a given SNP) and returns the bin IDs 
-    * @param snpIndex which SNP we are referring to
-    * @param genotypes the original data from the vcf files
-    * @param hits Vector containing the individual indexes where a variation occured
-    * @param genotypes This is where we'll write genotype data
-    * @return set of bin indexes for which this SNP applies
-    */
-	//std::set<uint> ParseSNP(uint snpIndex, vector<char>& genotypes, vector<Individual>& data);
 	
-
-	/**
-	 * returns lookup region index -> snp index
-	 */
-	//void GenerateBinContentLookup(multimap<uint, uint>& binContents);
-	//map<uint, uint> GetBinLookup();
 private:
 	///< Used to build and parse data into bins and genotypes
 	// Also holds the actual bins!
-	BinManager binData;
-
 	PopulationManager _pop_mgr;
 
+	BinManager binData;
 
-						///< Help to extract genotype data from vcf files
-	//vector<Individual> individuals;	///< This represents the actual data from the vcf files
-	//set<uint> binnable;					///< Just a map into the regions that created the entries
-	//map<uint, uint> binIndex;
-
-
-	//std::vector<Utility::Locus> loci;		///< The loci associated with the dataset
-	//Knowledge::SnpDataset loci;			/// This is now dataset
 };
 
 

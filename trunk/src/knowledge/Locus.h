@@ -70,6 +70,11 @@ public:
 	 * Return the position of this Locus
 	 */
 	uint getPos() const {return _pos;};
+	/**
+	 * Returns the position (alternate #) of the major allele.  Usually, this
+	 * will be 0 (reference allele), but not always
+	 */
+	uint getMajorPos() const {return (*_alleles.begin()).getPos();}
 
 	/**
 	 * Determine if the given allele is a minor allele or not

@@ -51,11 +51,12 @@ void DataImporter::parseSNP(Knowledge::Locus& loc, vector<short>& genotype_map_o
 		// want to add in quality or depth or FT later
 		entry.parse_genotype_entries(true, false, false, false);
 		pair<int,int> genotype;
+		genotype_map_out.clear();
 		genotype_map_out.reserve(vcf.N_indv);
 		// If either of the alleles are -1, then the genotype
 		// is char(-1) otherwise, it's the count of major alleles
 		for (uint i=0; i<vcf.N_indv; i++) {
-			genotype_map_out[i] = 0;
+			genotype_map_out.push_back(0);
 			entry.get_indv_GENOTYPE_ids(i, genotype);
 			if (genotype.first == -1 || genotype.second == -1){
 				genotype_map_out[i] = -1;

@@ -9,26 +9,27 @@
 
 #include <sstream>
 
-#include "knowledge/Group.h"
-#include "knowledge/Region.h"
-#include "knowledge/Locus.h"
+#include "PopulationManager.h"
 
 using std::stringstream;
 
 namespace BioBin{
 
-Bin::Bin(Knowledge::Group* grp) : _is_group(true), _is_intergenic(false),
-		_chrom(-1), _name(grp->getName()) {
+Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp) :
+		_is_group(true), _is_intergenic(false), _chrom(-1), _cached(false),
+		_name(grp->getName()), _pop_mgr(pop_mgr) {
 	_member.group = grp;
 }
 
-Bin::Bin(Knowledge::Region* reg) : _is_group(false), _is_intergenic(false),
-		_chrom(reg->getChrom()), _name(reg->getName()){
+Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg) :
+		_is_group(false), _is_intergenic(false), _chrom(reg->getChrom()),
+		_cached(false), _name(reg->getName()), _pop_mgr(pop_mgr){
 	_member.region = reg;
 }
 
-Bin::Bin(short chrom, int bin) :_is_group(false), _is_intergenic(true),
-		_chrom(chrom) {
+Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
+		_is_group(false), _is_intergenic(true),	_chrom(chrom), _cached(false),
+		_pop_mgr(pop_mgr) {
 	stringstream ss;
 	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << "-" << bin;
 	_name = ss.str();
@@ -64,6 +65,23 @@ bool Bin::operator<(const Bin& other) const{
 
 	return ret_val;
 
+}
+
+int Bin::getSize() const{
+	int ret_val = 0;
+	if(!_cached){
+		set<Knowledge::Locus*>::const_iterator itr = _variants.begin();
+		set<Knowledge::Locus*>::const_iterator end = _variants.end();
+		while(itr != end){
+			ret_val += _pop_mgr.genotypeContribution(**itr);
+			++itr;
+		}
+		_size_cache = ret_val;
+		_cached = true;
+	}else{
+		ret_val = _size_cache;
+	}
+	return ret_val;
 }
 
 } // namespace BioBin

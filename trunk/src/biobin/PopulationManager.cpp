@@ -68,8 +68,8 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	map<string, int>::const_iterator m_end = _positions.end();
 
-	map<string, int>::const_iterator pheno_status;
-	map<string, int>::const_iterator pheno_end = _phenotypes.end();
+	map<string, float>::const_iterator pheno_status;
+	map<string, float>::const_iterator pheno_end = _phenotypes.end();
 	// Print the first line// TODO: format the genotype if we want to!
 	os << "ID" << sep << "Status";
 
@@ -80,7 +80,7 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 	os << "\n";
 
 	int pos;
-	int status;
+	float status;
 	while (m_itr != m_end){
 		l_itr = _genotype_map.begin();
 		l_end = _genotype_map.end();
@@ -107,7 +107,10 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
 }
 
-
+int PopulationManager::genotypeContribution(const Locus& loc) const{
+	unordered_map<const Knowledge::Locus*, int>::const_iterator itr = _genotype_sum.find(&loc);
+	return (itr != _genotype_sum.end()) ? (*itr).second : 0;
+}
 
 
 

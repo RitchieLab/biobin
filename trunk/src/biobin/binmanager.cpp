@@ -7,7 +7,7 @@
 
 #include "binmanager.h"
 
-#include "Bin.h"
+#include "PopulationManager.h"
 
 #include "knowledge/RegionCollection.h"
 #include "knowledge/Region.h"
@@ -26,8 +26,8 @@ bool BinManager::ExpandByFunction = true;
 float BinManager::mafCutoff = 0.05;
 uint BinManager::maxSnpCount = 200;
 
-BinManager::BinManager() : _total_variants(0){
-}
+BinManager::BinManager(const PopulationManager& pop_mgr) : _total_variants(0),
+		_pop_mgr(pop_mgr){}
 
 BinManager::~BinManager() {
 	set<Bin*>::const_iterator itr = _bin_list.begin();
@@ -108,7 +108,7 @@ void BinManager::InitBins(
 
 				if (i_bin == _intergenic_bins.end()){
 					// OK, this bin is nonexistent
-					curr_bin = new Bin(key.first, key.second);
+					curr_bin = new Bin(_pop_mgr, key.first, key.second);
 					_intergenic_bins.insert(make_pair(key, curr_bin));
 					_bin_list.insert(curr_bin);
 				}else{
@@ -127,7 +127,7 @@ void BinManager::InitBins(
 					int id = (*r_itr)->getID();
 					map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
 					if (rm_itr == _region_bins.end()){
-						curr_bin = new Bin(*r_itr);
+						curr_bin = new Bin(_pop_mgr, *r_itr);
 						_bin_list.insert(curr_bin);
 						_region_bins.insert(make_pair(id, curr_bin));
 					}else{
@@ -142,7 +142,7 @@ void BinManager::InitBins(
 					int id = (*g_itr)->getID();
 					map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
 					if (gm_itr == _group_bins.end()){
-						curr_bin = new Bin(*g_itr);
+						curr_bin = new Bin(_pop_mgr, *g_itr);
 						_bin_list.insert(curr_bin);
 						_group_bins.insert(make_pair(id,curr_bin));
 					}else{

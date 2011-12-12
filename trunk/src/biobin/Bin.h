@@ -17,16 +17,20 @@
 using std::set;
 
 namespace BioBin{
+
+class PopulationManager;
+
 class Bin{
 
 public:
 	typedef set<Knowledge::Locus*>::const_iterator const_locus_iterator;
 
-	Bin(Knowledge::Group*);
-	Bin(Knowledge::Region*);
-	Bin(short chrom, int bin);
+	Bin(const PopulationManager& pop_mgr, Knowledge::Group*);
+	Bin(const PopulationManager& pop_mgr, Knowledge::Region*);
+	Bin(const PopulationManager& pop_mgr, short chrom, int bin);
 
-	int getSize() const {return _variants.size();}
+	int getSize() const;
+	int getVariantSize() const {return _variants.size();}
 	int getID() const{
 		return _is_intergenic ? -1 :
 				(_is_group ? _member.group->getID() : _member.region->getID());
@@ -55,9 +59,14 @@ private:
 	bool _is_intergenic;
 	short _chrom;
 
+	mutable int _size_cache;
+	mutable bool _cached;
+
 	string _name;
 
 	set<Knowledge::Locus*> _variants;
+
+	const PopulationManager& _pop_mgr;
 };
 }
 

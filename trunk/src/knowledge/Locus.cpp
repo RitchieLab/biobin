@@ -38,7 +38,7 @@ Locus::Locus(const string& chrom_str, uint pos, const string& id):
 }
 
 void Locus::addAllele(const string& allele, float freq){
-	_alleles.insert(Allele(allele, freq));
+	_alleles.insert(Allele(allele, freq, _alleles.size()));
 }
 
 float Locus::majorAlleleFreq() const{

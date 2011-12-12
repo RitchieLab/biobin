@@ -12,6 +12,7 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <boost/unordered_map.hpp>
 
 #include "knowledge/Locus.h"
 #include "Bin.h"
@@ -19,8 +20,9 @@
 
 using std::vector;
 using std::string;
-using std::map;
+//using std::map;
 using std::ostream;
+using boost::unordered_map;
 
 using Knowledge::Locus;
 
@@ -36,12 +38,17 @@ public:
 	// nothing needed for default constructor
 	PopulationManager(){}
 
+	// Loading functions
 	void loadIndividuals(DataImporter& importer);
 	template <class str_cont>
 	void loadPhenotypes(const str_cont& phenotype_filenames);
 	template <class Locus_cont>
 	void loadGenotypes(const Locus_cont& dataset, DataImporter& importer);
 
+	// Usage functions
+	int genotypeContribution(const Locus& locus) const;
+
+	// Printing functions
 	template <class Bin_cont>
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	void printGenotypes(ostream& os, const string& sep=",") const;
@@ -54,11 +61,54 @@ private:
 
 	void parsePhenotypeFile(const string& filename);
 
-	map<string, int> _phenotypes;
+	map<string, float> _phenotypes;
 	map<string, int> _positions;
 	map<Knowledge::Locus*, vector<short> > _genotype_map;
+	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
 };
+
+
+template <class str_cont>
+void PopulationManager::loadPhenotypes(const str_cont& phenotype_files){
+	vector<string>::const_iterator itr = phenotype_files.begin();
+	vector<string>::const_iterator end = phenotype_files.end();
+
+	while(itr != end){
+		parsePhenotypeFile(*itr);
+		++itr;
+	}
+}
+
+
+template <class Locus_cont>
+void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
+
+	typename Locus_cont::const_iterator itr = dataset.begin();
+	typename Locus_cont::const_iterator end = dataset.end();
+
+	vector<short>::const_iterator g_itr;
+	vector<short>::const_iterator g_end;
+	pair<uint, uint> decoded_genotype;
+	int total_contrib;
+
+	while(itr != end){
+		importer.parseSNP(**itr,_genotype_map[*itr]);
+
+		_genotype_sum[*itr] = total_contrib = 0;
+		g_itr = _genotype_map[*itr].begin();
+		g_end = _genotype_map[*itr].end();
+
+		while(g_itr != g_end){
+			decoded_genotype = (*itr)->decodeGenotype(*g_itr);
+			total_contrib += (decoded_genotype.first != (uint)-1 && decoded_genotype.first != (*itr)->getMajorPos());
+			total_contrib += (decoded_genotype.second != (uint)-1 && decoded_genotype.second != (*itr)->getMajorPos());
+			++g_itr;
+		}
+		_genotype_sum[*itr] = total_contrib;
+		++itr;
+	}
+}
 
 template <class Bin_cont>
 void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const string& sep) const{
@@ -82,12 +132,23 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 		os << sep << (*b_itr)->getSize();
 		++b_itr;
 	}
+	os << "\n";
+
+	// Print third line (variant totals)
+	os << "Variant totals" << sep << -1;
+	b_itr = bins.begin();
+	b_end = bins.end();
+	while(b_itr != b_end){
+		os << sep << (*b_itr)->getVariantSize();
+		++b_itr;
+	}
+	os << "\n";
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	map<string, int>::const_iterator m_end = _positions.end();
 
-	map<string, int>::const_iterator pheno_status;
-	map<string, int>::const_iterator pheno_end = _phenotypes.end();
+	map<string, float>::const_iterator pheno_status;
+	map<string, float>::const_iterator pheno_end = _phenotypes.end();
 
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
@@ -96,7 +157,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	map<Locus*, vector<short> >::const_iterator l_not_found = _genotype_map.end();
 
 	int pos;
-	int status;
+	float status;
 	int bin_count;
 	pair <uint, uint> decoded_genotype;
 
@@ -123,8 +184,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 				l_pos = _genotype_map.find((*l_itr));
 				if (l_pos != l_not_found){
 					decoded_genotype = (*l_itr)->decodeGenotype((*l_pos).second[pos]);
-					bin_count += (decoded_genotype.first != (uint)-1 && decoded_genotype.first != 0);
-					bin_count += (decoded_genotype.second != (uint)-1 && decoded_genotype.second != 0);
+					bin_count += (decoded_genotype.first != (uint)-1 && decoded_genotype.first != (*l_itr)->getMajorPos());
+					bin_count += (decoded_genotype.second != (uint)-1 && decoded_genotype.second != (*l_itr)->getMajorPos());
 				}
 				++l_itr;
 			}
@@ -137,30 +198,6 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	}
 }
 
-template <class Locus_cont>
-void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
-
-	typename Locus_cont::const_iterator itr = dataset.begin();
-	typename Locus_cont::const_iterator end = dataset.end();
-
-	while(itr != end){
-		importer.parseSNP(**itr,_genotype_map[*itr]);
-		++itr;
-	}
-
-
-}
-
-template <class str_cont>
-void PopulationManager::loadPhenotypes(const str_cont& phenotype_files){
-	vector<string>::const_iterator itr = phenotype_files.begin();
-	vector<string>::const_iterator end = phenotype_files.end();
-
-	while(itr != end){
-		parsePhenotypeFile(*itr);
-		++itr;
-	}
-}
 
 }
 
