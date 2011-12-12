@@ -57,7 +57,7 @@ public:
 	const_iterator begin() const {return _bin_list.begin();}
 	const_iterator end() const {return _bin_list.end();}
 
-	void printBins(std::ostream& os, Knowledge::Locus* locus, const string& sep=":");
+	void printBins(std::ostream& os, Knowledge::Locus* locus, const string& sep=":") const;
 
 
 

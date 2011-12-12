@@ -30,7 +30,7 @@ Bin::Bin(Knowledge::Region* reg) : _is_group(false), _is_intergenic(false),
 Bin::Bin(short chrom, int bin) :_is_group(false), _is_intergenic(true),
 		_chrom(chrom) {
 	stringstream ss;
-	ss << Knowledge::Locus::getChromStr(chrom) << "-" << bin;
+	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << "-" << bin;
 	_name = ss.str();
 	_member.bin_no = bin;
 }

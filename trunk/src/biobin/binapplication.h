@@ -71,6 +71,7 @@ public:
 
 	void writeBinData(const string& filename, const string& sep=",") const;
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
+	void writeLoci(const string& filename, const string& sep=",") const;
 
 
 	/**

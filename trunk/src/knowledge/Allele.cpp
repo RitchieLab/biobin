@@ -9,8 +9,9 @@
 
 namespace Knowledge{
 
+// I want to oder them from largest to smallest alele frequency
 bool Allele::operator<(const Allele& other) const{
-	return (_freq==other._freq ? _data < other._data : _freq < other._freq);
+	return (_freq==other._freq ? _data < other._data : _freq > other._freq);
 }
 bool Allele::operator>(const Allele& other) const{
 	return (other < *this);

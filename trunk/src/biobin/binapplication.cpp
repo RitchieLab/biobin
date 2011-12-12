@@ -75,33 +75,7 @@ void BinApplication::InitBins() {
 		iitr++;
 	}		
 */
-	std::string ofn = AddReport("locus", "csv", "Locus Description");
-	std::ofstream locusFile(ofn.c_str());
-	locusFile<<"Chromosome,Location,ID,type,gene(s),bin name(s)\n";
-	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
-	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
-	while(itr != end){
-		locusFile << (**itr) << ",";
-		locusFile << string(((1.0 - (*itr)->majorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
-		locusFile << string("Variant") << string(",");
-		// Print the genes here
-		Knowledge::RegionCollection::const_region_iterator r_itr =
-				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
-		Knowledge::RegionCollection::const_region_iterator r_end =
-				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
-		if (r_itr != r_end){
-			locusFile << (*itr)->getID();
-			while(++r_itr != r_end){
-				locusFile << ":" << (*itr)->getID();
-			}
-		}
-		locusFile << ",";
-		// Now print the bins
-		binData.printBins(locusFile, *itr);
-		locusFile << "\n";
-		++itr;
-	}
-	locusFile.close();
+
 
 	/*
 	//binIDs.resize(locusArray.size(), (uint)-1);
@@ -133,6 +107,37 @@ void BinApplication::writeGenotypeData(const string& filename, const string& sep
 	file.close();
 }
 
+void BinApplication::writeLoci(const string& filename, const string& sep) const{
+	std::ofstream locusFile(filename.c_str());
+	locusFile << "Chromosome" << sep << "Location" << sep << "ID" << sep
+			<< "Alleles" << sep << "type" << sep << "gene(s)" << sep << "bin name(s)\n";
+	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
+	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+	while(itr != end){
+		(*itr)->print(locusFile, sep);
+		locusFile << sep;
+		(*itr)->printAlleles(locusFile, "|");
+		locusFile << sep << string(((1.0 - (*itr)->majorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
+		locusFile << string("Variant") << sep;
+		// Print the genes here
+		Knowledge::RegionCollection::const_region_iterator r_itr =
+				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
+		Knowledge::RegionCollection::const_region_iterator r_end =
+				regions->positionEnd((*itr)->getChrom(), (*itr)->getPos());
+		if (r_itr != r_end){
+			locusFile << (*r_itr)->getName();
+			while(++r_itr != r_end){
+				locusFile << "|" << (*r_itr)->getID();
+			}
+		}
+		locusFile << sep;
+		// Now print the bins
+		binData.printBins(locusFile, *itr, "|");
+		locusFile << "\n";
+		++itr;
+	}
+	locusFile.close();
+}
 
 /*
 void BinApplication::GetMaxBinHits(std::vector<uint>& hits) {

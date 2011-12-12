@@ -99,6 +99,8 @@ public:
 
 	void print(ostream& o, const string& sep=",", bool printAlleles=false) const;
 
+	void printAlleles(ostream& o, const string& sep="|") const;
+
 	/**
 	 * Helper function for converting a chromosome index to a chromosome string
 	 * NOTE: This is the inverse of getChrom below.

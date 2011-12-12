@@ -42,7 +42,7 @@ void Locus::addAllele(const string& allele, float freq){
 }
 
 float Locus::majorAlleleFreq() const{
-	return _alleles.rbegin()->getFreq();
+	return _alleles.begin()->getFreq();
 }
 
 float Locus::minorAlleleFreq() const{
@@ -54,7 +54,7 @@ bool Locus::operator <(const Locus& other) const{
 }
 
 bool Locus::isMinor(const string& allele) const{
-	return !(allele == _alleles.rbegin()->getData());
+	return !(allele == _alleles.begin()->getData());
 }
 
 uint Locus::distance(const Locus& other) const{
@@ -123,12 +123,18 @@ void Locus::createID(){
 void Locus::print(ostream& o, const string& sep, bool printAlleles) const{
 	o << getChromStr() << sep << _pos << sep << _id;
 	if (printAlleles){
-		set<Allele>::const_iterator itr = _alleles.begin();
-		set<Allele>::const_iterator end = _alleles.end();
-		while(itr != end){
-			o << sep << *itr;
-			++itr;
-		}
+		this->printAlleles(o,sep);
+	}
+}
+
+void Locus::printAlleles(ostream& o, const string& sep) const{
+	set<Allele>::const_iterator itr = _alleles.begin();
+	set<Allele>::const_iterator end = _alleles.end();
+	if (itr != end){
+		o << *itr;
+	}
+	while(++itr != end){
+		o << sep << *itr;
 	}
 }
 
