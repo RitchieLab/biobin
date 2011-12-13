@@ -14,6 +14,7 @@
 
 using Knowledge::RegionCollection;
 using Knowledge::Region;
+using Knowledge::Group;
 using std::make_pair;
 
 namespace BioBin {
@@ -38,49 +39,10 @@ BinManager::~BinManager() {
 	}
 }
 
-/**
- * Basically, we'll need to generate a list of "leaf" nodes for
- * the selected set of groups. We'll store these as pointers to 
- * the group in a set or a vector.
- * 
- * If the user wishes to drill down further (to the gene level), 
- * we'll walk through the list of "leaves" and check each one
- * for how many snps fall inside each. If it is larger than
- * the threshold, we'll replace it with it's geneBins for each
- * of the genes. 
- * 
- * If the user wishes to drill further yet, we'll check each
- * of the genes for the presence of 2 or more subgroups and
- * replace them with their intronic/exonic oriented bins.
- * 
- * Finally, if the user wishes to express by functionality, 
- * each bin will be evaluated for the number of function based
- * bins and the bin entry will be replaced by 2 or more
- * functional bins
- * 
- * At any time of expansion/expression, we'll just drop a 
- * bin if it's contents falls below the suggested minimum
- * threshold.
- * 
- * Once the bin list(s) are created, we'll simply construct
- * the snpIndex->bin lookup and destroy the intermediate bin
- * stuff. 
- * 
- * Locus Remap shows what the current index is and what it was. 
- * That is the index we actually store the index->bin/genotype
- * information for
- */
 void BinManager::InitBins(
 		const map<uint, Knowledge::GroupCollection*> &groups,
 		const Knowledge::RegionCollection& regions,
 		const vector<Knowledge::Locus*>& loci) {
-	/**
-	 * The following items will result in a bin once we reach the end of the 
-	 * function. So, if we refine an item at one level, we should remove it from
-	 * the original structure. These will be the index into the dataset-not into
-	 * the vcf file (the locusRemap is used at the very last step only)
-	 */
-	/** Group -> snpIdx*/
 
 	vector<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
 	vector<Knowledge::Locus*>::const_iterator l_end = loci.end();
@@ -124,15 +86,7 @@ void BinManager::InitBins(
 
 				// If not in any groups, add to region bins
 				if(g_itr == g_end){
-					int id = (*r_itr)->getID();
-					map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
-					if (rm_itr == _region_bins.end()){
-						curr_bin = new Bin(_pop_mgr, *r_itr);
-						_bin_list.insert(curr_bin);
-						_region_bins.insert(make_pair(id, curr_bin));
-					}else{
-						curr_bin = (*rm_itr).second;
-					}
+					curr_bin = addRegionBin(*r_itr);
 					curr_bin->addLocus(&l);
 					_locus_bins[&l].insert(curr_bin);
 				}
@@ -182,7 +136,98 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 }
 
 void BinManager::collapseBins(){
+	// First things first, let's expand the groups that are too big
+	set<Bin*>::iterator b_itr = _bin_list.begin();
+	Bin::const_locus_iterator v_itr;
+	Bin::const_locus_iterator v_end;
+	while(b_itr != _bin_list.end() && (*b_itr)->isGroup()){
+		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
+
+			// First, add all of the appropriate child bins
+			Group* curr_group = (*b_itr)->getGroup();
+			Group::const_region_iterator r_itr = curr_group->regionBegin();
+			Group::const_region_iterator r_end = curr_group->regionEnd();
+
+
+
+			Bin* curr_bin;
+			v_end = (*b_itr)->variantEnd();
+			while(r_itr != r_end){
+
+				// For all rare loci in the current region, associate them
+				// with this bin
+				v_itr = (*b_itr)->variantBegin();
+
+				while(v_itr != v_end){
+					if ((*r_itr)->containsLocus(**v_itr)){
+						curr_bin = addRegionBin(*r_itr);
+						curr_bin->addLocus(*v_itr);
+						_locus_bins[*v_itr].insert(curr_bin);
+					}
+					++v_itr;
+				}
+				++r_itr;
+			}
+
+			// Now, erase the bin
+			eraseBin(b_itr);
+		}else{
+			++b_itr;
+		}
+	}
+
+	//OK, now we go through and clean up all of the bins that are too small!
+	b_itr = _bin_list.begin();
+	while(b_itr != _bin_list.end()){
+		if((uint)(*b_itr)->getSize() < MinBinSize){
+			eraseBin(b_itr);
+		}else{
+			// Otherwise, just move along, nothing to see here
+			++b_itr;
+		}
+	}
 	return;
+}
+
+void BinManager::eraseBin(set<Bin*>::iterator& b_itr){
+
+	// Remove the bin from the shortcut data structures
+	if((*b_itr)->isGroup()){
+		_group_bins.erase((*b_itr)->getID());
+	}else if((*b_itr)->isIntergenic()){
+		_intergenic_bins.erase(
+				make_pair((*b_itr)->getChrom(), (*b_itr)->getID()));
+	}else{
+		_region_bins.erase((*b_itr)->getID());
+	}
+
+	// remove the bin from the locus->set<Bin*>
+	Bin::const_locus_iterator v_itr = (*b_itr)->variantBegin();
+	Bin::const_locus_iterator v_end = (*b_itr)->variantEnd();
+	while(v_itr != v_end){
+		_locus_bins[*v_itr].erase(*b_itr);
+		++v_itr;
+	}
+
+	// Delete the bin itself
+	delete *b_itr;
+
+	// And remove it from the master list and move to the next one
+	_bin_list.erase(b_itr++);
+}
+
+Bin* BinManager::addRegionBin(Region* reg){
+	Bin* curr_bin;
+	int id = reg->getID();
+	map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
+	if (rm_itr == _region_bins.end()){
+		curr_bin = new Bin(_pop_mgr, reg);
+		_bin_list.insert(curr_bin);
+		_region_bins.insert(make_pair(id, curr_bin));
+	}else{
+		curr_bin = (*rm_itr).second;
+	}
+	return curr_bin;
 }
 
 } // namespace BioBin;

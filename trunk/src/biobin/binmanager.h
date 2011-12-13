@@ -72,6 +72,10 @@ private:
 
 	// Collapses all of the bins according to the preferences we set.
 	void collapseBins();
+	// Erases (and increments) a single bin
+	void eraseBin(set<Bin*>::iterator&);
+
+	Bin* addRegionBin(Knowledge::Region* reg);
 
 	// The authoritative list of all of the bins.  Everything else holds pointers
 	// to bins in this set.

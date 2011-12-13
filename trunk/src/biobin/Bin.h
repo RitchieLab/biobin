@@ -32,10 +32,16 @@ public:
 	int getSize() const;
 	int getVariantSize() const {return _variants.size();}
 	int getID() const{
-		return _is_intergenic ? -1 :
+		return _is_intergenic ? _member.bin_no :
 				(_is_group ? _member.group->getID() : _member.region->getID());
 	}
+
+	Knowledge::Group* getGroup() const { return _is_group ? _member.group : NULL;}
+
 	const string& getName() const{ return _name;}
+	bool isGroup() const {return _is_group;}
+	bool isIntergenic() const {return _is_intergenic;}
+	short getChrom() const {return _chrom;}
 
 	void addLocus(Knowledge::Locus* to_ins) {_variants.insert(to_ins);}
 
