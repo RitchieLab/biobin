@@ -9,8 +9,6 @@ biobin_SOURCES= \
    binapplication.cpp \
    binmanager.h \
    binmanager.cpp \
-   configuration.h \
-   configuration.cpp \
    dataimporter.h \
    dataimporter.cpp \
    main.h \
@@ -21,10 +19,9 @@ biobin_SOURCES= \
    taskfilegeneration.cpp \
    PopulationManager.h \
    PopulationManager.cpp \
-   timestamp.h 
-   #../../data/knowledge.bio \
-   #../../data/example.cfg \
-   #../../data/example.vcf
+   timestamp.h \
+   Configuration.h \
+   Configuration.cpp
    
 dist_data_DATA=$(top_srcdir)/data/knowledge.bio \
 	$(top_srcdir)/data/example.cfg \
@@ -41,5 +38,6 @@ biobin_LDADD=../utility/libutility.la \
 	$(SQLITE_LIBS) \
 	$(BOOST_REGEX_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_SYSTEM_LIB)
+	$(BOOST_SYSTEM_LIB) \
+	$(BOOST_PROGRAM_OPTIONS_LIB) 
 

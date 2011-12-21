@@ -7,24 +7,19 @@
 
 #include "task.h"
 
+#include "application.h"
+
 namespace BioBin {
 namespace Task {
 
+bool Task::detailedReport = true;
+
 //Task::Task() : regions(NULL), snps(NULL) { }
 
-Task::Task(uint t) : taskType(t) { }
-
-Task::~Task() {}
-
-void Task::Init(Application* app) {
-	filename = app->AddReport(GetFileSuffix().c_str(), GetFileExtension().c_str(), GetFileDescription().c_str());
+Task::Task(int t, Application* app) : _task_type(t) {
+	app->AddReport(GetFileSuffix(), GetFileExtension(), GetFileDescription());
 }
 
-bool Task::operator<(const Task& other) const {
-	return taskType<other.taskType;
-}
-
-bool Task::detailedReport = true;
 }
 }
 

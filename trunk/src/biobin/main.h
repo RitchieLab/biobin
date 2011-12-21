@@ -1,61 +1,66 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "configuration.h"
+//#include "configuration.h"
+
+#include <string>
+#include <vector>
+#include <set>
+#include <sys/types.h>
+
+#include "binapplication.h"
+
+using std::set;
+using std::vector;
+using std::string;
 
 namespace BioBin {
+
+namespace Task{
+class Task;
+}
+
+class DataImporter;
+
 class Main {
 public:
-	Main();
-	~Main();
+	Main(){}
+	~Main(){}
 	/**
 	 * @brief Pass the arguments to the application object
 	 */
-	bool ParseCmdLine(int argc, char **argv);
-	int ParseCmd(int curr, int argc, char **argv);
-	void PrintHelp();						///< Display usage details
-	void PrintBanner();					///< Display details about the software
-	void LoadConfiguration(const char *cfgFilename);
+	//bool ParseCmdLine(int argc, char **argv);
+	//int ParseCmd(int curr, int argc, char **argv);
+	//void PrintHelp();						///< Display usage details
+	//void PrintBanner();					///< Display details about the software
+	//void LoadConfiguration(const char *cfgFilename);
 	void RunCommands();
-	int SetConfigValue(int nextCmd, int argc, const char *var, const char *val, const char *err);
+	//int SetConfigValue(int nextCmd, int argc, const char *var, const char *val, const char *err);
 	void InitGroupData();
 	void InitRegionData();
+
+	void initTasks();
+
+	void RunTasks(int level);
+
+	static string c_vcf_file;
+	static string c_knowledge_file;
+	static string c_genome_build;
+
+	static vector<string> c_custom_groups;
+	static set<uint> c_source_ids;
+
 protected:
 	void LoadSNPs(DataImporter& vcf);
-	void InitGroups();
-
-	struct BiofilterAction {
-		enum Action {
-			NoAction,						///< No particular action. This is the default
-			ParseError,						///< Error loading configuration
-			ListGroups,						///< List gorup IDs (optionally based on search)
-			ListAliasTypes,				///< Lists the Alias types in the database
-			ListGenes,						///< Just a DB dump of the genes in the database (based on one or more aliases/ALL and one or more type/ALL)
-			ListGenesSimple,				///< Lists the genes covered by one or more SNPs in the SNP source
-			ListMetaGroups,				///< Display only metagroups and their IDs (useful for group filtering)
-			ListPopulationIDs,			///< Lists available population IDs (for ld expansion)
-			PrintSampleConfig,			///< Write sample configuration file
-			ListAssociations,				///< gene->group associations for a snp list
-			FilterByGenes,					///< Filter a SNP list by presence inside a gene
-			SetVariationFilename			///< Used to fix the variation filename
-		};
-	};
-
 
 	
-	Configuration cfg;					///< Configuration settings
+	//Configuration cfg;					///< Configuration settings
 	BinApplication app;					///< The application that does all of the work
-	bool silentRun;						///< Used to silence the banner banter
-	BiofilterAction::Action action;	///< Actual task to be performed
+	//bool silentRun;						///< Used to silence the banner banter
 
-
+	multimap<int,Task::Task*> _task_list;
 };
-inline
-Main::Main() : silentRun(false), action(BiofilterAction::NoAction) { }
 
-inline
-Main::~Main() { }
 }
-
 
 #endif

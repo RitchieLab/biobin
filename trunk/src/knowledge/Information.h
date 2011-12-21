@@ -12,11 +12,13 @@
 #include <ostream>
 #include <vector>
 #include <map>
+#include <set>
 
 using std::ostream;
 using std::string;
 using std::vector;
 using std::map;
+using std::set;
 
 namespace Knowledge{
 
@@ -38,7 +40,7 @@ public:
 	virtual void listGroupIDs(ostream& os, const vector<string>& group_list){}
 	virtual void listRegions(ostream& os, const vector<string>& alias_list, const vector<string>& alias_type){}
 
-	virtual void getGroupTypes(const vector<int>& group_ids,
+	virtual void getGroupTypes(const set<uint>& group_ids,
 			map<int, string>& type_names_out) = 0;
 };
 /* listRegions

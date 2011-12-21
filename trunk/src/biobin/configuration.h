@@ -24,6 +24,7 @@ namespace BioBin {
 
 	@author Eric Torstenson <torstenson@chgr.mc.vanderbilt.edu>
 */
+namespace Config{
 class Configuration : public Utility::FileToMapExplicit {
 public:
     Configuration();
@@ -68,5 +69,5 @@ public:
 
 
 }
-
+}
 #endif

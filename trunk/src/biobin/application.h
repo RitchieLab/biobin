@@ -64,7 +64,7 @@ public:
     * @return Number of regions loaded
     */
 	template <class T_cont>
-	uint LoadRegionData(const string& pop, T_cont& aliasesNotFound,
+	uint LoadRegionData(T_cont& aliasesNotFound,
 			const vector<string>& aliasList);		///< Comma separated list of strings
 
 	/**
@@ -74,7 +74,7 @@ public:
     * @return
     */
 	template <class T1_cont>
-	uint LoadGroupDataByName(T1_cont& userDefinedGroups, const vector<string>& groupNames, const vector<int>& ids);
+	uint LoadGroupDataByName(T1_cont& userDefinedGroups, const set<uint>& group_type_ids);
 
 	uint GetPopulationID(const string& pop);
 
@@ -107,77 +107,6 @@ public:
 	Knowledge::GroupCollection* GroupManager(uint idx);
 
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
-
-	/**
-	 * Generate simple alias type ID report
-    */
-	//void ListAliasTypes(std::ostream& os);
-
-	/**
-	 * Produce gene reporting
-    * If detailed, then SNPs will be included in the report
-    */
-	//void ListGenes(std::ostream, bool detailed);
-
-	//std::multimap<uint, uint> BuildSnpGeneMap();
-
-	/**
-	 * Cheap way to turn add/remove indexes so that certain actions will be as fast as possible
-	 */
-	//void StripOptimization();
-	//void PerformOptimization();
-
-	/**
-	 * Loads aliases based on the preferred type.
-	 * @param aliasTypeList Comma separated list of type_ids (from the database)
-	 */
-	//void LoadAliases(const char *aliasTypeList);
-	//void LoadPreferredAliases(const char *filename);
-
-	//void SummarizeModelCounts();
-
-	//Knowledge::SnpDataset *GetDataset();
-	//std::multimap<uint, uint> *GetGeneLookup();
-	//Knowledge::GeneGeneModelArchive *GetGeneGeneModels();
-	/**
-	 * This can be used to allow users to provide group names, instead of group IDs
-	 * The return value shoulApplicationd be sufficient to pass to LoadGroupData
-	 */
-	//std::string ConvertGroupNamesToIDs(const string& groupList);
-
-
-	//template <class T1_cont, class T2_cont>
-	//void GeneCoverage(T1_cont& rsSources, T2_cont& mapSources, const string& geneFilename, const string& population);
-
-	/**
-	 * Loads all group data (or subselection based on groupInclusions) as well as all user defined stuff
-	 * @param userDefinedGroups Array of configuration strings to define the different groups
-	 * @param groupInclusions The IDs associated for groups to be loaded (can include meta group ID)
-    * @return Number of groups loaded
-    */
-	//template <class T1_cont, class T2_cont>
-	//uint LoadGroupData(T1_cont& userDefinedGroups, T2_cont& groupInclusions);
-
-	/**
-	 * Loads data based on plink map file
-    * @param filename The file used to specify the SNP data
-	 * @param genomicBuild The build id associated with the map
-	 * @param lostSnps array of SNPs who cound not be merged for some reason (because they were in regions that didn't properly lift over)
-    * @return number of SNPs successfully loaded
-    */
-	//template <class T_cont>
-	//uint LoadMapData(const string& filename, const string& genomicBuild, T_cont& lostSnps, bool doAlignData = false);
-
-	/**
-	 * Loads SNPs based on RS ID
-    * @param filename The name of the file containing the RS IDs
-    * @param lostSnps The SNPs that couldn't be found in the variations file
-    * @return Number of SNPs successfully loaded
-    */
-	//template <class T_cont>
-	//uint LoadSnpsSource(const string& filename, T_cont& lostSnps);
-	
-	//void LoadLdSpline(const string& cfg);
 
 protected:
 	uint GetPopID(const string& pop);
@@ -228,9 +157,9 @@ private:
 
 
 template <class T_cont>
-uint Application::LoadRegionData(const string& pop, T_cont& aliasesNotFound, const vector<string>& aliasList) {
+uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& aliasList) {
 
-	regions->Load(GetPopulationID(pop), aliasList);
+	regions->Load(aliasList);
 	regions->associateLoci(dataset.begin(), dataset.end());
 
 	//T_cont::const_iterator pos = aliasesNotFound.end();
@@ -252,12 +181,11 @@ uint Application::LoadRegionData(const string& pop, T_cont& aliasesNotFound, con
  */
 template <class T1_cont>
 uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups,
-		const vector<string>& groupNames,
-		const vector<int>& groupIDs) {
+		const set<uint>& group_type_ids) {
 
 	map<int, string> group_types;
 
-	_info->getGroupTypes(groupIDs, group_types);
+	_info->getGroupTypes(group_type_ids, group_types);
 
 	map<int, string>::const_iterator itr = group_types.begin();
 	map<int, string>::const_iterator end = group_types.end();
@@ -268,7 +196,7 @@ uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups,
 	while(itr != end){
 		Knowledge::GroupCollection* new_group = (Knowledge::GroupCollection*)
 				new Knowledge::GroupCollectionSQLite((*itr).first, (*itr).second, _db);
-		new_group->Load(*regions, groupNames);
+		new_group->Load(*regions);
 		curr_id = (*itr).first;
 		groups[curr_id] = new_group;
 		totalGroupsLoaded += new_group->size();

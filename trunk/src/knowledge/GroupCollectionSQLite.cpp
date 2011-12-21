@@ -42,35 +42,68 @@ uint GroupCollectionSQLite::Load(RegionCollection& regions,
 	where_stream << "WHERE groups.group_type_id = " << _id;
 
 	bool two_constraint = false;
-	if (group_names.size() != 0 && ids.size() != 0){
+	if ((group_names.size()  != 0 || c_group_names.size() != 0) &&
+			(ids.size() != 0 || c_id_list.size() != 0)){
 		two_constraint = true;
 	}
 
-	if (group_names.size() != 0){
+	if (group_names.size() != 0 || c_group_names.size() != 0){
 		vector<string>::const_iterator itr = group_names.begin();
 		vector<string>::const_iterator end = group_names.end();
+		vector<string>::const_iterator c_itr = c_group_names.begin();
+		vector<string>::const_iterator c_end = c_group_names.end();
 		where_stream << " AND ";
 		if (two_constraint){
 			where_stream << "(";
 		}
-		where_stream << "groups.group_name IN (" << *itr;
-		while (++itr != end){
-			where_stream << "," << *itr;
+		where_stream << "groups.group_name IN (";
+		if (itr != end){
+			where_stream << *itr;
+			while (++itr != end){
+				where_stream << "," << *itr;
+			}
+
+			if(c_itr != c_end){
+				where_stream << ",";
+			}
+		}
+		if(c_itr != c_end){
+			where_stream << *c_itr;
+			while(++c_itr != c_end){
+				where_stream << "," << *c_itr;
+			}
 		}
 		where_stream << ")";
 	}
 
-	if (ids.size() != 0){
+	if (ids.size() != 0 || c_id_list.size() != 0){
 		unordered_set<uint>::const_iterator itr = ids.begin();
 		unordered_set<uint>::const_iterator end = ids.end();
+		unordered_set<uint>::const_iterator c_itr = c_id_list.begin();
+		unordered_set<uint>::const_iterator c_end = c_id_list.end();
+
 		if (two_constraint){
 			where_stream << " OR ";
 		}else{
 			where_stream << " AND ";
 		}
-		where_stream << "groups.group_id IN (" << *itr;
-		while (++itr != end){
-			where_stream << "," << *itr;
+
+		where_stream << "groups.group_id IN (";
+		if(itr != end){
+			where_stream << *itr;
+			while (++itr != end){
+				where_stream << "," << *itr;
+			}
+
+			if(c_itr != c_end){
+				where_stream << ",";
+			}
+		}
+		if(c_itr != c_end){
+			where_stream << *c_itr;
+			while(++c_itr != c_end){
+				where_stream << "," << *c_itr;
+			}
 		}
 		where_stream << ")";
 		if (two_constraint){

@@ -6,50 +6,58 @@
  * Created on April 12, 2011, 4:51 PM
  */
 
-#ifndef TASK_H
-#define	TASK_H
-#include <map>
+#ifndef BIOBIN_TASK_TASK_H
+#define	BIOBIN_TASK_TASK_H
+#include <string>
+
+#include <sys/types.h>
 
 //#include "utility/types.h"
 //#include "knowledge/regionmanager.h"
 //#include "knowledge/snpdataset.h"
-#include "application.h"
+//#include "application.h"
+
+using std::string;
 
 namespace BioBin {
+
+class Application;
+
 namespace Task {
 
 class Task {
+
 public:
-	Task();
 	/**
 	 *
 	 * @param type Gene/SNP/Model
 	 */
-	Task(uint taskType);
+	Task(int taskType, BioBin::Application* app);
 
-	virtual ~Task();
-
+	virtual ~Task(){}
 	virtual void ExecuteTask() = 0;
 
 	//Required for STL container
-	bool operator<(const Task& other) const;
+	//bool operator<(const Task& other) const;
 
-	virtual std::string GetFileSuffix() { return ""; }
-	virtual std::string GetFileExtension() { return ""; }
-	virtual std::string GetFileDescription() { return "";}
+	virtual std::string GetFileSuffix() const { return ""; }
+	virtual std::string GetFileExtension() const { return ""; }
+	virtual std::string GetFileDescription() const { return "";}
 
-	virtual void Init(BioBin::Application* app);
+	int getType() const {return _task_type;}
 
-	uint taskType;
+	//virtual void Init(BioBin::Application* app);
+
 	static bool detailedReport;
 protected:
-	std::string filename;
+	int _task_type;
+	std::string _filename;
 };
 
 }
 
 }
-
+/*
 namespace std{
 
 template <>
@@ -59,13 +67,13 @@ struct less<BioBin::Task::Task*>{
 	}
 };
 }
+*/
 
-
-using BioBin::Task::Task;
+//using BioBin::Task::Task;
 
 //typedef std::multimap<Task*, TaskPtrCmp> TaskList;
-typedef std::multimap<uint, Task*> TaskList;
-typedef std::pair<uint, Task*> TaskPair;
+//typedef std::multimap<uint, Task*> TaskList;
+//typedef std::pair<uint, Task*> TaskPair;
 
 #endif	/* TASK_H */
 

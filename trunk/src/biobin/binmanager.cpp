@@ -22,8 +22,8 @@ namespace BioBin {
 uint BinManager::IntergenicBinWidth = 50000;
 uint BinManager::BinTraverseThreshold = 50;
 uint BinManager::MinBinSize = 1;
-bool BinManager::ExpandByExons = true;
-bool BinManager::ExpandByFunction = true;
+bool BinManager::ExpandByExons = false;
+bool BinManager::ExpandByFunction = false;
 float BinManager::mafCutoff = 0.05;
 uint BinManager::maxSnpCount = 200;
 

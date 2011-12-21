@@ -1,153 +1,110 @@
 #include "main.h"
+
+#include "config.h"
+
 #include <iostream>
 #include "utility/exception.h"
+
+#include "Configuration.h"
+#include "knowledge/Configuration.h"
+
+#include "task.h"
+#include "taskfilegeneration.h"
+#include "dataimporter.h"
+
+#include <boost/program_options.hpp>
+
+namespace po=boost::program_options;
+
+using po::value;
 
 /**
  * The VCF Tools require this, but I don't want to use their main...
  */
 namespace VCF {
-	std::ofstream LOG;
+std::ofstream LOG;
 }
 
 namespace BioBin {
 
+string Main::c_vcf_file;
+string Main::c_knowledge_file;
+string Main::c_genome_build = "37";
 
+vector<string> Main::c_custom_groups;
+set<uint> Main::c_source_ids;
+
+/*
 void Main::LoadConfiguration(const char *cfgFilename) {
 	cfg.SetValue("REPORT_PREFIX", Utility::ExtractBaseFilename(cfgFilename));
 	cfg.Parse(cfgFilename);
 }
-
+*/
 
 void Main::InitRegionData() {
 	vector<string> missingAliases;
 	vector<string> aliasList;
 
-	app.LoadRegionData(cfg.GetLine("POPULATION"), missingAliases, aliasList);
+	app.LoadRegionData(missingAliases, aliasList);
 }
 
-// TODO: deal w/ schizophrenic vector/string uint/int decisions
 void Main::InitGroupData() {
-	//User defined groups
-	Utility::StringArray udGroups;
-	cfg.GetLines("ADD_GROUP", udGroups);
-
-	//Any specialized searches are defined here
-	vector<string> lines;
-	vector<uint> groupIDs;
-	cfg.GetIntegers("INCLUDE_GROUPS", groupIDs);
-//	std::cerr<<"ASDFASDF: "<<lines.size()<<"\n";
-	set<uint> ids;
-	ids.insert(groupIDs.begin(), groupIDs.end());
-
-	cfg.LoadFileContents("INCLUDE_GROUP_FILE", ids);
-
-	//Now, let's do the same for names
-	
-	vector<string> groups;
-	cfg.GetLines("INCLUDE_GROUP_NAMES", groups);
-	cfg.LoadFileContents("INCLUDE_GROUP_NAME_FILE", groups);
-
-	vector<int> group_id_input;
-	group_id_input.reserve(ids.size());
-	set<uint>::const_iterator itr = ids.begin();
-	set<uint>::const_iterator end = ids.end();
-	while(itr != end){
-		group_id_input.push_back(*itr);
-		++itr;
-	}
-	app.LoadGroupDataByName(udGroups, groups, group_id_input);
-
+	app.LoadGroupDataByName(c_custom_groups, c_source_ids);
 }
 
 void Main::RunCommands() {
 	VCF::LOG.open("vcf-responses.log");
 
-	app.Init(cfg.GetLine("SETTINGS_DB"), !silentRun);
-	std::string genomicBuild = cfg.GetString("GENOMIC_BUILD");
-	if (genomicBuild != "") {
-		app.LoadBuildConverter(genomicBuild);
+	app.Init(c_knowledge_file, true);
+	if (c_genome_build != "") {
+		app.LoadBuildConverter(c_genome_build);
 	}
-	/* This is biofilter specific, not for biobin
-	switch (action) {
-		case BiofilterAction::ListGroups:
-			{
-				std::vector<std::string> keywords;
-				std::string s = cfg.GetLine("GROUP_SEARCH_CRITERIA");
-				if (s != "All")
-					keywords = Utility::Split(s.c_str(), ",");
-				
-				app.ListGroupIDs(std::cout, keywords);
-			} return;
-		case BiofilterAction::ListPopulationIDs:
-			app.ListPopulationIDs(std::cout);
-			return;
-		case BiofilterAction::ListGenes: {
-			std::string s = cfg.GetLine("GENE_COVERAGE");
-			Utility::StringArray aliasList;
-			if (s != "ALL")
-				aliasList = Utility::Split(s.c_str(), ",");
-			Utility::StringArray aliasTypeList;
-			s = cfg.GetLine("ALIAS_TYPES");
-			if (s != "ALL")
-				aliasTypeList = Utility::Split(s.c_str(), ",");
 
-			app.ListGenes(std::cout, aliasList, aliasTypeList);
-			return;
-		}
-		case BiofilterAction::ListMetaGroups:{
-//				InitGroupData();
-//				app.ListMetaGroups(cout);
-//
-			return;
-		}
-	}*/
-	
 	//Tasks that run before SNPs load (not sure what those would be)
-	cfg.RunTasks(0);
+	RunTasks(0);
 
-	vector<string> genes;
-	std::string geneFilename = cfg.GetLine("GENE_COVERAGE");
-	if (geneFilename != "")
-		cfg.LoadFileContents("GENE_COVERAGE", genes);
 	/**
 	 * Do the SNP oriented stuff here
-    */
-
-	//With some new decisions about binning, we have to 
-	//preload the groups-then we will handle the dataset merging/squeeze
-	//This sort of makes tasks type 2 and 3 redundant....and is backward
-	//from our previous approach
+	 */
 
 	// TODO: check for existence of the file here!
-	string fn = cfg.GetLine("VCF_FILE");
-	if(fn.size() == 0){
+	if(c_vcf_file.size() == 0){
 		std::cerr<<"No SNP dataset available. Unable to continue.\n";
 		exit(1);
 	}
 
-	DataImporter vcfimporter(fn);
+	DataImporter vcfimporter(c_vcf_file);
 	LoadSNPs(vcfimporter);
 
-	cfg.RunTasks(1);
+	RunTasks(1);
 
 	InitRegionData();
 
-	cfg.RunTasks(2);
+	RunTasks(2);
 
 	InitGroupData();
 	app.InitBins();
 
-	cfg.RunTasks(3);
+	RunTasks(3);
 
-	//We need to make sure that there is one or more tasks at level four before we generate the models
-	// We should NOT be here in biobin!!  There's no model generation going on!
-	//if (cfg.CountTasks(4)) {
-	//	app.ProduceModels(std::cout);
-	//	cfg.RunTasks(4);
-	//}
 }
 
+void Main::RunTasks(int level){
+	multimap<int, Task::Task*>::iterator itr = _task_list.lower_bound(level);
+	multimap<int, Task::Task*>::iterator end = _task_list.upper_bound(level);
 
+	while (itr != end) {
+		(*itr).second->ExecuteTask();
+		++itr;
+	}
+}
+
+void Main::initTasks(){
+	BioBin::Task::Task *t = new BioBin::Task::GenerateFiles(&app);
+	_task_list.insert(std::make_pair(t->getType(), t));
+}
+
+/*
 
 bool Main::ParseCmdLine(int argc, char **argv) {
 
@@ -187,61 +144,19 @@ bool Main::ParseCmdLine(int argc, char **argv) {
 
 	return true;
 }
-
-void Main::PrintBanner()  {
-	if (!silentRun) {
-		//std::cerr<<"biobin "<<APPMAJOR<<"."<<APPMINOR<<"."
-		//	 <<APPBUGFIX<<" ("<<BUILD_NUMBER<<") "<<BUILD_TYPE<<"  "<<BUILD_DATE<<"\n";
-#ifdef USE_MPI
-		cout<<"* This application is compiled to run on parallel computing systems using MPI\n";
-##else
-		cout<<"* (serial)\n";
-#endif
-		std::cerr<<"\nMarylyn Ritchie, Carrie Buchanan and Eric Torstenson\n\n";
-	}
-}
-
-void Main::PrintHelp() {
-	silentRun = false;
-	PrintBanner();
-#ifdef USE_MPI
-	cerr<<"usage: biofilter <configuration file> [ [command] ...] [ [parameter] ...]\n";
-#else
-	std::cerr<<"usage: biobin <configuration file> \n";
-#endif
-	std::cerr<<"\biobin - TODO write stuff about biobin\n";
-	std::cerr<<"Optional Commands Include:\n";
-	std::cerr<<"\t-S [--sample-config]                       -- Print sample configuration to std-out\n";
-	std::cerr<<"\t--list-genes                               -- Lists all genes that are covered by at least one SNP\n";
-	std::cerr<<"\t--genes alias_list alias_type              -- Lists all genes present in the database that match one of the comma \n"
-		 <<"\t                                              separated. Either or both can also be ALL, which will show them all. \n";
-	std::cerr<<"\nOptional Parameters Include:\n";
-	std::cerr<<"\t-V [--vcf-file] <filename>                 -- Specify a vcf file to be used.\n";
-	std::cerr<<"\t-B [--build] <build version>               -- Define the build associated with map files (35, 36, 37)\n";
-	std::cerr<<"\t-P [--list-populations]                    -- Lists all available Population based LD boundary options\n";
-	std::cerr<<"\t-p [--set-population] pop                  -- Override the configurations population setting (NO-LD, CEUDP1.0, etc)\n";
-	std::cerr<<"\t-t [--maf-threshold] thresh                -- MAF cutoff for calling rare-variants.\n";
-	std::cerr<<"\t-k [--knowledge-threshold] thresh          -- Max number of SNPs for a knowledge group to be binned.\n";
-	std::cerr<<"\t--fix-variations var-filename-path         -- Sets the path (and filename) to the appropriate variation file.\n";
-	std::cerr<<"\t                                              This should only be done if the file needs to be moved to a new location.\n";
-}
-
+*/
 
 void Main::LoadSNPs(DataImporter& vcf) {
-		std::string genomicBuild = cfg.GetLine("GENOMIC_BUILD");
-		vector<string> lostSnps;
-		app.InitVcfDataset(genomicBuild, lostSnps, vcf);
-		std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
+	vector<string> lostSnps;
+	app.InitVcfDataset(c_genome_build, lostSnps, vcf);
+	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
 }
 
-void Main::InitGroups() {
-
-}
-
+/*
 int Main::SetConfigValue(int nextCmd, int argc, const char *var, const char *val, const char *err) {
-	if (nextCmd < argc) 
+	if (nextCmd < argc) {
 		cfg.SetValue(var, val);
-	else {
+	} else {
 		action = BiofilterAction::ParseError;
 		std::cerr<<err<<"\n";
 		return -1;
@@ -255,75 +170,15 @@ int Main::ParseCmd(int curr, int argc, char **argv) {
 		action = BiofilterAction::PrintSampleConfig;
 		return nextCmd;
 	}
-	if (strcmp(argv[curr], "--DB")==0)
+	if (strcmp(argv[curr], "--DB")==0){
 		return SetConfigValue(nextCmd, argc, "SETTINGS_DB", argv[nextCmd], "--DB must be followed by a database filename");
-	if (strcmp(argv[curr], "--marker-info")==0) {
-		cfg.SetValue("MARKER_INFO_REPORT", "ON");
-		return nextCmd;
 	}
-	if (strcmp(argv[curr], "-b")==0 || strcmp(argv[curr], "--binary")==0)
+	if (strcmp(argv[curr], "-b")==0 || strcmp(argv[curr], "--binary")==0){
 		return SetConfigValue(nextCmd, argc, "BINARY_MODEL_ARCHIVE", argv[nextCmd], "--binary must be followed by Yes/No");
-	if (strcmp(argv[curr], "-P")==0 || strcmp(argv[curr], "--list-populations")==0) {
-		action = BiofilterAction::ListPopulationIDs;
-		return nextCmd;
 	}
 	if (strcmp(argv[curr], "-D")==0) {
 		cfg.SetValue("DETAILED_REPORTS", "ON");
 		return nextCmd;
-	}
-	if (strcmp(argv[curr], "--map-snps-to-gene")==0) {
-		cfg.SetValue("SNP_GENE_MAP", "ON");
-		if (nextCmd < argc) {
-			cfg.SetValue("GENE_COVERAGE", argv[nextCmd++]);
-		}
-		else {
-			action = BiofilterAction::ParseError;
-			std::cerr<<"--map-snps-to-gene must be followed by a filename containing a list of genes.\n";
-			return -1;
-		}
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "--list-genes")==0)  {
-		cfg.SetValue("GENE_REPORT", "ON");
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "--snp-report")==0)  {
-		cfg.SetValue("SNP_REPORT", "ON");
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "--map-snps-to-gene")==0)  {
-		cfg.SetValue("SNP_GENE_MAP", "ON");
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "-G")==0 || strcmp(argv[curr], "--groups")==0) {
-		if (argc > nextCmd) {
-			silentRun = true;				// At this point, we don't care about the other stuff
-			cfg.SetValue("LIST_GROUPS_FROM_DB", "ON");
-			cfg.SetValue("GROUP_SEARCH_CRITERIA", argv[nextCmd++]);
-			action = BiofilterAction::ListGroups;
-			return -1;
-		}
-		else {
-			action = BiofilterAction::ParseError;
-			std::cerr<<"--groups must include search criterion or ALL (to list all groups).\n";
-			return -1;
-		}
-	}
-	if (strcmp(argv[curr], "--genes")==0) {
-		if (argc > nextCmd + 1) {
-			silentRun = true;				// At this point, we don't care about the other stuff
-			cfg.SetValue("LIST_GENES_FROM_DB", "ON");
-			cfg.SetValue("GENE_COVERAGE", argv[nextCmd++]);
-			cfg.SetValue("ALIAS_TYPES", argv[nextCmd++]);
-			action = BiofilterAction::ListGenes;
-			return -1;
-		}
-		else {
-			action = BiofilterAction::ParseError;
-			std::cerr<<"--genes must include genes (comma separated) and alias type (comma separated). Either can be replaced by ALL.\n";
-			return -1;
-		}
-
 	}
 	if (strcmp(argv[curr], "-B")==0 || strcmp(argv[curr], "--build")==0) {
 		if (nextCmd < argc) {
@@ -336,26 +191,32 @@ int Main::ParseCmd(int curr, int argc, char **argv) {
 		}
 	}
 
-	if (strcmp(argv[curr], "-k")==0 || strcmp(argv[curr], "--knowledge-threshold")==0)
+	if (strcmp(argv[curr], "-k")==0 || strcmp(argv[curr], "--knowledge-threshold")==0){
 		return SetConfigValue(nextCmd, argc, "BIN_COLLAPSE_THRESHOLD", argv[nextCmd], "--knowledge-threshold must be followed by the max number of SNPs allowed in knowledge based bins.");
-	if (strcmp(argv[curr], "-t")==0 || strcmp(argv[curr], "--maf-threshold")==0) 
+	}
+	if (strcmp(argv[curr], "-t")==0 || strcmp(argv[curr], "--maf-threshold")==0){
 		return SetConfigValue(nextCmd, argc, "MAF_CUTOFF", argv[nextCmd], "--MAF_CUTOFF must be followed by maf threshold value");
-	if (strcmp(argv[curr], "--PREFIX")==0)
+	}
+	if (strcmp(argv[curr], "--PREFIX")==0){
 		return SetConfigValue(nextCmd, argc, "REPORT_PREFIX", argv[nextCmd], "--PREFIX must be followed by prefix to be prepended to the generated filenames");
-	if (strcmp(argv[curr], "-p")==0 || strcmp(argv[curr], "--set-population")==0)
+	}
+	if (strcmp(argv[curr], "-p")==0 || strcmp(argv[curr], "--set-population")==0){
 		return SetConfigValue(nextCmd, argc, "POPULATION", argv[nextCmd], "--set-population must be followed by name population you wish to use");
-	if (strcmp(argv[curr], "--gene-boundary")==0)
+	}
+	if (strcmp(argv[curr], "--gene-boundary")==0){
 		return SetConfigValue(nextCmd, argc, "GENE_BOUNDARY_EXTENSION", argv[nextCmd], "--gene-boundary must be followed by an integer describing the number of bases");
-	if (strcmp(argv[curr], "-V")==0 || strcmp(argv[curr], "--vcf-file")==0)
+	}
+	if (strcmp(argv[curr], "-V")==0 || strcmp(argv[curr], "--vcf-file")==0){
 		return SetConfigValue(nextCmd, argc, "VCF_FILE", argv[nextCmd], "--vcf-file must be followed by the name of a vcf file.");
-	if (strcmp(argv[curr], "-z")==0 || strcmp(argv[curr], "--gzipped vcf")==0)
+	}
+	if (strcmp(argv[curr], "-z")==0 || strcmp(argv[curr], "--gzipped vcf")==0){
 		return SetConfigValue(nextCmd, argc, "COMPRESSED_VCF", argv[nextCmd], "--gzipped vcf must be followed by YES/NO.");
+	}
 	action = BiofilterAction::ParseError;
 	std::cerr<<"Unrecognized parameter: "<<argv[curr]<<"\n";
 	return -1;
 }
-
-
+*/
 
 }
 
@@ -365,11 +226,91 @@ int main(int argc, char *argv[]) {
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
+	po::options_description cmd("Biobin Options");
+	cmd.add_options()
+				("help,h","Display help message")
+				("version,v","Display version")
+				("sample-config,S", "Print a sample configuration to the screen");
 
-	if (!app->ParseCmdLine(argc, argv)) {
+	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
+
+	po::options_description hidden("Hidden Biobin Options");
+	hidden.add_options()
+					("config-file",value<vector<string> >(),"Name of the configuration file");
+
+	po::options_description cmd_options;
+	cmd_options.add(cmd).add(hidden);
+
+	po::options_description config_options;
+	Knowledge::Configuration::addConfigFile(BioBin::Configuration::addConfigFile(config_options));
+
+	po::positional_options_description pos;
+	pos.add("config-file",-1);
+
+	po::variables_map vm;
+	try{
+		store(po::command_line_parser(argc,argv).options(cmd_options).positional(pos).run(), vm);
+		notify(vm);
+	}catch(...){
+		std::cout << "Error processing command line arguments\n";
+		std::cout << cmd;
+		return 2;
+	}
+
+	// Check here for help, version or sample printing
+	if (vm.count("help")){
+		std::cout << cmd;
+		return 1;
+	}
+
+	if (vm.count("sample-config")){
+		BioBin::Configuration::printConfig(std::cout);
+		Knowledge::Configuration::printConfig(std::cout);
+		return 1;
+	}
+
+	if (vm.count("version")){
+		std::cout << PACKAGE_STRING << "\n";
+		std::cout << "(c) Ritchie Lab, 2012\n";
+		std::cout << "To report bugs, please email " << PACKAGE_BUGREPORT << "\n";
+	}
+
+	try{
+		// load the info given in the configuration file
+		if(vm.count("config-file")){
+			vector<string> conf_files = vm["config-file"].as<vector<string> >();
+			vector<string>::const_iterator itr = conf_files.begin();
+			vector<string>::const_iterator end = conf_files.end();
+			while(itr != end){
+				ifstream ifs((*itr).c_str());
+				if (!ifs)
+				{
+					std::cerr << "WARNING: can not open config file: " << (*itr) << "\n";
+				}
+				else
+				{
+					store(parse_config_file(ifs, config_options), vm);
+					notify(vm);
+				}
+				++itr;
+			}
+		}
+	}catch(...){
+		std::cout << "Error processing configuration file\n";
+		BioBin::Configuration::printConfig(std::cout);
+		Knowledge::Configuration::printConfig(std::cout);
+		return 2;
+	}
+
+	Knowledge::Configuration::parseOptions(vm);
+	BioBin::Configuration::parseOptions(vm);
+
+	app->initTasks();
+
+	/*if (!app->ParseCmdLine(argc, argv)) {
 		delete app;
 		exit(1);
-	}
+	}*/
 	//Performs any commands
 	try {
 		app->RunCommands();
@@ -381,5 +322,5 @@ int main(int argc, char *argv[]) {
 
 	delete app;
 
-  	return 0;
+	return 0;
 }

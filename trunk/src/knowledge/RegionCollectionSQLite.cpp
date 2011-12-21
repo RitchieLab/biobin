@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <sstream>
 
+#include "InformationSQLite.h"
+
 #include "Locus.h"
 
 using std::stringstream;
@@ -20,18 +22,21 @@ namespace Knowledge{
 
 RegionCollectionSQLite::RegionCollectionSQLite(const string& fn) : self_open(true){
 	sqlite3_open(fn.c_str(),&db);
+	_info = new InformationSQLite(db);
 }
 
 RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn) :
-		self_open(false), db(db_conn){}
+		self_open(false), db(db_conn) {
+	_info = new InformationSQLite(db);
+}
 
 RegionCollectionSQLite::~RegionCollectionSQLite(){
 	if (self_open){
 		sqlite3_close(db);
 	}
+	delete _info;
 }
-uint RegionCollectionSQLite::Load(const uint popID,
-		const unordered_set<uint>& ids,
+uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		const vector<string>& alias_list){
 
 	string where_clause = "";
@@ -63,6 +68,8 @@ uint RegionCollectionSQLite::Load(const uint popID,
 			where_clause = string(" WHERE ") + alias_stream.str();
 		}
 	}
+
+	int popID = _info->getPopulationID(pop_str);
 
 	string bound_vals = "DefBounds.start, DefBounds.end";
 	string bound_tables = "LEFT OUTER JOIN region_bounds DefBounds "
@@ -110,11 +117,13 @@ int RegionCollectionSQLite::parseRegionQuery(void* obj, int ncols, char** colVal
 
 	// In this case, no population ID was given
 	if (ncols == 6){
-		regions->AddRegion(colVals[name_idx], id, chrom, start, end, colVals[alias_idx]);
+		regions->AddRegion(colVals[name_idx], id, chrom, start, end,
+				start-gene_expansion, end+gene_expansion, colVals[alias_idx]);
 	}else if (ncols == 8){
 		int pop_start = colVals[start_idx + pop_offset] ? atoi(colVals[start_idx + pop_offset]) : start;
 		int pop_end = colVals[end_idx + pop_offset] ? atoi(colVals[end_idx + pop_offset]) : end;
-		regions->AddRegion(colVals[name_idx], id, chrom, start, end, pop_start, pop_end, colVals[alias_idx + pop_offset]);
+		regions->AddRegion(colVals[name_idx], id, chrom, start, end,
+				pop_start, pop_end, colVals[alias_idx + pop_offset]);
 	}else{
 		// WE SHOULD NOT BE HERE!!
 		return 1;

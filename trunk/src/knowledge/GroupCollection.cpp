@@ -26,6 +26,9 @@ using boost::to_upper;
 
 namespace Knowledge{
 
+vector<string> GroupCollection::c_group_names;
+unordered_set<uint> GroupCollection::c_id_list;
+
 GroupCollection::GroupCollection(uint id, const string& name) :
 	_id(id), _name(name), _group_not_found(-1,"Not Found") {}
 

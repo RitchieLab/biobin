@@ -7,39 +7,38 @@
 
 #include "taskfilegeneration.h"
 #include "utility/strings.h"
+
+#include "binapplication.h"
+
 namespace BioBin {
 namespace Task {
 
 bool GenerateFiles::WriteBinData = true;
 bool GenerateFiles::WriteGenotypeData = true;
-std::string GenerateFiles::OutputDelimeter = " ";
+bool GenerateFiles::WriteLociData = true;
+std::string GenerateFiles::OutputDelimiter = ",";
 
-GenerateFiles::GenerateFiles() :
-		Task(3), app(NULL) {
-}
-
-GenerateFiles::~GenerateFiles() {
-}
-
-void GenerateFiles::Init(Application* app) {
-	this->app = (BinApplication*) app;
+GenerateFiles::GenerateFiles(BinApplication* app) :
+		Task(3, app), _app(app) {
 }
 
 void GenerateFiles::ExecuteTask() {
 	std::cerr << "Executing Dataset File Generation\n";
 
 	if (WriteBinData) {
-		std::string filename = app->AddReport("data", "bins", "Bin Counts");
-		app->writeBinData(filename);
+		std::string filename = _app->AddReport("data", "bins", "Bin Counts");
+		_app->writeBinData(filename);
 	}
 	if (WriteGenotypeData) {
-		std::string filename = app->AddReport("data", "genotypes",
+		std::string filename = _app->AddReport("data", "genotypes",
 				"Genotype Data");
-		app->writeGenotypeData(filename);
+		_app->writeGenotypeData(filename);
 	}
-	std::string filename = app->AddReport("locus", "csv",
-			"Locus Data");
-	app->writeLoci(filename);
+	if (WriteLociData){
+		std::string filename = _app->AddReport("locus", "csv",
+				"Locus Data");
+		_app->writeLoci(filename);
+	}
 }
 
 }

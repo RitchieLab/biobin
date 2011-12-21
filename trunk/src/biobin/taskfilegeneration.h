@@ -9,29 +9,27 @@
 #define	TASKFILEGENERATION_H
 
 #include "task.h"
-#include "binapplication.h"
 
 namespace BioBin {
 
-class Application;
+class BinApplication;
 
 namespace Task {
 
 
 class GenerateFiles : public Task {
 public:
-	GenerateFiles();
-	virtual ~GenerateFiles();
+	GenerateFiles(BinApplication* app);
+	virtual ~GenerateFiles(){}
 
-	virtual void Init(Application* app);
-
-	void ExecuteTask();
+	virtual void ExecuteTask();
 
 	static bool WriteBinData;
 	static bool WriteGenotypeData;
-	static std::string OutputDelimeter;
+	static bool WriteLociData;
+	static std::string OutputDelimiter;
 protected:
-	BinApplication* app;
+	BinApplication* _app;
 };
 
 

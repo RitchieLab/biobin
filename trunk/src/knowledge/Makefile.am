@@ -20,6 +20,8 @@ libknowledge_la_SOURCES=\
 	Information.h \
 	InformationSQLite.h \
 	InformationSQLite.cpp \
+	Configuration.h \
+	Configuration.cpp \
 	liftover/BuildConversion.h \
 	liftover/BuildConversion.cpp \
 	liftover/Chain.h \
@@ -35,4 +37,4 @@ libknowledge_la_SOURCES=\
 AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS)
 #AM_LDFLAGS=-lsqlite3
 
-libknowledge_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(SQLITE_LIBS)
+libknowledge_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(SQLITE_LIBS)

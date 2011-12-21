@@ -14,6 +14,8 @@ class sqlite3;
 
 namespace Knowledge{
 
+class Information;
+
 /**
  * A class that implements the region collection from a SQLite database
  */
@@ -27,14 +29,16 @@ public:
 	/**
 	 * Loading function - must be subclassed
 	 */
-	virtual uint Load(const uint popID,
-			const unordered_set<uint>& ids,
+	virtual uint Load(const unordered_set<uint>& ids,
 			const vector<string>& aliasList);
 
 private:
 	bool self_open;
 	// sqlite connection
 	sqlite3 *db;
+
+	// object to get generalized information
+	Information* _info;
 
 	// callback functions for sqlite interface
 	// NOTE: the 1st argument will be a pointer to a RegionCollection object

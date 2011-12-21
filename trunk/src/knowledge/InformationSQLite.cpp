@@ -54,13 +54,13 @@ const string InformationSQLite::getResourceVersion(const string& resource){
 	return result;
 }
 
-void InformationSQLite::getGroupTypes(const vector<int>& type_ids,
+void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 		map<int, string>& group_types_out){
 	string query_str = string("SELECT group_type_id, group_type FROM group_type");
 
 	if (type_ids.size() != 0){
-		vector<int>::const_iterator itr = type_ids.begin();
-		vector<int>::const_iterator end = type_ids.end();
+		set<uint>::const_iterator itr = type_ids.begin();
+		set<uint>::const_iterator end = type_ids.end();
 		query_str += " WHERE group_type_id IN (";
 		stringstream id_stream;
 		id_stream << *itr;

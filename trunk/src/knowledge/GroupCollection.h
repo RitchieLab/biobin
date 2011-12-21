@@ -114,6 +114,9 @@ public:
 
 	uint size() { return _group_map.size(); }
 
+	static vector<string> c_group_names;
+	static unordered_set<uint> c_id_list;
+
 protected:
 	// The ID of the type (source) of groups
 	uint _id;

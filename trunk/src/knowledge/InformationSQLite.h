@@ -29,7 +29,7 @@ public:
 	virtual int getPopulationID(const string& pop_str);
 	virtual const string getResourceVersion(const string& resource);
 
-	virtual void getGroupTypes(const vector<int>& type_ids,
+	virtual void getGroupTypes(const set<uint>& type_ids,
 			map<int, string>& group_types_out);
 
 private:

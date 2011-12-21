@@ -113,31 +113,34 @@ public:
 	 * This function does the heavy lifting,region is not in the map and is the only function that needs
 	 * to be subclassed
 	 */
-	virtual uint Load(const uint popID,
-			const unordered_set<uint>& ids,
+	virtual uint Load(const unordered_set<uint>& ids,
 			const vector<string>& aliasList) = 0;
 
 	/**
 	 * Calls Load(...) with an empty ID list
 	 */
-	virtual uint Load(const uint popID,
-			const vector<string>& aliasList);
+	virtual uint Load(const vector<string>& aliasList);
 
 	/**
 	 * Calls Load(...) with an empty aliasList
 	 */
-	virtual uint Load(const uint popID,
-			const unordered_set<uint>& ids);
+	virtual uint Load(const unordered_set<uint>& ids);
 
 	/**
 	 * Calls Load(...) with an empty set of ids and and empty aliasList
 	 */
-	virtual uint Load(const uint popID);
+	//virtual uint Load(const uint popID);
 
 	/**
 	 * Calls Load(...) with popID=0, empty set of ids and empty aliasList
 	 */
 	virtual uint Load();
+
+
+	// The configured population to use here
+	static string pop_str;
+	// The amount of gene boundary expansion (if using no-ld)
+	static int gene_expansion;
 
 
 protected:

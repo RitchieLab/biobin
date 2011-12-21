@@ -7,13 +7,21 @@
 
 #include "RegionCollection.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include "Locus.h"
 #include "Region.h"
+#include "Information.h"
 
-#include "utility/strings.h"
-
+using boost::algorithm::split;
+using boost::algorithm::is_any_of;
 
 namespace Knowledge{
+
+// The configured population to use here
+string RegionCollection::pop_str = "NO-LD";
+// The amount of gene boundary expansion (if using no-ld)
+int RegionCollection::gene_expansion = 0;
 
 RegionCollection::~RegionCollection(){
 	// Go through the map of id->Region* and delete all of the regions
@@ -33,20 +41,6 @@ Region& RegionCollection::operator[](const uint idx){
 	}
 	return region_not_found;
 }
-
-/*
-const set<Region&>& RegionCollection::operator[](const string& alias){
-	unordered_map<string,uint>::iterator idx_itr = _alias_map.find(alias);
-	if (idx_itr != _alias_map.end()){
-		unordered_map<uint,Region>::iterator element = _region_map.find(idx_itr->second);
-		if (element != _region_map.end()){
-			return element->second;
-		}
-	}
-	return region_not_found;
-}
-*/
-
 
 const Region& RegionCollection::operator[](const uint idx) const{
 	unordered_map<uint,Region*>::const_iterator element = _region_map.find(idx);
@@ -137,9 +131,10 @@ void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint 
 
 	// Add all aliases, including the canonical name
 	_alias_map[name].insert(&new_region);
-	Utility::StringArray aliasList = Utility::Split(aliases.c_str(), ",");
-	Utility::StringArray::const_iterator itr = aliasList.begin();
-	Utility::StringArray::const_iterator end = aliasList.end();
+	vector<string> aliasList;
+	split(aliasList, aliases, is_any_of(","));
+	vector<string>::const_iterator itr = aliasList.begin();
+	vector<string>::const_iterator end = aliasList.end();
 	while (itr != end){
 		_alias_map[*itr++].insert(&new_region);
 	}
@@ -151,22 +146,18 @@ void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint 
 }
 
 uint RegionCollection::Load(){
-	return this->Load(0);
-}
-
-uint RegionCollection::Load(const uint pop_id){
 	unordered_set<uint> empty_set;
-	return this->Load(pop_id,empty_set);
+	return this->Load(empty_set);
 }
 
-uint RegionCollection::Load(const uint pop_id, const unordered_set<uint>& ids){
+uint RegionCollection::Load(const unordered_set<uint>& ids){
 	vector<string> empty_list;
-	return this->Load(pop_id,ids,empty_list);
+	return this->Load(ids,empty_list);
 }
 
-uint RegionCollection::Load(const uint pop_id, const vector<string>& alias_list){
+uint RegionCollection::Load(const vector<string>& alias_list){
 	unordered_set<uint> empty_set;
-	return this->Load(pop_id, empty_set, alias_list);
+	return this->Load(empty_set, alias_list);
 }
 
 bool RegionCollection::isValid(const Region& other) const{
