@@ -3,7 +3,6 @@
 #include "config.h"
 
 #include <iostream>
-#include "utility/exception.h"
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
@@ -112,114 +111,6 @@ void Main::LoadSNPs(DataImporter& vcf) {
 	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
 }
 
-/*
-
-bool Main::ParseCmdLine(int argc, char **argv) {
-
-	//Test the DB connection
-#ifdef USE_MPI
-	MPI::Init(argc, argv);
-#endif
-	if (argc < 2) {
-		PrintHelp();
-		return false;
-	}
-	int i=1;
-	cfg.Init();
-	if (argv[1][0] != '-')
-		LoadConfiguration(argv[i++]);
-	//Work out any other cmd line arguments
-	for (; i<argc && i>0;) {
-		i=ParseCmd(i, argc, argv);
-	}
-	cfg.ExecuteConfiguration(&app);
-	app.SetReportPrefix(cfg.GetLine("REPORT_PREFIX").c_str());
-
-	if (action == BiofilterAction::ParseError) {
-		return false;
-	}
-	if (action == BiofilterAction::PrintSampleConfig) {
-		PrintBanner();
-		std::cout<<"#BioBin configuration file\n";
-		std::cout<<"#\n#Users can change these parameters to meet their needs.\n";
-		std::cout<<"#Please see the manual for more information about the different parameters and their options.\n";
-		cfg.Write(std::cout);
-		return false;
-	}
-
-	if (!silentRun)
-		cfg.ReportConfiguration(std::cerr);
-
-	return true;
-}
-*/
-
-/*
-int Main::SetConfigValue(int nextCmd, int argc, const char *var, const char *val, const char *err) {
-	if (nextCmd < argc) {
-		cfg.SetValue(var, val);
-	} else {
-		action = BiofilterAction::ParseError;
-		std::cerr<<err<<"\n";
-		return -1;
-	}
-	return nextCmd + 1;
-}
-
-int Main::ParseCmd(int curr, int argc, char **argv) {
-	int nextCmd = curr+1;
-	if (strcmp(argv[curr], "-S")==0 || strcmp(argv[curr], "--sample-config")==0) {
-		action = BiofilterAction::PrintSampleConfig;
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "--DB")==0){
-		return SetConfigValue(nextCmd, argc, "SETTINGS_DB", argv[nextCmd], "--DB must be followed by a database filename");
-	}
-	if (strcmp(argv[curr], "-b")==0 || strcmp(argv[curr], "--binary")==0){
-		return SetConfigValue(nextCmd, argc, "BINARY_MODEL_ARCHIVE", argv[nextCmd], "--binary must be followed by Yes/No");
-	}
-	if (strcmp(argv[curr], "-D")==0) {
-		cfg.SetValue("DETAILED_REPORTS", "ON");
-		return nextCmd;
-	}
-	if (strcmp(argv[curr], "-B")==0 || strcmp(argv[curr], "--build")==0) {
-		if (nextCmd < argc) {
-			cfg.SetValue("GENOMIC_BUILD", argv[nextCmd++]);
-			return nextCmd;
-		} else {
-			action = BiofilterAction::ParseError;
-			std::cerr<<"--build must be followed by an appropriate build number (35, 36, etc.)\n";
-			return -1;
-		}
-	}
-
-	if (strcmp(argv[curr], "-k")==0 || strcmp(argv[curr], "--knowledge-threshold")==0){
-		return SetConfigValue(nextCmd, argc, "BIN_COLLAPSE_THRESHOLD", argv[nextCmd], "--knowledge-threshold must be followed by the max number of SNPs allowed in knowledge based bins.");
-	}
-	if (strcmp(argv[curr], "-t")==0 || strcmp(argv[curr], "--maf-threshold")==0){
-		return SetConfigValue(nextCmd, argc, "MAF_CUTOFF", argv[nextCmd], "--MAF_CUTOFF must be followed by maf threshold value");
-	}
-	if (strcmp(argv[curr], "--PREFIX")==0){
-		return SetConfigValue(nextCmd, argc, "REPORT_PREFIX", argv[nextCmd], "--PREFIX must be followed by prefix to be prepended to the generated filenames");
-	}
-	if (strcmp(argv[curr], "-p")==0 || strcmp(argv[curr], "--set-population")==0){
-		return SetConfigValue(nextCmd, argc, "POPULATION", argv[nextCmd], "--set-population must be followed by name population you wish to use");
-	}
-	if (strcmp(argv[curr], "--gene-boundary")==0){
-		return SetConfigValue(nextCmd, argc, "GENE_BOUNDARY_EXTENSION", argv[nextCmd], "--gene-boundary must be followed by an integer describing the number of bases");
-	}
-	if (strcmp(argv[curr], "-V")==0 || strcmp(argv[curr], "--vcf-file")==0){
-		return SetConfigValue(nextCmd, argc, "VCF_FILE", argv[nextCmd], "--vcf-file must be followed by the name of a vcf file.");
-	}
-	if (strcmp(argv[curr], "-z")==0 || strcmp(argv[curr], "--gzipped vcf")==0){
-		return SetConfigValue(nextCmd, argc, "COMPRESSED_VCF", argv[nextCmd], "--gzipped vcf must be followed by YES/NO.");
-	}
-	action = BiofilterAction::ParseError;
-	std::cerr<<"Unrecognized parameter: "<<argv[curr]<<"\n";
-	return -1;
-}
-*/
-
 }
 
 
@@ -317,9 +208,9 @@ int main(int argc, char *argv[]) {
 	try {
 		app->RunCommands();
 	}
-	catch (Utility::Exception::General& e) {
+	catch (std::exception& e) {
 		BioBin::BinApplication::errorExit = true;
-		std::cerr<<"\nError: \t"<<e.GetErrorMessage()<<" Unable to continue.\n";
+		std::cerr<<"\nError: \t"<<e.what()<<".  Unable to continue.\n";
 	}
 
 	delete app;

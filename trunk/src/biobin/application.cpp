@@ -11,18 +11,11 @@
 #include <sstream>
 
 #include <sqlite3.h>
-//#include <soci-sqlite3.h>
-//#include "utility/filetools.h"
-//#include "taskgenecoverage.h"
-//#include "ldsplineimporter.h"
 
 #include "knowledge/liftover/ConverterSQLite.h"
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
 #include "knowledge/GroupCollectionSQLite.h"
-//#include "liftover/converterdb.h"
-
-#include "utility/exception.h"
 
 namespace BioBin {
 
@@ -138,7 +131,7 @@ void Application::Init(const string& filename, bool reportVersion) {
 	}
 
 	if (!fileFound){
-		throw Utility::Exception::FileNotFound(filename.c_str());
+		throw std::ios_base::failure("File " + filename + " not found");
 	}
 
 	sqlite3_open(filename.c_str(), &_db);

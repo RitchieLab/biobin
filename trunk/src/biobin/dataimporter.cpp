@@ -13,16 +13,6 @@
 
 using std::pair;
 
-/***
- * This is going to require some additional work to allow it to be 
- * broken into pieces. Right now, we have no idea which index SNP 0 is
- * for a given chromosome. 
- * 
- * So, for now, this is only going to work if you have a single dataimporter
- * object. However, if you want to use parallel stuff, or deal with different
- * files, that needs to be fixed...
- */
-
 using Knowledge::Locus;
 
 namespace BioBin {

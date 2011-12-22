@@ -14,8 +14,6 @@ namespace Task {
 
 bool Task::detailedReport = true;
 
-//Task::Task() : regions(NULL), snps(NULL) { }
-
 Task::Task(int t, Application* app) : _task_type(t) {
 	app->AddReport(GetFileSuffix(), GetFileExtension(), GetFileDescription());
 }

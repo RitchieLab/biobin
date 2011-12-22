@@ -19,7 +19,6 @@ biobin_SOURCES= \
    taskfilegeneration.cpp \
    PopulationManager.h \
    PopulationManager.cpp \
-   timestamp.h \
    Configuration.h \
    Configuration.cpp
    
@@ -32,7 +31,7 @@ AM_LDFLAGS=$(BOOST_LDFLAGS)
 
 biobin_LDFLAGS=
 
-biobin_LDADD=../utility/libutility.la \
+biobin_LDADD=\
 	../knowledge/libknowledge.la \
 	../vcftools/libvcftools.la \
 	$(SQLITE_LIBS) \

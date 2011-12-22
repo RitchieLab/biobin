@@ -14,7 +14,6 @@
 #include <string>
 #include <utility>
 
-//#include "individual.h"
 #include "knowledge/GroupCollection.h"
 #include "knowledge/RegionCollection.h"
 #include "knowledge/Group.h"

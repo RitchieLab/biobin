@@ -6,7 +6,6 @@
  */
 
 #include "taskfilegeneration.h"
-#include "utility/strings.h"
 
 #include "binapplication.h"
 

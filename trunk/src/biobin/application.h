@@ -18,20 +18,6 @@
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>
-//using boost::filesystem;
-
-// Rewriting regionManager and groupManager from scratch
-//#include "knowledge/regionmanagerdb.h"
-//#include "knowledge/groupmanagerdb.h"
-
-//#include "knowledge/genegenemodelarchive.h"
-//#include "knowledge/snpdataset.h"
-//#include "knowledge/def.h"
-//#include "liftover/converterdb.h"
-
-using std::string;
-using std::vector;
-using std::map;
 
 #include "knowledge/Locus.h"
 #include "knowledge/GroupCollection.h"
@@ -41,6 +27,8 @@ using std::map;
 #include "knowledge/GroupCollectionSQLite.h"
 
 using std::string;
+using std::vector;
+using std::map;
 
 namespace BioBin {
 

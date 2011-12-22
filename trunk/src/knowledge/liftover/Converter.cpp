@@ -7,11 +7,10 @@
 
 #include "Converter.h"
 
+#include <iostream>
+#include <fstream>
 #include <utility>						// std::make_pair
-#include <boost/algorithm/string/split.hpp>
-
-// TODO: remove dependency on utility/exception here
-#include "utility/exception.h"
+#include <boost/algorithm/string.hpp>
 
 #include "Chain.h"
 #include "knowledge/Locus.h"
@@ -142,8 +141,9 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out) const{
 
 	std::ifstream file(mapFilename.c_str());
-	if (!file.good())
-		throw Utility::Exception::FileNotFound(mapFilename.c_str());
+	if (!file.good()){
+		throw std::ios_base::failure("File " + mapFilename + " not found");
+	}
 
 	string line;
 	vector<string> words;
@@ -163,84 +163,3 @@ void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out
 } // namespace Knowledge
 
 
-
-
-#ifdef TEST_APP
-
-#include <gtest/gtest.h>
-using namespace LiftOver;
-
-TEST(LoConversionTest, ConversionBasic) {
-	std::string chunk;
-	chunk = std::string("chain 788625 chr10 135374737 + 81241464 81249852 chr10 135534747 + 81251575 81259959 6147\n")
-		   + "783     1       0\n"
-			+ "883     23      33\n"
-		   + "3247    1       0\n"
-			+ "143     31      31\n"
-		   + "957     15      3\n"
-			+ "2304\n";
-
-	/**
-	 * This results in the following local / remote pairs:
-	 *
-	 * 81241464	81242247	-	81251575	81252358
-	 * 81242248	81243131	-	81252358	81253241
-	 * 81243154	81246401	-	81253274	81256521
-	 * 81246402	81246545	-	81256521	81256664
-	 * 81246576	81247533	-	81256695	81257652
-	 * 81247548	81249852	-	81257655	81259959
-	 */
-
-	Converter cnv("old", "new");
-	cnv.AddChain(chunk.c_str());
-	chunk = std::string("chain 870863 chr10 113275 + 9144 18556 chr10 135534747 - 46779061 46789268 4835\n")
-		   + "301     2       0\n"
-			+ "564     3       0\n"
-		   + "802     1       0\n"
-			+ "2624    0       112\n"
-		   + "142     0       2\n"
-		   + "128     100     787\n"
-			+ "4745\n";
-
-	cnv.AddChain(chunk.c_str());
-	SnpArray snps;
-
-	int chr = Utility::ChromToInt("10");
-
-	SNP s1(chr, 81241464, "rs1", 1);			// 81251575
-	SNP s2(chr, 81241564, "rs2", 1);			// 81251675
-	SNP s3(chr, 81242948, "rs3", 1);			// 81253058
-	SNP s4(chr, 81246876, "rs4", 1);			// 81256995
-	SNP s5(chr, 9244,     "rs5", 1);			// 88755586
-	SNP s6(chr, 13941,	 "rs6", 1);			// 88751783
-
-	snps.push_back(s1);
-	snps.push_back(s2);
-	snps.push_back(s3);
-	snps.push_back(s4);
-	snps.push_back(s5);
-	snps.push_back(s6);
-	
-	std::multimap<SNP, SNP> conversions;
-	cnv.ConvertDataset(snps, conversions);
-
-	SnpArray::iterator itr = snps.begin();
-	SnpArray::iterator end = snps.end();
-
-	while (itr != end) {
-		//std::cout<<"chr"<<(int)itr->chr<<"\t"<<itr->pos<<"\t"<<itr->RSID()<<"\n";
-		SNP s = *itr;
-
-		std::multimap<SNP, SNP>::iterator citr = conversions.lower_bound(s);
-		std::multimap<SNP, SNP>::iterator cend = conversions.upper_bound(s);
-
-		while (citr != cend) {
-			//std::cout<<"\tchr"<<(int)citr->second.chr<<"\t"<<citr->second.pos<<"\t"<<citr->second.RSID()<<"\n";
-			citr++;
-		}
-		itr++;
-	}
-
-}
-
-#endif

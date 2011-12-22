@@ -12,11 +12,6 @@
 
 #include <sys/types.h>
 
-//#include "utility/types.h"
-//#include "knowledge/regionmanager.h"
-//#include "knowledge/snpdataset.h"
-//#include "application.h"
-
 using std::string;
 
 namespace BioBin {
