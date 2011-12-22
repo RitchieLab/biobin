@@ -18,13 +18,56 @@ using Knowledge::Locus;
 
 namespace BioBin{
 
-void PopulationManager::loadIndividuals(DataImporter& importer){
+float PopulationManager::c_phenotype_control = 0;
+vector<string> PopulationManager::c_phenotype_files;
+float PopulationManager::c_min_control_frac = 0.125;
+
+const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 	const vector<string>& indivs = importer.getIndividualIDs();
 
 	int size = indivs.size();
 	for (int i=0; i<(size); ++i){
 		_positions[indivs[i]] = i;
 	}
+
+	// By default, everyone is a control who is not found in a phenotype file
+	_is_control = vector<bool>(size, true);
+
+	// OK, now iterate through the phenotype files and load them up
+	vector<string>::const_iterator itr = c_phenotype_files.begin();
+	vector<string>::const_iterator end = c_phenotype_files.end();
+
+	while(itr != end){
+		parsePhenotypeFile(*itr);
+		++itr;
+	}
+
+	// Now, we go through and determine who is a case and who is a control
+	map<string, int>::const_iterator p_itr = _positions.begin();
+	map<string, int>::const_iterator p_end = _positions.end();
+	map<string, float>::const_iterator pheno_itr;
+	map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
+	int total = 0;
+	int control = 0;
+	while(p_itr != p_end){
+		pheno_itr = _phenotypes.find((*p_itr).first);
+		++total;
+		if (pheno_itr == pheno_not_found || (*pheno_itr).second == c_phenotype_control){
+			++control;
+		}else{
+			_is_control[(*p_itr).second] = false;
+		}
+		++p_itr;
+	}
+
+	// If we don't have enough controls, print a warning and make everyone a control
+	if ((total / (float) control) < c_min_control_frac){
+		std::cerr << "WARNING: Number of controls is less than " <<
+				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
+		_is_control = vector<bool>(size, true);
+	}
+
+	return _is_control;
 }
 
 

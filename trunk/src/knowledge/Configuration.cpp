@@ -27,7 +27,7 @@ using boost::algorithm::is_any_of;
 
 namespace Knowledge{
 
-po::options_description Configuration::_generic;
+po::options_description Configuration::_generic("LOKI Options");
 po::options_description Configuration::_cmd;
 po::options_description Configuration::_hidden;
 po::options_description Configuration::_config;
@@ -114,7 +114,7 @@ void Configuration::printConfig(std::ostream& os){
 			string name = (*itr)->semantic()->name();
 			if(name.find_last_of('=') != string::npos){
 				int eq_pos = name.find_last_of('=');
-				txt_val = name.substr(eq_pos - 1, name.find_last_of(')') - eq_pos - 1);
+				txt_val = name.substr(eq_pos + 1, name.find_last_of(')') - eq_pos - 1);
 			}
 		}else{
 			os << "#";

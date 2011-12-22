@@ -61,7 +61,7 @@ public:
 	 * @param loci_out The vector of Locus objects to append to
 	 */
 	template <class T_cont>
-	void getLoci(T_cont& loci_out);
+	void getLoci(T_cont& loci_out, const vector<bool>& controls=vector<bool>());
 
 	static bool CompressedVCF;					///< gzipped file Y/N
 
@@ -87,7 +87,9 @@ private:
 };
 
 template <class T_cont>
-void DataImporter::getLoci(T_cont& loci_out) {
+void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
+
+
 
 	std::set<std::string> unknownChromosomes;
 	//T_cont::const_iterator pos = loci_out.end();
@@ -109,7 +111,15 @@ void DataImporter::getLoci(T_cont& loci_out) {
 		entry.parse_basic_entry(true);
 		entry.parse_genotype_entries(true);
 		uint alleleCount = entry.get_N_alleles();
-		entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+
+		// To deal with the default parameter, we really just want to use
+		// vcf.include_indivs, but NOOOO C++ has to be a pain
+		if(controls.size() == 0){
+			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
+		}else{
+			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+
+		}
 		nonMissingChrCount = nmcc;
 
 		Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),entry.get_ID());

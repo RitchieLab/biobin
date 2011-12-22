@@ -11,10 +11,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
+#include <boost/filesystem.hpp>
 
 #include "main.h"
 #include "binmanager.h"
 #include "taskfilegeneration.h"
+#include "application.h"
+#include "PopulationManager.h"
 
 using std::string;
 using std::vector;
@@ -24,7 +27,7 @@ using boost::shared_ptr;
 
 namespace BioBin{
 
-po::options_description Configuration::_generic;
+po::options_description Configuration::_generic("BioBin Options");
 po::options_description Configuration::_cmd;
 po::options_description Configuration::_hidden;
 po::options_description Configuration::_config;
@@ -38,6 +41,7 @@ void Configuration::initGeneric(){
 	_generic.add_options()
 		("settings-db,D", value<string>(&Main::c_knowledge_file)->default_value("knowledge.bio"),
 				"The location of the database")
+		("vcf-file,V",value<string>(&Main::c_vcf_file), "The file containing VCF information")
 		("compressed-vcf,C", "Flag indicating VCF file is compressed")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
@@ -49,7 +53,7 @@ void Configuration::initGeneric(){
 				"A list of filenames containing a group collection definition")
 		("output-delimiter,d",value<string>(&Task::GenerateFiles::OutputDelimiter)->default_value(","),
 				"The delimiter to use when outputting text files")
-		("phenotype-filename,p",value<vector<string> >()->composing(),
+		("phenotype-filename,p",value<vector<string> >(&PopulationManager::c_phenotype_files)->composing(),
 				"Filename containing phenotype information")
 		("bin-minimum-size,m", value<uint>(&BinManager::MinBinSize)->default_value(5),
 				"The minimum size of any bin")
@@ -63,7 +67,11 @@ void Configuration::initGeneric(){
 		("no-bins,b","Flag indicating desire to not write bin report")
 		("no-genotypes,g","Flag indicating desire to not write genotype report")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
-				"Genomic build of input data");
+				"Genomic build of input data")
+		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
+				"Phenotype control value")
+		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125),
+				"Minimum fraction of population needed for control cases");
 
 	_generic_init = true;
 }
@@ -132,7 +140,7 @@ void Configuration::printConfig(std::ostream& os){
 			eq_pos = name.find_last_of('=');
 			if(name.find_last_of('=') != string::npos){
 				eq_pos = name.find_last_of('=');
-				txt_val = name.substr(eq_pos - 1, name.find_last_of(')') - eq_pos - 1);
+				txt_val = name.substr(eq_pos + 1, name.find_last_of(')') - eq_pos - 1);
 			}
 		}else{
 			os << "#";
@@ -155,14 +163,29 @@ void Configuration::parseOptions(const po::variables_map& vm){
 
 	if(vm.count("bin-expand-exons")){
 		BinManager::ExpandByExons = true;
+		std::cerr<<"WARNING: expansion into exons is not currently supported.\n";
 	}
 
 	if(vm.count("bin-expand-functions")){
 		BinManager::ExpandByFunction = true;
+		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
 	}
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
+	}
+
+	if(vm.count("vcf-file")){
+		string fn(boost::filesystem::path(vm["vcf-file"].as<string>()).filename().string());
+		Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
+	}
+
+	if(vm.count("include-sources")){
+		std::cerr<<"WARNING: include-sources functionality has not been implemented yet.\n";
+	}
+
+	if(vm.count("include-source-file")){
+		std::cerr<<"WARNING: include-source-file functionality has not been implemented yet.\n";
 	}
 
 }

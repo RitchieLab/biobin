@@ -64,8 +64,8 @@ public:
      */
 	void InitBins();
 
-	template<class T_cont>
-	void loadPhenotypes(const T_cont& pheno_files){_pop_mgr.loadPhenotypes(pheno_files);}
+	//template<class T_cont>
+	//void loadPhenotypes(const T_cont& pheno_files){_pop_mgr.loadPhenotypes(pheno_files);}
 
 	void writeBinData(const string& filename, const string& sep=",") const;
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
@@ -88,6 +88,9 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 
 	std::cerr<<"Loading VCF Data\n";
 
+	// First things first, let's load our individuals
+	const vector<bool>& controls = _pop_mgr.loadIndividuals(vcfimporter);
+
 	//locusRemap.clear();
 	//locusRemap.reserve(locusArray.size());
 	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
@@ -96,7 +99,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	if (chainCount > 0) {
 		vector <Knowledge::Locus*> locusArray;
 		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
-		vcfimporter.getLoci(locusArray);
+		vcfimporter.getLoci(locusArray, controls);
 
 		std::string conversionLog = this->AddReport("lift-over", "tsv", "SNPs that were lifted over to new build which differed dramatically or changed chromosome");
 		std::ofstream cnvLog(conversionLog.c_str());
@@ -160,11 +163,9 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 			file<<missingSNPs.str();
 		}
 	} else {
-		vcfimporter.getLoci(dataset);
+		vcfimporter.getLoci(dataset, controls);
 	}
 
-	// OK, now that we've loaded the dataset, we can load up the individuals
-	_pop_mgr.loadIndividuals(vcfimporter);
 	_pop_mgr.loadGenotypes(dataset, vcfimporter);
 
 }

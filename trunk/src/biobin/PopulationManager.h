@@ -20,7 +20,7 @@
 
 using std::vector;
 using std::string;
-//using std::map;
+using std::map;
 using std::ostream;
 using boost::unordered_map;
 
@@ -39,9 +39,9 @@ public:
 	PopulationManager(){}
 
 	// Loading functions
-	void loadIndividuals(DataImporter& importer);
-	template <class str_cont>
-	void loadPhenotypes(const str_cont& phenotype_filenames);
+	const vector<bool>& loadIndividuals(DataImporter& importer);
+	//template <class str_cont>
+	//void loadPhenotypes(const str_cont& phenotype_filenames);
 	template <class Locus_cont>
 	void loadGenotypes(const Locus_cont& dataset, DataImporter& importer);
 
@@ -53,6 +53,11 @@ public:
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	void printGenotypes(ostream& os, const string& sep=",") const;
 
+	static float c_phenotype_control;
+	static vector<string> c_phenotype_files;
+
+	static float c_min_control_frac;
+
 private:
 
 	// NO copying or assignment!
@@ -63,12 +68,14 @@ private:
 
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
+	// _is_control can be passed to the VCF parser
+	vector<bool> _is_control;
 	map<Knowledge::Locus*, vector<short> > _genotype_map;
 	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
 };
 
-
+/*
 template <class str_cont>
 void PopulationManager::loadPhenotypes(const str_cont& phenotype_files){
 	vector<string>::const_iterator itr = phenotype_files.begin();
@@ -79,7 +86,7 @@ void PopulationManager::loadPhenotypes(const str_cont& phenotype_files){
 		++itr;
 	}
 }
-
+*/
 
 template <class Locus_cont>
 void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){

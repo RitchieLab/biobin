@@ -27,8 +27,9 @@
 namespace BioBin {
 
 bool Application::errorExit = false;
+std::string Application::reportPrefix = "biobin";
 
-Application::Application() : dbFilename(""), varVersion(0), geneExtensionLength(0), htmlReports(false), reportPrefix("report") {}
+Application::Application() : dbFilename(""), varVersion(0), geneExtensionLength(0), htmlReports(false) {}
 
 Application::~Application(){
 	sqlite3_close(_db);

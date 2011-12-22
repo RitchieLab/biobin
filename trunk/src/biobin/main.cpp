@@ -104,6 +104,14 @@ void Main::initTasks(){
 	_task_list.insert(std::make_pair(t->getType(), t));
 }
 
+
+
+void Main::LoadSNPs(DataImporter& vcf) {
+	vector<string> lostSnps;
+	app.InitVcfDataset(c_genome_build, lostSnps, vcf);
+	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
+}
+
 /*
 
 bool Main::ParseCmdLine(int argc, char **argv) {
@@ -145,12 +153,6 @@ bool Main::ParseCmdLine(int argc, char **argv) {
 	return true;
 }
 */
-
-void Main::LoadSNPs(DataImporter& vcf) {
-	vector<string> lostSnps;
-	app.InitVcfDataset(c_genome_build, lostSnps, vcf);
-	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
-}
 
 /*
 int Main::SetConfigValue(int nextCmd, int argc, const char *var, const char *val, const char *err) {
@@ -226,7 +228,7 @@ int main(int argc, char *argv[]) {
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
-	po::options_description cmd("Biobin Options");
+	po::options_description cmd("General Options");
 	cmd.add_options()
 				("help,h","Display help message")
 				("version,v","Display version")

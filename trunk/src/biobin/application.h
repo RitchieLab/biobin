@@ -107,6 +107,7 @@ public:
 	Knowledge::GroupCollection* GroupManager(uint idx);
 
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
+	static std::string reportPrefix;
 
 protected:
 	uint GetPopID(const string& pop);
@@ -140,8 +141,7 @@ protected:
 	uint geneExtensionLength;
 	///< Turn on/off HTML report generation
 	bool htmlReports;
-	///< Report Prefix
-	std::string reportPrefix;
+
 
 	///< Converter structure for map files (using liftover chains)
 	Knowledge::Liftover::Converter* buildConverter;

@@ -9,7 +9,13 @@
 #define BIOBIN_CONFIGURATION_H
 
 #include <boost/program_options.hpp>
+#include <boost/any.hpp>
 #include <iostream>
+#include <vector>
+#include <string>
+
+using std::string;
+using std::vector;
 
 namespace po = boost::program_options;
 
@@ -42,6 +48,9 @@ private:
 
 	static void initAll();
 
+	template <class T>
+	static void validate(boost::any& v, const vector<string>& values, vector<T>*, int);
+
 	// Options allowed in both command line and config file
 	static po::options_description _generic;
 	// Options allowed only in the config file
@@ -57,9 +66,25 @@ private:
 	static bool _hidden_init;
 
 };
+
+
+template <class T>
+void Configuration::validate(boost::any& v, const vector<string>& values, vector<T>*, int){
+	if(v.empty()){
+		v = boost::any(vector<T>());
+	}
+
+	vector<T>* val_vec_ptr = boost::any_cast<vector<T> >(&v);
+
+	vector<string>::const_iterator itr = values.begin();
+	vector<string>::const_iterator end = values.end();
+	while(itr != end){
+		val_vec_ptr->push_back(boost::lexical_cast<T>(*itr));
+		++itr;
+	}
 }
 
-
+}
 
 
 #endif /* CONFIGURATION_H_ */
