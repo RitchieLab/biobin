@@ -88,14 +88,18 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 		getline(data_file, line);
 		split(result, line, is_any_of(" \n\t"));
 
-		if (result.size() < 2){
-			std::cerr << "WARNING: improperly formatted phenotype file";
-		}
+		if (result.size() && result.size() < 2){
+			std::cerr << "WARNING: improperly formatted phenotype file.\n";
+		}else if(result.size()){
+			if (_positions.find(result[0]) == _positions.end()){
+				std::cerr << "WARNING: cannot find " << result[0] << " in VCF file.\n";
+			}
 
-		try{
-			_phenotypes[result[0]] = lexical_cast<int>(result[1]);
-		}catch(bad_lexical_cast&){
-			_phenotypes[result[0]] = -1;
+			try{
+				_phenotypes[result[0]] = lexical_cast<int>(result[1]);
+			}catch(bad_lexical_cast&){
+				_phenotypes[result[0]] = -1;
+			}
 		}
 	}
 }

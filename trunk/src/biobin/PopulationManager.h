@@ -75,19 +75,6 @@ private:
 
 };
 
-/*
-template <class str_cont>
-void PopulationManager::loadPhenotypes(const str_cont& phenotype_files){
-	vector<string>::const_iterator itr = phenotype_files.begin();
-	vector<string>::const_iterator end = phenotype_files.end();
-
-	while(itr != end){
-		parsePhenotypeFile(*itr);
-		++itr;
-	}
-}
-*/
-
 template <class Locus_cont>
 void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
 
