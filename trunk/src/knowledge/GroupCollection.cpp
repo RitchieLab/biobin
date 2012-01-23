@@ -28,6 +28,7 @@ namespace Knowledge{
 
 vector<string> GroupCollection::c_group_names;
 unordered_set<uint> GroupCollection::c_id_list;
+uint GroupCollection::_max_group = 0;
 
 GroupCollection::GroupCollection(uint id, const string& name) :
 	_id(id), _name(name), _group_not_found(-1,"Not Found") {}
@@ -52,8 +53,8 @@ void GroupCollection::addRelationship(uint parent_id, uint child_id){
 	unordered_map<uint, Group*>::const_iterator end = _group_map.end();
 	if (parent_itr != end && child_itr != end){
 		_group_relationships[parent_id].insert(child_id);
-		parent_itr->second->addChild(child_itr->second);
-		child_itr->second->addParent(parent_itr->second);
+		parent_itr->second->addChild(*(child_itr->second));
+		//child_itr->second->addParent(*(parent_itr->second));
 	}
 }
 
@@ -63,7 +64,7 @@ void GroupCollection::addAssociation(uint group_id, uint region_id,
 	if (itr != _group_map.end()){
 		Region& child = regions[region_id];
 		if (regions.isValid(child)){
-			itr->second->addRegion(&child);
+			itr->second->addRegion(child);
 			child.addGroup(_id, *(itr->second));
 			_group_associations[group_id].insert(&child);
 		}
@@ -108,7 +109,7 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 	ifstream data_file(filename.c_str());
 	if (!data_file.is_open()){
 		std::cerr<<"WARNING: cannot find " << filename <<", ignoring.";
-		return 0;
+		return 1;
 	}
 
 	// Read the definition of the meta-group
@@ -127,7 +128,7 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 	if (!(result[0] == "GROUP")){
 		std::cerr<<"WARNING: Invalid formatting in archive file.  "
 				<< filename << " will be ignored.";
-		return 0;
+		return 2;
 	}
 
 	uint num_groups = 0;
@@ -166,7 +167,7 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 		}
 	}
 
-	return num_groups;
+	return 0;
 }
 
 uint GroupCollection::initGroupFromArchive(const vector<string>& split_line){

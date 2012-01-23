@@ -75,7 +75,7 @@ Knowledge::GroupCollection* Application::GroupManager(uint idx) {
 string Application::GetReportLog() {
 	return reportLog.str();
 }
-
+/*
 void Application::ListGenes(std::ostream& os, const vector<string>& aliasList, const vector<string>& aliasType) {
 	_info->listRegions(os, aliasList, aliasType);
 }
@@ -87,6 +87,7 @@ void Application::ListGroupIDs(std::ostream& os, const vector<string>& searchLis
 void Application::ListPopulationIDs(std::ostream& os) {
 	_info->listPopulationIDs(os);
 }
+*/
 
 string Application::AddReport(const string& suffix, const string& extension, const string& description) {
 	string newFilename(reportPrefix);

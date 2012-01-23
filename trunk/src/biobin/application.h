@@ -71,18 +71,19 @@ public:
 	/**
 	 * Streams population IDs to stdout
 	 */
-	void ListPopulationIDs(std::ostream& os);
+	//void ListPopulationIDs(std::ostream& os);
 
 	/**
 	 * Generates group/ID report showing meta groups, their children and all IDs in the current dataset
 	 */
-	void ListGroupIDs(std::ostream& os, const vector<string>& searchList);
+	//void ListGroupIDs(std::ostream& os, const vector<string>& searchList);
 
 	/**
 	 * Update the database with new variation filename (allow users to move the file to a permanent location specific to their system)
 	 */
 	//void SetVariationFilename(const string& variationFilename);
-	void ListGenes(std::ostream& os, const vector<string>& aliasList, const vector<string>& aliasType);
+
+	//void ListGenes(std::ostream& os, const vector<string>& aliasList, const vector<string>& aliasType);
 
 	void SetGeneExtension(uint geneBoundaryExt);
 	void SetReportPrefix(const string& pref);
@@ -201,8 +202,8 @@ uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups,
 		//Give some bogus groupType, since it will be found in the file
 		Knowledge::GroupCollection* new_group =
 				new Knowledge::GroupCollectionSQLite(++max_id, fn, _db);
-		totalGroupsLoaded +=
-				new_group->LoadArchive(*regions, fn, unmatchedAliases);
+		new_group->LoadArchive(*regions, fn, unmatchedAliases);
+		totalGroupsLoaded += new_group->size();
 		groups[max_id] = new_group;
 		++udItr;
 	}

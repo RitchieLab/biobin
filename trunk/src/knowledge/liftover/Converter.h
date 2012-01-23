@@ -46,7 +46,7 @@ public:
 	void ConvertDataset(T_iter itr, const T_iter& end, T_cont& newBuild, std::ostream& droppedLog);
 
 	/**
-	 * Takes a map filename and returns the new Locus objects in teh supplied
+	 * Takes a map filename and returns the new Locus objects in the supplied
 	 * container.
 	 */
 	template <class T_cont>

@@ -25,95 +25,217 @@ using std::ostream;
 
 namespace Knowledge{
 
+/*!
+ * \brief A class representing a locus in the genome.
+ * This class represents a locus, which we have defined as a single position
+ * on a chromosome that has some variation between individuals.  Traditionally,
+ * these have been SNPs, but a Locus is somewhat more general, as we may have
+ * any variant at this location.  This class will keep track of all the
+ * different alleles possible at this position.
+ *
+ * NOTE: The user of this class must ensure that no two loci will have the
+ * same chromosome and position.
+ */
 class Locus{
 
 public:
 
-	/**
-	 * Constructs a Locus object using the chromosome string (preferrable)
+	/*!
+	 * \brief Constructs a Locus object using the chromosome string.
+	 * This constructor uses the chromosome string, along with the position to
+	 * define a single locus.  Optionally, a user can provide an ID, which could
+	 * correspond to an RSID.  If not provided, a unique ID will be created in
+	 * the form "chr#-pos"
+	 *
+	 * \param chrom_str The chromosome string ID of the chromosome (see the _chrom_list variable for acceptable formatting)
+	 * \param pos The position on the chromosome of this locus
+	 * \param id The unique ID string of this locus (optional)
 	 */
 	Locus(const string& chrom_str, uint pos, const string& id="");
 
-	/**
-	 * Constructs a locus object using the chromosome index.
-	 * (This is typically chromosome # - 1, where X=23, Y=24, XY=25, MT=26
+	/*!
+	 * \brief Constructs a locus object using the chromosome index.
+	 * This constructor uses the chromosome index, which is what is directly
+	 * stored in the object.  Typically, this is chromosome # - 1, where X=23,
+	 * Y=24, XY=25, MT=26 (though this is subject to change, and will be
+	 * different for species other than humans).  Again, an optional ID can be
+	 * provided, and if not provided, one will be created.
+	 *
+	 * \param chrom The chromosome index of the chromosome
+	 * \param pos The position on the chromosome of the locus
+	 * \param id The unique ID string of this locus (optional)
 	 */
 	Locus(short chrom, uint pos, const string& id="");
 
-	/**
-	 * Add an associated allele to this particular Locus
+	/*!
+	 * \brief Add an associated allele to this particular Locus.
+	 * This function adds an allele to this locus, given the data and the
+	 * frequency.  The position of the allele (see Allele) is autoincremented,
+	 * starting at 0.  It is incumbent upon the user to ensure that the
+	 * frequency of all alleles will sum to 1.
+	 *
+	 * NOTE: It is assumed that the user will add all alleles before accessing
+	 * any of the encoding or decoding of genotype information.
+	 *
+	 * \param allele The data of the given allele
+	 * \param freq The frequency of the allele to add.
 	 */
 	void addAllele(const string& allele, float freq);
 
-	/**
-	 * Return the major allele frequency (that which is most common)
+	/*!
+	 * \brief Return the major allele frequency (that which is most common).
+	 * Returns the most common allele among all those that have been entered
+	 * already.  This is determined by the ordering of the Allele object.
+	 *
+	 * \return the major allele frequency.
 	 */
 	float majorAlleleFreq() const;
-	/**
-	 * Return the minor allele frequency (sum of all other alleles)
+
+	/*!
+	 * \brief Return the minor allele frequency (sum of all other alleles)
+	 * Returns the minor allele frequency.  In the case of a biallelic Locus,
+	 * this is simply the frequency of the allele that is present in the
+	 * minority of the population.  In the case of the multi-allelic genes, this
+	 * is the sum of all other alleles other than the major allele, or
+	 * 1-majorAlleleFreq().  Note that it is possible that the minor allele
+	 * frequency could be greater than 1/2 in the case of multi-allelic genes.
+	 *
+	 * \return The minor allele frequency.
 	 */
 	float minorAlleleFreq() const;
 
-	/**
-	 * Return the ID of this Locus (passed in)
+	/*!
+	 * Return the ID of this Locus (passed in or auto-generated).
+	 *
+	 * \return The unique ID of the Locus.
 	 */
 	const string& getID() const {return _id;};
-	/**
+
+	/*!
 	 * Return the string identifying the chromosome (see _chrom_list)
+	 *
+	 * \return The chromosome string of the Locus.
 	 */
 	const string& getChromStr() const {return getChromStr(_chrom);};
-	/**
+
+	/*!
 	 * Return the chromosome index of this Locus (helpful for indexing)
+	 *
+	 * \return The cromosome index of the Locus.
 	 */
 	short getChrom() const {return _chrom;};
-	/**
+
+	/*!
 	 * Return the position of this Locus
+	 *
+	 * \return The base pair location of this Locus.
 	 */
 	uint getPos() const {return _pos;};
-	/**
+
+	/*!
+	 * \brief Returns the position of the major allele.
 	 * Returns the position (alternate #) of the major allele.  Usually, this
-	 * will be 0 (reference allele), but not always
+	 * will be 0 (reference allele), but this is not a guarantee.  Typically,
+	 * will be used in determining if a bin contains a minor allele "hit".
+	 *
+	 * \return The alternate number of the major allele.
 	 */
 	uint getMajorPos() const {return (*_alleles.begin()).getPos();}
 
-	/**
-	 * Determine if the given allele is a minor allele or not
+	/*!
+	 * \brief Determine if the given allele is a minor allele or not
+	 * This function checks the given allele data against the major allele to
+	 * determine if the given allele is the major allele or not.  Note that if
+	 * the given allele is not actually in the allele list, this function will
+	 * still return "true", as it is not the same as the major allele.
+	 *
+	 * \param allele The allele data to check against the major allele
+	 *
+	 * \return A boolean that is false <==> the given allele is the major allele
 	 */
 	bool isMinor(const string& allele) const;
 
-	/**
-	 * Gives the distance from this Locus to another on the same chromosome.
-	 * If on different chromosomes, returns -1
+	/*!
+	 * \brief Returns the distance to another Locus.
+	 * Gives the distance (absolute value of the difference of the positions)
+	 * from this Locus to another on the same chromosome.  If on different
+	 * chromosomes, returns -1.
+	 *
+	 * \param other A Locus to determine distance
+	 *
+	 * \return The distance from this locus to the other (-1 if on different chromosomes)
 	 */
 	uint distance(const Locus& other) const;
-	/**
-	 * Comparison operator for use in STL ordered classes.
-	 * Ordered by chromosome then position.
+
+	/*!
+	 * \brief Comparison operator for use in STL ordered classes.
+	 * This compares 2 loci and orders them by chromosome then position.
+	 *
+	 * \param other The other Locus in the comparison
+	 *
+	 * \return
 	 */
 	bool operator<(const Locus& other) const;
 
-	/**
-	 * Encodes the genotype in a single value, which can the be decoded
+	/*!
+	 * \brief Encodes the genotype in a single value
+	 * This function encodes a given genotype, given as the positions a1 and a2,
+	 * which can the be decoded at a later time.  This is encoded as (# of
+	 * alleles)*a1 + a2 (similar to a bitmask).
+	 *
+	 * NOTE: After encoding a genotype, no further alleles should be added, or
+	 * the results will be incorrect.
+	 *
+	 * \param a1 The allele # on the 1st strand
+	 * \param a2 The allele # on the 2nd strand
+	 *
+	 * \return The encoded genotype
 	 */
 	short encodeGenotype(uint a1, uint a2) const;
 
-	/**
-	 * Decodes the genotype in a pair of values.  Inverse of encodeGenotype
+	/*!
+	 * \brief Decodes the genotype into a pair of values.
+	 * This function takes an encoded genotype and decodes it into two separate
+	 * allele positions.  This function is the inverse of encodeGenotype.
+	 *
+	 * NOTE: If alleles have been added after the genotype was encoded, this
+	 * function will give incorrect results.
+	 *
+	 * \param encoded_type The encoded genotype from encodeGenotype
+	 *
+	 * \return A pair of integers representing the allele numbers.
 	 */
 	pair<uint, uint> decodeGenotype(short encoded_type) const;
 
+	/*!
+	 * \brief A function to print a Locus.
+	 * This function prints a
+	 */
 	void print(ostream& o, const string& sep=",", bool printAlleles=false) const;
 
+	/*!
+	 * \brief a function to print the alleles
+	 */
 	void printAlleles(ostream& o, const string& sep="|") const;
 
-	/**
+	/*!
+	 * \brief Converts a chromosome index into a chromosome string
 	 * Helper function for converting a chromosome index to a chromosome string
 	 * NOTE: This is the inverse of getChrom below.
+	 *
+	 * \param chrom A chromosome index
+	 *
+	 * \return A chromosome string
 	 */
 	static const string& getChromStr(short chrom);
-	/**
-	 * Helper function for converting a chromosome string to an index
-	 * Inverse of getChromStr
+
+	/*!
+	 * \brief Converts chromosome string into an index
+	 * Helper function for converting a chromosome string to an index.  Inverse
+	 * of getChromStr
+	 *
+	 * \param chrom_str A chromosome string
+	 * \return The corresponding index for the chromosome
 	 */
 	static short getChrom(const string& chrom_str);
 
@@ -125,7 +247,8 @@ private:
 	Locus(const Locus&);
 	Locus& operator=(const Locus&);
 
-	/**
+	/*!
+	 * \brief Helper method for creating an ID
 	 * Method that creates an ID based on the chromosome and position and saves
 	 * the created Id into the _id member.
 	 */

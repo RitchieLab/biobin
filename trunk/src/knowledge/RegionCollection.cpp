@@ -113,9 +113,7 @@ void RegionCollection::Squeeze(){
 }
 
 void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
-	//assert(chrom > 0);
 	// Insert the region into the map
-
 	Region& new_region = *(new Region(name, id, chrom, effStart, effStop, trueStart, trueStop));
 
 	// WARNING: inserting a region with an identical ID will result in a memory leak!

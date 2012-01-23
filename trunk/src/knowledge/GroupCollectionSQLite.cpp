@@ -143,9 +143,10 @@ uint GroupCollectionSQLite::Load(RegionCollection& regions,
 }
 
 uint GroupCollectionSQLite::getMaxGroup() {
-	string query_str = "SELECT MAX(group_id) FROM groups";
-
-	sqlite3_exec(_db, query_str.c_str(), parseMaxGroupQuery, &_max_group, NULL);
+	if (_max_group == 0){
+		string query_str = "SELECT MAX(group_id) FROM groups";
+		sqlite3_exec(_db, query_str.c_str(), parseMaxGroupQuery, &_max_group, NULL);
+	}
 
 	return _max_group;
 
