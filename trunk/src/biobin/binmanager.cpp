@@ -19,7 +19,7 @@ using std::make_pair;
 
 namespace BioBin {
 
-uint BinManager::IntergenicBinWidth = 50000;
+uint BinManager::IntergenicBinWidth = 50;
 uint BinManager::BinTraverseThreshold = 50;
 uint BinManager::MinBinSize = 1;
 bool BinManager::ExpandByExons = false;
@@ -64,7 +64,7 @@ void BinManager::InitBins(
 			Bin* curr_bin;
 			if (r_itr == r_end){
 				//Add to intergenic
-				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / IntergenicBinWidth);
+				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinWidth*1000));
 				map<pair<short, int>, Bin*>::const_iterator i_bin =
 						_intergenic_bins.find(key);
 
