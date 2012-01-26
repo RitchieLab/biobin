@@ -135,7 +135,7 @@ void Application::Init(const string& filename, bool reportVersion) {
 		throw std::ios_base::failure("File " + filename + " not found");
 	}
 
-	sqlite3_open(filename.c_str(), &_db);
+	sqlite3_open(dbPath.c_str(), &_db);
 	_info = new Knowledge::InformationSQLite(_db);
 	regions = new Knowledge::RegionCollectionSQLite(_db);
 
