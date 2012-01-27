@@ -144,7 +144,7 @@ public:
 			return this->_set_iter == other._set_iter;
 		}
 
-		Group* const dereference() const {return *_set_iter;}
+		Group* const& dereference() const {return *_set_iter;}
 
 		// This should ALWAYS be empty!
 		static const set<Group*> _empty_set;
