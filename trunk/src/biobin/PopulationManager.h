@@ -48,6 +48,8 @@ public:
 	// Usage functions
 	int genotypeContribution(const Locus& locus) const;
 
+	const vector<bool>& getControls() const {return _is_control;}
+
 	// Printing functions
 	template <class Bin_cont>
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;

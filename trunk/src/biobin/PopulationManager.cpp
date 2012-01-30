@@ -65,6 +65,10 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 		std::cerr << "WARNING: Number of controls is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
 		_is_control = vector<bool>(size, true);
+	}else if(1-(total / (float) control) < c_min_control_frac){
+		std::cerr << "WARNING: Number of cases is less than " <<
+				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
+				" for cases may be unreliable\n";
 	}
 
 	return _is_control;

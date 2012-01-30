@@ -26,7 +26,6 @@
 
 #include "binmanager.h"
 #include "PopulationManager.h"
-//#include "individual.h"
 
 #include "dataimporter.h"
 
@@ -50,13 +49,12 @@ namespace BioBin {
 	
 class BinApplication : public Application {
 public:
-	BinApplication();
-	virtual ~BinApplication();
+	BinApplication(const string& vcf_file);
+	virtual ~BinApplication() {}
 
 	template <class SNP_cont>
 	void InitVcfDataset(string& genomicBuild,
-			SNP_cont& lostSnps,
-			DataImporter& vcfimporter);
+			SNP_cont& lostSnps);
 
 	/**
 	 * Initialize the bins.  After this call, the binmanager will have the final
@@ -70,6 +68,7 @@ public:
 	void writeBinData(const string& filename, const string& sep=",") const;
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
 	void writeLoci(const string& filename, const string& sep=",") const;
+	void writeAFData(const string& filename, const string& sep=",");
 
 
 	
@@ -80,16 +79,18 @@ private:
 
 	BinManager binData;
 
+	DataImporter _data;
+
 };
 
 
 template <class SNP_cont>
-void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps, DataImporter& vcfimporter) {
+void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
 
 	std::cerr<<"Loading VCF Data\n";
 
 	// First things first, let's load our individuals
-	const vector<bool>& controls = _pop_mgr.loadIndividuals(vcfimporter);
+	const vector<bool>& controls = _pop_mgr.loadIndividuals(_data);
 
 	//locusRemap.clear();
 	//locusRemap.reserve(locusArray.size());
@@ -99,7 +100,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	if (chainCount > 0) {
 		vector <Knowledge::Locus*> locusArray;
 		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
-		vcfimporter.getLoci(locusArray, controls);
+		_data.getLoci(locusArray, controls);
 
 		std::string conversionLog = this->AddReport("lift-over", "tsv", "SNPs that were lifted over to new build which differed dramatically or changed chromosome");
 		std::ofstream cnvLog(conversionLog.c_str());
@@ -163,10 +164,10 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 			file<<missingSNPs.str();
 		}
 	} else {
-		vcfimporter.getLoci(dataset, controls);
+		_data.getLoci(dataset, controls);
 	}
 
-	_pop_mgr.loadGenotypes(dataset, vcfimporter);
+	_pop_mgr.loadGenotypes(dataset, _data);
 
 }
 

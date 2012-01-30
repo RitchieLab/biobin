@@ -66,6 +66,7 @@ void Configuration::initGeneric(){
 		("no-loci,l","Flag indicating desire to not write locus report")
 		("no-bins,b","Flag indicating desire to not write bin report")
 		("no-genotypes,g","Flag indicating desire to not write genotype report")
+		("no-locus-freq,q","Flag indicating desire to not write Case v. Control Minor Allele Freq. report")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
@@ -186,6 +187,22 @@ void Configuration::parseOptions(const po::variables_map& vm){
 
 	if(vm.count("include-source-file")){
 		std::cerr<<"WARNING: include-source-file functionality has not been implemented yet.\n";
+	}
+
+	if(vm.count("no-loci")){
+		BioBin::Task::GenerateFiles::WriteLociData = false;
+	}
+
+	if(vm.count("no-bins")){
+		BioBin::Task::GenerateFiles::WriteBinData = false;
+	}
+
+	if(vm.count("no-genotypes")){
+		BioBin::Task::GenerateFiles::WriteGenotypeData = false;
+	}
+
+	if(vm.count("no-locus-freq")){
+		BioBin::Task::GenerateFiles::WriteAFData = false;
 	}
 
 }

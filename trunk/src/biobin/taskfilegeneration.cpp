@@ -15,6 +15,7 @@ namespace Task {
 bool GenerateFiles::WriteBinData = true;
 bool GenerateFiles::WriteGenotypeData = true;
 bool GenerateFiles::WriteLociData = true;
+bool GenerateFiles::WriteAFData = true;
 std::string GenerateFiles::OutputDelimiter = ",";
 
 GenerateFiles::GenerateFiles(BinApplication* app) :
@@ -25,11 +26,11 @@ void GenerateFiles::ExecuteTask() {
 	std::cerr << "Executing Dataset File Generation\n";
 
 	if (WriteBinData) {
-		std::string filename = _app->AddReport("data", "bins", "Bin Counts");
+		std::string filename = _app->AddReport("bins", "csv", "Bin Counts");
 		_app->writeBinData(filename);
 	}
 	if (WriteGenotypeData) {
-		std::string filename = _app->AddReport("data", "genotypes",
+		std::string filename = _app->AddReport("genotypes", "csv",
 				"Genotype Data");
 		_app->writeGenotypeData(filename);
 	}
@@ -37,6 +38,11 @@ void GenerateFiles::ExecuteTask() {
 		std::string filename = _app->AddReport("locus", "csv",
 				"Locus Data");
 		_app->writeLoci(filename);
+	}
+	if (WriteAFData){
+		std::string filename = _app->AddReport("AllFreq", "csv",
+				"Case vs. Conrol Allele Freq.");
+		_app->writeAFData(filename);
 	}
 }
 

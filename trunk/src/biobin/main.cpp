@@ -72,8 +72,7 @@ void Main::RunCommands() {
 		exit(1);
 	}
 
-	DataImporter vcfimporter(c_vcf_file);
-	LoadSNPs(vcfimporter);
+	LoadSNPs();
 
 	RunTasks(1);
 
@@ -105,9 +104,9 @@ void Main::initTasks(){
 
 
 
-void Main::LoadSNPs(DataImporter& vcf) {
+void Main::LoadSNPs() {
 	vector<string> lostSnps;
-	app.InitVcfDataset(c_genome_build, lostSnps, vcf);
+	app.InitVcfDataset(c_genome_build, lostSnps);
 	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
 }
 
@@ -116,8 +115,6 @@ void Main::LoadSNPs(DataImporter& vcf) {
 
 int main(int argc, char *argv[]) {
 	std::string cfgFilename;
-
-	BioBin::Main *app = new BioBin::Main();					///<The application object
 
 	po::options_description cmd("General Options");
 	cmd.add_options()
@@ -197,6 +194,8 @@ int main(int argc, char *argv[]) {
 
 	Knowledge::Configuration::parseOptions(vm);
 	BioBin::Configuration::parseOptions(vm);
+
+	BioBin::Main *app = new BioBin::Main();					///<The application object
 
 	app->initTasks();
 

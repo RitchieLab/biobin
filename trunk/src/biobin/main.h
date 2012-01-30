@@ -20,11 +20,9 @@ namespace Task{
 class Task;
 }
 
-class DataImporter;
-
 class Main {
 public:
-	Main(){}
+	Main() : app(c_vcf_file){}
 	~Main(){}
 	/**
 	 * @brief Pass the arguments to the application object
@@ -51,7 +49,7 @@ public:
 	static set<uint> c_source_ids;
 
 protected:
-	void LoadSNPs(DataImporter& vcf);
+	void LoadSNPs();
 
 	
 	//Configuration cfg;					///< Configuration settings

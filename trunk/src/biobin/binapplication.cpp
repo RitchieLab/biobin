@@ -17,14 +17,8 @@
 
 namespace BioBin {
 
-BinApplication::BinApplication() : binData(_pop_mgr) {
-}
-
-
-BinApplication::~BinApplication() {
-}
-
-
+BinApplication::BinApplication(const string& vcf_file) :
+		binData(_pop_mgr), _data(vcf_file) {}
 
 void BinApplication::InitBins() {
 	
@@ -90,6 +84,33 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		++itr;
 	}
 	locusFile.close();
+}
+
+void BinApplication::writeAFData(const string& filename, const string& sep){
+	std::ofstream freqFile(filename.c_str());
+
+	unordered_map<Knowledge::Locus*, float> case_maf;
+
+	_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
+
+	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
+	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+
+	freqFile << "Locus" << sep << "Control MAF" << sep << "Case MAF" << sep
+			<< "Bins\n";
+	while(itr != end){
+		freqFile << (*itr)->getID() << sep << (*itr)->minorAlleleFreq() << sep
+				<< case_maf[*itr] << sep;
+
+		binData.printBins(freqFile, *itr, "|");
+
+		freqFile << "\n";
+
+		++itr;
+	}
+
+	freqFile.close();
+
 }
 
 }

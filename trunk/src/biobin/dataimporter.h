@@ -30,6 +30,8 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <iostream>
 
 #include "knowledge/Locus.h"
 
@@ -40,6 +42,7 @@
 
 using std::string;
 using std::vector;
+using std::map;
 using boost::unordered_map;
 
 using Knowledge::Locus;
@@ -63,6 +66,10 @@ public:
 	template <class T_cont>
 	void getLoci(T_cont& loci_out, const vector<bool>& controls=vector<bool>());
 
+	template <class T_cont>
+	void getCaseAF(const T_cont& loci, const vector<bool>& controls,
+			unordered_map<Knowledge::Locus*, float>& maf_out);
+
 	static bool CompressedVCF;					///< gzipped file Y/N
 
 	uint individualCount() {return vcf.N_indv;}
@@ -78,12 +85,10 @@ private:
 
 	//uint totalIndividualEntries;				///< Number of individuals in the file(s)
 	VCF::vcf_file vcf;							///< This represents the vcf object we will be using
-	//VCF::vcf_entry entry;						///< This is used to extract data out of the file
 
-	// A map to keep track of where
+	// A map to keep track of where in the file a locus resides
 	unordered_map<Knowledge::Locus*, int> _locus_position;
 
-	//std::vector<Utility::Locus> loci;		///< Help identify what is what within this region
 };
 
 template <class T_cont>
@@ -91,7 +96,7 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 
 
 
-	std::set<std::string> unknownChromosomes;
+	set<string> unknownChromosomes;
 	//T_cont::const_iterator pos = loci_out.end();
 
 	uint totalSiteCount	= vcf.N_entries;
@@ -99,8 +104,8 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 	//TODO: preallocate the map for some speed here
 	//_locus_position.reserve(totalSiteCount);
 
-	std::string line;
-	std::vector<int> alleleCounts;
+	string line;
+	vector<int> alleleCounts;
 	double nonMissingChrCount = 0.0;
 	uint nmcc = 0;					///< Just to avoid redundant conversions
 	VCF::vcf_entry entry(vcf.N_indv);
@@ -118,7 +123,6 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
 		}else{
 			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
-
 		}
 		nonMissingChrCount = nmcc;
 
@@ -142,6 +146,64 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		_locus_position[loc] = i;
 	}
 
+}
+
+template <class T_cont>
+void DataImporter::getCaseAF(const T_cont& loci, const vector<bool>& controls,
+		unordered_map<Knowledge::Locus*, float>& maf_out){
+	int num_cases = 0;
+	vector<bool> cases = controls;
+
+	for (unsigned int i=0; i < controls.size(); i++){
+		cases[i].flip();
+		num_cases += cases[i];
+	}
+	if(num_cases == 0){
+		std::cerr << "WARNING: No cases found!  "
+				"No data to calculate case allele frequency" << std::endl;
+	}
+
+	typename T_cont::const_iterator l_itr = loci.begin();
+	typename T_cont::const_iterator l_end = loci.end();
+
+	vector<int> alleleCounts;
+	string line;
+	double nonMissingChrCount = 0.0;
+	uint nmcc = 0;					///< Just to avoid redundant conversions
+	VCF::vcf_entry entry(vcf.N_indv);
+	float missing_val = -1;
+
+	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_itr;
+	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_end =
+			_locus_position.end();
+
+	while(l_itr != l_end){
+
+		locus_pos_itr = _locus_position.find(*l_itr);
+		if(locus_pos_itr == locus_pos_end){
+			std::cerr << "WARNING: Could not find " << (*l_itr)->getID() <<
+					" when calculating case AF" << std::endl;
+
+			maf_out[*l_itr] = missing_val;
+		} else {
+
+			vcf.get_vcf_entry((*locus_pos_itr).second, line);
+			entry.reset(line);
+			entry.parse_basic_entry(true);
+			entry.parse_genotype_entries(true);
+
+			entry.get_allele_counts(alleleCounts, nmcc, cases,
+					vcf.include_genotype[(*locus_pos_itr).second]);
+			nonMissingChrCount = nmcc;
+
+			if(nmcc > 0){
+				maf_out[*l_itr] =  1 - (alleleCounts[(*l_itr)->getMajorPos()] / nonMissingChrCount);
+			}else{
+				maf_out[*l_itr] = missing_val;
+			}
+		}
+		++l_itr;
+	}
 }
 
 }
