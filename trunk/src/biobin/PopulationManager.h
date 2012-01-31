@@ -37,7 +37,29 @@ class PopulationManager{
 public:
 	// A list of the available disease models.  These affect the calculation
 	// of the genotype sum and an individual's contribution to a bin.
-	enum DiseaseModel { ADDITIVE, DOMINANT, RECESSIVE };
+	enum DiseaseModel_ENUM { ADDITIVE, DOMINANT, RECESSIVE };
+
+	class DiseaseModel{
+	public:
+		DiseaseModel() : _data(ADDITIVE){}
+		DiseaseModel(const DiseaseModel_ENUM& d):_data(d){}
+		operator const char*() const{
+			switch(_data){
+			case BioBin::PopulationManager::ADDITIVE:
+				return "additive";
+			case BioBin::PopulationManager::DOMINANT:
+				return "dominant";
+			case BioBin::PopulationManager::RECESSIVE:
+				return "recessive";
+			default:
+				return "unknown";
+			}
+		}
+		operator int() const{return _data;}
+
+	private:
+		DiseaseModel_ENUM _data;
+	};
 
 	// nothing needed for default constructor
 	PopulationManager(){}
@@ -203,6 +225,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 
 }
 
-
+namespace std{
+ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m);
+}
 
 #endif /* POPULATIONMANAGER_H_ */

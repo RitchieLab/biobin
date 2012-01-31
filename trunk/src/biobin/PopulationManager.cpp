@@ -187,4 +187,10 @@ int PopulationManager::getIndivContrib(const Locus& loc, short genotype) const {
 
 }
 
+namespace std{
+ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m){
+	o << (const char*) m;
+	return o;
+}
+}
 
