@@ -22,6 +22,9 @@ namespace BioBin {
 uint BinManager::IntergenicBinWidth = 50;
 uint BinManager::BinTraverseThreshold = 50;
 uint BinManager::MinBinSize = 1;
+bool BinManager::ExpandByGenes = true;
+bool BinManager::UsePathways = true;
+bool BinManager::IncludeIntergenic = true;
 bool BinManager::ExpandByExons = false;
 bool BinManager::ExpandByFunction = false;
 float BinManager::mafCutoff = 0.05;
@@ -62,7 +65,7 @@ void BinManager::InitBins(
 					regions.positionEnd(l.getChrom(), l.getPos());
 
 			Bin* curr_bin;
-			if (r_itr == r_end){
+			if (r_itr == r_end && IncludeIntergenic){
 				//Add to intergenic
 				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinWidth*1000));
 				map<pair<short, int>, Bin*>::const_iterator i_bin =
@@ -79,20 +82,24 @@ void BinManager::InitBins(
 				curr_bin->addLocus(&l);
 				_locus_bins[&l].insert(curr_bin);
 			}
+
 			while (r_itr != r_end){
 				// For each region, get all of the groups it is in
 				Region::const_group_iterator g_itr = (*r_itr)->groupBegin();
 				Region::const_group_iterator g_end = (*r_itr)->groupEnd();
 
-				// If not in any groups, add to region bins
-				if(g_itr == g_end){
+				// If Gene expansion is enabled and we are either not using
+				// pathway information OR the gene belongs to no pathways,
+				// we add it to a region bin
+				if(ExpandByGenes && (!UsePathways || g_itr == g_end)){
 					curr_bin = addRegionBin(*r_itr);
 					curr_bin->addLocus(&l);
 					_locus_bins[&l].insert(curr_bin);
 				}
 
-				// add to all group bins that it is a member of
-				while(g_itr != g_end){
+				// add to all group bins that it is a member of, provided that
+				// we want to use pathway information
+				while(UsePathways && g_itr != g_end){
 					int id = (*g_itr)->getID();
 					map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
 					if (gm_itr == _group_bins.end()){
@@ -136,11 +143,12 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 }
 
 void BinManager::collapseBins(){
-	// First things first, let's expand the groups that are too big
+
+	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
 	Bin::const_locus_iterator v_itr;
 	Bin::const_locus_iterator v_end;
-	while(b_itr != _bin_list.end() && (*b_itr)->isGroup()){
+	while(ExpandByGenes && b_itr != _bin_list.end() && (*b_itr)->isGroup()){
 		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
 
 			// First, add all of the appropriate child bins
@@ -175,6 +183,8 @@ void BinManager::collapseBins(){
 			++b_itr;
 		}
 	}
+
+	// TODO: Expand by functionality and sub-gene information here
 
 	//OK, now we go through and clean up all of the bins that are too small!
 	b_itr = _bin_list.begin();

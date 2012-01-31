@@ -21,6 +21,8 @@ namespace BioBin{
 float PopulationManager::c_phenotype_control = 0;
 vector<string> PopulationManager::c_phenotype_files;
 float PopulationManager::c_min_control_frac = 0.125;
+PopulationManager::DiseaseModel PopulationManager::c_model =
+		PopulationManager::ADDITIVE;
 
 const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 	const vector<string>& indivs = importer.getIndividualIDs();
@@ -163,6 +165,24 @@ int PopulationManager::genotypeContribution(const Locus& loc) const{
 	return (itr != _genotype_sum.end()) ? (*itr).second : 0;
 }
 
+int PopulationManager::getIndivContrib(const Locus& loc, short genotype) const {
+	pair<uint, uint> decoded_genotype = loc.decodeGenotype(genotype);
+	unsigned int major_pos = loc.getMajorPos();
+
+	switch(c_model){
+	case ADDITIVE:
+		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) +
+				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+	case DOMINANT:
+		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) ||
+				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+	case RECESSIVE:
+		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) &&
+				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+	default:
+		return 0;
+	}
+}
 
 
 }

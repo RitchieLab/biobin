@@ -35,6 +35,10 @@ namespace BioBin{
 class PopulationManager{
 
 public:
+	// A list of the available disease models.  These affect the calculation
+	// of the genotype sum and an individual's contribution to a bin.
+	enum DiseaseModel { ADDITIVE, DOMINANT, RECESSIVE };
+
 	// nothing needed for default constructor
 	PopulationManager(){}
 
@@ -60,6 +64,8 @@ public:
 
 	static float c_min_control_frac;
 
+	static DiseaseModel c_model;
+
 private:
 
 	// NO copying or assignment!
@@ -67,6 +73,8 @@ private:
 	PopulationManager& operator=(const PopulationManager&);
 
 	void parsePhenotypeFile(const string& filename);
+
+	int getIndivContrib(const Locus& loc, short genotype) const;
 
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
@@ -97,8 +105,7 @@ void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& i
 
 		while(g_itr != g_end){
 			decoded_genotype = (*itr)->decodeGenotype(*g_itr);
-			total_contrib += (decoded_genotype.first != (uint)-1 && decoded_genotype.first != (*itr)->getMajorPos());
-			total_contrib += (decoded_genotype.second != (uint)-1 && decoded_genotype.second != (*itr)->getMajorPos());
+			total_contrib += getIndivContrib(**itr, *g_itr);
 			++g_itr;
 		}
 		_genotype_sum[*itr] = total_contrib;
@@ -180,8 +187,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 				l_pos = _genotype_map.find((*l_itr));
 				if (l_pos != l_not_found){
 					decoded_genotype = (*l_itr)->decodeGenotype((*l_pos).second[pos]);
-					bin_count += (decoded_genotype.first != (uint)-1 && decoded_genotype.first != (*l_itr)->getMajorPos());
-					bin_count += (decoded_genotype.second != (uint)-1 && decoded_genotype.second != (*l_itr)->getMajorPos());
+					bin_count += getIndivContrib(**l_itr, (*l_pos).second[pos]);
 				}
 				++l_itr;
 			}

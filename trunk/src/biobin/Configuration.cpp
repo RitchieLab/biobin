@@ -24,6 +24,9 @@ using std::vector;
 using po::value;
 
 using boost::shared_ptr;
+using boost::any;
+
+using namespace boost::program_options;
 
 namespace BioBin{
 
@@ -61,6 +64,9 @@ void Configuration::initGeneric(){
 				"The size above which bins are expanded into child bins, if possible")
 		("bin-expand-exons,x","Flag indicating to expand bins into exons/intron regions")
 		("bin-expand-functions,f","Flag indicating to expand bins by functionality of the variants")
+		("bin-no-pathways","Flag indicating not to include pathways in the analysis")
+		("bin-no-genes","Flag indicating not to include genes in the analysis")
+		("bin-no-intergenic","Flag indicating not to include intergenic bins in the analysis")
 		("intergenic-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
 		("no-loci,l","Flag indicating desire to not write locus report")
@@ -72,7 +78,9 @@ void Configuration::initGeneric(){
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
 				"Phenotype control value")
 		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125),
-				"Minimum fraction of population needed for control cases");
+				"Minimum fraction of population needed for control cases")
+		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
+				"Disease model (additive, dominant, or recessive)");
 
 	_generic_init = true;
 }
@@ -162,23 +170,15 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	// NOTE: Help, version and sample will be parsed elsewhere!
 	// In fact, they'll probably be moved out of here to where they're parsed
 
-	if(vm.count("bin-expand-exons")){
-		BinManager::ExpandByExons = true;
-		std::cerr<<"WARNING: expansion into exons is not currently supported.\n";
-	}
-
-	if(vm.count("bin-expand-functions")){
-		BinManager::ExpandByFunction = true;
-		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
-	}
-
-	if(vm.count("add-groups")){
-		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
-	}
 
 	if(vm.count("vcf-file")){
 		string fn(boost::filesystem::path(vm["vcf-file"].as<string>()).filename().string());
 		Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
+	}
+
+
+	if(vm.count("add-groups")){
+		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
 	}
 
 	if(vm.count("include-sources")){
@@ -189,27 +189,90 @@ void Configuration::parseOptions(const po::variables_map& vm){
 		std::cerr<<"WARNING: include-source-file functionality has not been implemented yet.\n";
 	}
 
+	//==========================================
+	// Parsing report strategies
+	//==========================================
 	if(vm.count("no-loci")){
 		BioBin::Task::GenerateFiles::WriteLociData = false;
 	}
-
 	if(vm.count("no-bins")){
 		BioBin::Task::GenerateFiles::WriteBinData = false;
 	}
-
 	if(vm.count("no-genotypes")){
 		BioBin::Task::GenerateFiles::WriteGenotypeData = false;
 	}
-
 	if(vm.count("no-locus-freq")){
 		BioBin::Task::GenerateFiles::WriteAFData = false;
 	}
 
+	//===========================================
+	// Parsing binning strategies
+	//===========================================
+	if(vm.count("bin-expand-exons")){
+		BinManager::ExpandByExons = true;
+		std::cerr<<"WARNING: expansion into exons is not currently supported.\n";
+	}
+	if(vm.count("bin-expand-functions")){
+		BinManager::ExpandByFunction = true;
+		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
+	}
+	if(vm.count("bin-no-pathways")){
+		BioBin::BinManager::UsePathways = false;
+	}
+	if(vm.count("bin-no-genes")){
+		BioBin::BinManager::ExpandByGenes = false;
+	}
+	if(vm.count("bin-no-inergenic")){
+		BioBin::BinManager::IncludeIntergenic = false;
+	}
+	if(!BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
+		std::cerr<<"ERROR: You must bin by either pathways or genes.  You " <<
+				"cannot use both --bin-no-genes and --bin-no-pathways options\n";
+		throw validation_error(validation_error::invalid_option_value);
+	}
 }
 
 }
 
 
+std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseModel& model_out)
+{
+    std::string token;
+    in >> token;
+    if(token.size() > 0){
+    	char s = token[0];
+    	if(s == 'a' || s == 'A'){
+    		model_out = BioBin::PopulationManager::ADDITIVE;
+    	}else if(s == 'd' || s == 'D'){
+    		model_out = BioBin::PopulationManager::DOMINANT;
+    	}else if(s == 'r' || s == 'R'){
+    		model_out = BioBin::PopulationManager::RECESSIVE;
+    	}else{
+    		throw validation_error(validation_error::invalid_option_value);
+    	}
+    }else{
+    	throw validation_error(validation_error::invalid_option_value);
+    }
+//    else throw boost::program_options::validation_error("Invalid unit");
+    return in;
+}
 
+/*
+void validate(boost::any& v,
+		const std::vector<std::string>& values,
+		BioBin::PopulationManager::DiseaseModel*, int){
+	validators::check_first_occurrence(v);
 
+	const string& s = validators::get_single_string(values);
 
+	if(s[0] == 'a' || s[0] == 'A'){
+		v = any(BioBin::PopulationManager::ADDITIVE);
+	}else if(s[0] == 'd' || s[0] == 'D'){
+		v = any(BioBin::PopulationManager::DOMINANT);
+	}else if(s[0] == 'r' || s[0] == 'R'){
+		v = any(BioBin::PopulationManager::RECESSIVE);
+	}else{
+		throw validation_error(validation_error::invalid_option_value);
+	}
+}
+*/

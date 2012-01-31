@@ -5,8 +5,8 @@
  * Created on July 21, 2011, 3:54 PM
  */
 
-#ifndef BINMANAGER_H
-#define	BINMANAGER_H
+#ifndef BIOBIN_BINMANAGER_H
+#define	BIOBIN_BINMANAGER_H
 
 #include <vector>
 #include <map>
@@ -57,6 +57,8 @@ public:
 	static uint IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
 	static uint BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing
 	static uint MinBinSize;							///< How small do we tolerate bins to be before we ignore the bin altogether
+	static bool UsePathways;						///< Do we want to use pathways in the analysis?
+	static bool IncludeIntergenic;					///< Include INtergenic bins?
 	static bool ExpandByGenes;						///< Do we want to drop down to genes, if the group is large enough?
 	static bool ExpandByExons;						///< Do we want to drop to to introns and exons, if the group is large enough
 	static bool ExpandByFunction;					///< Indicate that we do want to use function 
@@ -79,7 +81,7 @@ private:
 	// The authoritative list of all of the bins.  Everything else holds pointers
 	// to bins in this set.
 	set<Bin*> _bin_list;
-	// Mappint of Region IDs to bins
+	// Mapping of Region IDs to bins
 	map<int, Bin*> _region_bins;
 	// Mapping of group IDs to bins
 	map<int, Bin*> _group_bins;
