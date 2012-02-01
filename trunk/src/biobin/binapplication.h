@@ -69,6 +69,8 @@ public:
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
 	void writeLoci(const string& filename, const string& sep=",") const;
 	void writeAFData(const string& filename, const string& sep=",");
+	void writeBinFreqData(const string& filename, const string& sep=",") const;
+
 
 
 	

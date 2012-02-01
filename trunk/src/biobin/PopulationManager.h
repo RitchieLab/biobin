@@ -79,6 +79,8 @@ public:
 	// Printing functions
 	template <class Bin_cont>
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
+	template <class Bin_cont>
+	void printBinFreq(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	void printGenotypes(ostream& os, const string& sep=",") const;
 
 	static float c_phenotype_control;
@@ -208,7 +210,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 			while(l_itr != l_end){
 				l_pos = _genotype_map.find((*l_itr));
 				if (l_pos != l_not_found){
-					decoded_genotype = (*l_itr)->decodeGenotype((*l_pos).second[pos]);
+					//decoded_genotype = (*l_itr)->decodeGenotype((*l_pos).second[pos]);
 					bin_count += getIndivContrib(**l_itr, (*l_pos).second[pos]);
 				}
 				++l_itr;
@@ -222,6 +224,68 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	}
 }
 
+
+template <class Bin_cont>
+void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const string& sep) const{
+	typename Bin_cont::const_iterator b_itr = bins.begin();
+	typename Bin_cont::const_iterator b_end = bins.end();
+
+	int n_cases = 0;
+	int n_controls = 0;
+
+	vector<bool>::const_iterator c_itr = _is_control.begin();
+	vector<bool>::const_iterator c_end = _is_control.end();
+
+	while(c_itr != c_end){
+		n_controls += *c_itr;
+		n_cases += !(*c_itr);
+		++c_itr;
+	}
+
+	map<string, int>::const_iterator m_itr;
+	map<string, int>::const_iterator m_end = _positions.end();
+	int case_cont_contrib[2];
+
+	map<Locus*, vector<short> >::const_iterator l_pos;
+	map<Locus*, vector<short> >::const_iterator l_not_found = _genotype_map.end();
+
+	os << "Bin" << sep << "Control Freq." << sep << "Case Freq.\n";
+
+	while(b_itr != b_end){
+
+		Bin::const_locus_iterator v_itr = (*b_itr)->variantBegin();
+		Bin::const_locus_iterator v_end = (*b_itr)->variantEnd();
+
+		while(v_itr != v_end){
+			m_itr = _positions.begin();
+
+			case_cont_contrib[0] = 0;
+			case_cont_contrib[1] = 0;
+			while(m_itr != m_end){
+				l_pos = _genotype_map.find((*v_itr));
+				if (l_pos != l_not_found){
+					case_cont_contrib[_is_control[(*m_itr).second]] +=
+							getIndivContrib(**v_itr, (*l_pos).second[(*m_itr).second]);
+				}
+				++m_itr;
+			}
+			++v_itr;
+		}
+
+		os << (*b_itr)->getName() << sep;
+		os << case_cont_contrib[1] / ((float) (*b_itr)->getVariantSize() * n_controls * (1 + (c_model == ADDITIVE)));
+		os << sep;
+		if (n_cases == 0){
+			os << -1;
+		}else{
+			os << case_cont_contrib[0] / ((float) (*b_itr)->getVariantSize() * n_cases * (1 + (c_model == ADDITIVE)));
+		}
+		os << "\n";
+
+		++b_itr;
+	}
+
+}
 
 }
 

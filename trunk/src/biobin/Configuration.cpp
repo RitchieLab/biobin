@@ -82,6 +82,8 @@ void Configuration::initGeneric(){
 				"Flag indicating desire to write genotype report")
 		("report-locus-freq",value<Bool>()->default_value(true),
 				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
+		("report-bin-freq",value<Bool>()->default_value(true),
+				"Flag indicating desire to write Bin Case v. Control Frequency report")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
@@ -205,6 +207,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BioBin::Task::GenerateFiles::WriteBinData = vm["report-bins"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
+	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
 
 	//===========================================
 	// Parsing binning strategies

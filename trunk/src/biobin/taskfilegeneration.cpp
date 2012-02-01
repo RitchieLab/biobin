@@ -16,6 +16,7 @@ bool GenerateFiles::WriteBinData = true;
 bool GenerateFiles::WriteGenotypeData = true;
 bool GenerateFiles::WriteLociData = true;
 bool GenerateFiles::WriteAFData = true;
+bool GenerateFiles::WriteBinFreqData = true;
 std::string GenerateFiles::OutputDelimiter = ",";
 
 GenerateFiles::GenerateFiles(BinApplication* app) :
@@ -43,6 +44,11 @@ void GenerateFiles::ExecuteTask() {
 		std::string filename = _app->AddReport("AllFreq", "csv",
 				"Case vs. Conrol Allele Freq.");
 		_app->writeAFData(filename);
+	}
+	if(WriteBinFreqData){
+		std::string filename = _app->AddReport("BinFreq", "csv",
+						"Case vs. Conrol Bin Freq.");
+		_app->writeBinFreqData(filename);
 	}
 }
 

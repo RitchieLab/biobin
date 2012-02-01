@@ -113,4 +113,11 @@ void BinApplication::writeAFData(const string& filename, const string& sep){
 
 }
 
+void BinApplication::writeBinFreqData(const string& filename, const string& sep) const {
+	std::ofstream freqFile(filename.c_str());
+	_pop_mgr.printBinFreq(freqFile, binData, sep);
+	freqFile.close();
+
+}
+
 }

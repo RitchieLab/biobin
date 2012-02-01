@@ -28,6 +28,7 @@ public:
 	static bool WriteGenotypeData;
 	static bool WriteLociData;
 	static bool WriteAFData;
+	static bool WriteBinFreqData;
 	static std::string OutputDelimiter;
 protected:
 	BinApplication* _app;
