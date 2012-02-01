@@ -16,6 +16,8 @@
 
 using std::string;
 using std::vector;
+using std::ostream;
+using std::istream;
 
 namespace po = boost::program_options;
 
@@ -24,6 +26,23 @@ namespace BioBin{
 class Configuration{
 
 public:
+	class Bool{
+	public:
+		Bool() : _data(false) {}
+		Bool(const bool d) : _data(d){}
+		Bool(const string& d) : _data(fromString(d)){}
+
+		operator const char*() const{ return _data ? "Y" : "N"; }
+		operator bool() const{ return _data;}
+
+	private:
+		static bool fromString(const string& s){
+			return (s[0] == 'Y' || s[0] == 'y');
+		}
+
+		bool _data;
+	};
+
 	static po::options_description& addCmdLine(po::options_description& opts);
 	static po::options_description& addConfigFile(po::options_description& opts);
 	static po::options_description& addVisible(po::options_description& opts);
@@ -84,6 +103,11 @@ void Configuration::validate(boost::any& v, const vector<string>& values, vector
 	}
 }
 
+}
+
+namespace std{
+ostream& operator<<(ostream& o, const BioBin::Configuration::Bool& d);
+istream& operator>>(istream& in, BioBin::Configuration::Bool& d_out);
 }
 
 

@@ -172,13 +172,13 @@ int PopulationManager::getIndivContrib(const Locus& loc, short genotype) const {
 	switch(c_model){
 	case ADDITIVE:
 		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) +
-				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
 	case DOMINANT:
 		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) ||
-				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
 	case RECESSIVE:
 		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) &&
-				(decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos);
+				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
 	default:
 		return 0;
 	}

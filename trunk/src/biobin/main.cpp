@@ -192,18 +192,18 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	Knowledge::Configuration::parseOptions(vm);
-	BioBin::Configuration::parseOptions(vm);
+	try{
+		Knowledge::Configuration::parseOptions(vm);
+		BioBin::Configuration::parseOptions(vm);
+	}catch(...){
+		std::cerr<<"\nError Parsing Configuration File\n";
+		return 3;
+	}
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
 	app->initTasks();
 
-	/*if (!app->ParseCmdLine(argc, argv)) {
-		delete app;
-		exit(1);
-	}*/
-	//Performs any commands
 	try {
 		app->RunCommands();
 	}

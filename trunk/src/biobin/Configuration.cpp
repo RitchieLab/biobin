@@ -62,17 +62,26 @@ void Configuration::initGeneric(){
 				"The minimum size of any bin")
 		("bin-expand-size,e", value<uint>(&BinManager::BinTraverseThreshold)->default_value(50),
 				"The size above which bins are expanded into child bins, if possible")
-		("bin-expand-exons,x","Flag indicating to expand bins into exons/intron regions")
-		("bin-expand-functions,f","Flag indicating to expand bins by functionality of the variants")
-		("bin-no-pathways","Flag indicating not to include pathways in the analysis")
-		("bin-no-genes","Flag indicating not to include genes in the analysis")
-		("bin-no-intergenic","Flag indicating not to include intergenic bins in the analysis")
+		("bin-expand-exons,x",value<Bool>()->default_value(false),
+				"Flag indicating to expand bins into exons/intron regions")
+		("bin-expand-functions,f",value<Bool>()->default_value(false),
+				"Flag indicating to expand bins by functionality of the variants")
+		("bin-pathways",value<Bool>()->default_value(true),
+				"Flag indicating not to include pathways in the analysis")
+		("bin-genes",value<Bool>()->default_value(true),
+				"Flag indicating not to include genes in the analysis")
+		("bin-intergenic",value<Bool>()->default_value(true),
+				"Flag indicating not to include intergenic bins in the analysis")
 		("intergenic-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
-		("no-loci,l","Flag indicating desire to not write locus report")
-		("no-bins,b","Flag indicating desire to not write bin report")
-		("no-genotypes,g","Flag indicating desire to not write genotype report")
-		("no-locus-freq,q","Flag indicating desire to not write Case v. Control Minor Allele Freq. report")
+		("report-loci",value<Bool>()->default_value(true),
+				"Flag indicating desire to write locus report")
+		("report-bins",value<Bool>()->default_value(true),
+				"Flag indicating desire to write bin report")
+		("report-genotypes",value<Bool>()->default_value(true),
+				"Flag indicating desire to write genotype report")
+		("report-locus-freq",value<Bool>()->default_value(true),
+				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
@@ -192,39 +201,25 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//==========================================
 	// Parsing report strategies
 	//==========================================
-	if(vm.count("no-loci")){
-		BioBin::Task::GenerateFiles::WriteLociData = false;
-	}
-	if(vm.count("no-bins")){
-		BioBin::Task::GenerateFiles::WriteBinData = false;
-	}
-	if(vm.count("no-genotypes")){
-		BioBin::Task::GenerateFiles::WriteGenotypeData = false;
-	}
-	if(vm.count("no-locus-freq")){
-		BioBin::Task::GenerateFiles::WriteAFData = false;
-	}
+	BioBin::Task::GenerateFiles::WriteLociData = vm["report-loci"].as<Bool>();
+	BioBin::Task::GenerateFiles::WriteBinData = vm["report-bins"].as<Bool>();
+	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
+	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
 
 	//===========================================
 	// Parsing binning strategies
 	//===========================================
-	if(vm.count("bin-expand-exons")){
-		BinManager::ExpandByExons = true;
+	BinManager::ExpandByExons = vm["bin-expand-exons"].as<Bool>();
+	if(BinManager::ExpandByExons){
 		std::cerr<<"WARNING: expansion into exons is not currently supported.\n";
 	}
-	if(vm.count("bin-expand-functions")){
-		BinManager::ExpandByFunction = true;
+	BinManager::ExpandByFunction = vm["bin-expand-functions"].as<Bool>();
+	if(BinManager::ExpandByFunction){
 		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
 	}
-	if(vm.count("bin-no-pathways")){
-		BioBin::BinManager::UsePathways = false;
-	}
-	if(vm.count("bin-no-genes")){
-		BioBin::BinManager::ExpandByGenes = false;
-	}
-	if(vm.count("bin-no-inergenic")){
-		BioBin::BinManager::IncludeIntergenic = false;
-	}
+	BioBin::BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
+	BioBin::BinManager::ExpandByGenes = vm["bin-genes"].as<Bool>();
+	BioBin::BinManager::IncludeIntergenic = vm["bin-intergenic"].as<Bool>();
 	if(!BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		std::cerr<<"ERROR: You must bin by either pathways or genes.  You " <<
 				"cannot use both --bin-no-genes and --bin-no-pathways options\n";
@@ -255,6 +250,27 @@ std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseMod
     }
 //    else throw boost::program_options::validation_error("Invalid unit");
     return in;
+}
+
+namespace std{
+std::istream& operator>>(std::istream& in, BioBin::Configuration::Bool& d_out)
+{
+    std::string token;
+    in >> token;
+    if(token.size() > 0){
+    	char s = token[0];
+    	d_out = (s == 'y' || s == 'Y');
+    }else{
+    	throw validation_error(validation_error::invalid_option_value);
+    }
+//    else throw boost::program_options::validation_error("Invalid unit");
+    return in;
+}
+
+ostream& operator<<(ostream& o, const BioBin::Configuration::Bool& d){
+	o << (const char *) d;
+	return o;
+}
 }
 
 /*
