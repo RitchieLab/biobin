@@ -64,11 +64,11 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 	}
 
 	// If we don't have enough controls, print a warning and make everyone a control
-	if ((total / (float) control) < c_min_control_frac){
+	if ((control / (float) total) < c_min_control_frac){
 		std::cerr << "WARNING: Number of controls is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
 		_is_control = vector<bool>(size, true);
-	}else if(1-(total / (float) control) < c_min_control_frac){
+	}else if(1-(control / (float) total) < c_min_control_frac){
 		std::cerr << "WARNING: Number of cases is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
 				" for cases may be unreliable\n";
@@ -106,7 +106,7 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 				}
 
 				try{
-					_phenotypes[result[0]] = lexical_cast<int>(result[1]);
+					_phenotypes[result[0]] = lexical_cast<float>(result[1]);
 				}catch(bad_lexical_cast&){
 					_phenotypes[result[0]] = -1;
 				}
