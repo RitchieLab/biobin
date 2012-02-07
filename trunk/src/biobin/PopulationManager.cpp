@@ -12,6 +12,7 @@
 
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
+using boost::trim;
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
 using Knowledge::Locus;
@@ -92,19 +93,23 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 	vector<string> result;
 	while(data_file.good()){
 		getline(data_file, line);
-		split(result, line, is_any_of(" \n\t"));
 
-		if (result.size() && result.size() < 2){
-			std::cerr << "WARNING: improperly formatted phenotype file.\n";
-		}else if(result.size()){
-			if (_positions.find(result[0]) == _positions.end()){
-				std::cerr << "WARNING: cannot find " << result[0] << " in VCF file.\n";
-			}
+		trim(line);
+		if(line.size() > 0 && line[0] != '#'){
+			split(result, line, is_any_of(" \n\t"));
 
-			try{
-				_phenotypes[result[0]] = lexical_cast<int>(result[1]);
-			}catch(bad_lexical_cast&){
-				_phenotypes[result[0]] = -1;
+			if (result.size() && result.size() < 2){
+				std::cerr << "WARNING: improperly formatted phenotype file.\n";
+			}else if(result.size()){
+				if (_positions.find(result[0]) == _positions.end()){
+					std::cerr << "WARNING: cannot find " << result[0] << " in VCF file.\n";
+				}
+
+				try{
+					_phenotypes[result[0]] = lexical_cast<int>(result[1]);
+				}catch(bad_lexical_cast&){
+					_phenotypes[result[0]] = -1;
+				}
 			}
 		}
 	}

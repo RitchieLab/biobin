@@ -11,6 +11,9 @@
 #include "taskfilegeneration.h"
 #include "dataimporter.h"
 
+// Use the boost filesystem library to work with OS-independent paths
+#include <boost/filesystem.hpp>
+
 #include <boost/program_options.hpp>
 
 namespace po=boost::program_options;
@@ -26,8 +29,8 @@ std::ofstream LOG;
 
 namespace BioBin {
 
-string Main::c_vcf_file;
-string Main::c_knowledge_file;
+string Main::c_vcf_file="";
+string Main::c_knowledge_file="";
 string Main::c_genome_build = "37";
 
 vector<string> Main::c_custom_groups;
@@ -52,6 +55,7 @@ void Main::InitGroupData() {
 }
 
 void Main::RunCommands() {
+
 	VCF::LOG.open("vcf-responses.log");
 
 	app.Init(c_knowledge_file, true);
@@ -61,16 +65,6 @@ void Main::RunCommands() {
 
 	//Tasks that run before SNPs load (not sure what those would be)
 	RunTasks(0);
-
-	/**
-	 * Do the SNP oriented stuff here
-	 */
-
-	// TODO: check for existence of the file here!
-	if(c_vcf_file.size() == 0){
-		std::cerr<<"No SNP dataset available. Unable to continue.\n";
-		exit(1);
-	}
 
 	LoadSNPs();
 
@@ -198,6 +192,18 @@ int main(int argc, char *argv[]) {
 	}catch(...){
 		std::cerr<<"\nError Parsing Configuration File\n";
 		return 3;
+	}
+
+	// TODO: check for existence of the file here!
+	if(BioBin::Main::c_vcf_file.size() == 0){
+		std::cerr<<"ERROR: No VCF file given.  You must supply a vcf file.\n";
+		exit(1);
+	}
+
+	boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
+	if (!boost::filesystem::is_regular_file(vcf_path)) {
+		std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
+		exit(1);
 	}
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
