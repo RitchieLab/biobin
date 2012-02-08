@@ -15,7 +15,7 @@ namespace Task {
 bool Task::detailedReport = true;
 
 Task::Task(int t, Application* app) : _task_type(t) {
-	app->AddReport(GetFileSuffix(), GetFileExtension(), GetFileDescription());
+	//app->AddReport(GetFileSuffix(), GetFileExtension(), GetFileDescription());
 }
 
 }
