@@ -42,12 +42,12 @@ void GenerateFiles::ExecuteTask() {
 	}
 	if (WriteAFData){
 		std::string filename = _app->AddReport("AllFreq", "csv",
-				"Case vs. Conrol Allele Freq.");
+				"Case vs. Control Allele Freq.");
 		_app->writeAFData(filename);
 	}
 	if(WriteBinFreqData){
 		std::string filename = _app->AddReport("BinFreq", "csv",
-						"Case vs. Conrol Bin Freq.");
+						"Case vs. Control Bin Freq.");
 		_app->writeBinFreqData(filename);
 	}
 }
