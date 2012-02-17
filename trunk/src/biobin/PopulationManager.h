@@ -256,11 +256,10 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		Bin::const_locus_iterator v_itr = (*b_itr)->variantBegin();
 		Bin::const_locus_iterator v_end = (*b_itr)->variantEnd();
 
+		case_cont_contrib[0] = 0;
+		case_cont_contrib[1] = 0;
 		while(v_itr != v_end){
 			m_itr = _positions.begin();
-
-			case_cont_contrib[0] = 0;
-			case_cont_contrib[1] = 0;
 			while(m_itr != m_end){
 				l_pos = _genotype_map.find((*v_itr));
 				if (l_pos != l_not_found){
