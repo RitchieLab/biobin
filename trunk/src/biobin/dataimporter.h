@@ -120,9 +120,9 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		// To deal with the default parameter, we really just want to use
 		// vcf.include_indivs, but NOOOO C++ has to be a pain
 		if(controls.size() == 0){
-			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
-		}else{
 			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+		}else{
+			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
 		}
 		nonMissingChrCount = nmcc;
 
