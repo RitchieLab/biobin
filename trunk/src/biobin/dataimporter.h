@@ -131,7 +131,10 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
 		//	unknownChromosomes.insert(entry->get_CHROM());
 
-		loc->addAllele(entry.get_REF(), alleleCounts[0] / nonMissingChrCount);
+		loc->addAllele(entry.get_REF(), nmcc != 0 ? alleleCounts[0] / nonMissingChrCount : 0);
+		if (nmcc == 0){
+			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+		}
 
 		//From here, they are all "ALT" alleles. We would have to evaluate an
 		//if should we want to roll them all in together, since it's a different
@@ -139,7 +142,7 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		for (uint n = 1; n<alleleCount; n++)	{
 			loc->addAllele(
 					entry.get_ALT_allele(n-1),
-					alleleCounts[n] / nonMissingChrCount);
+					nmcc != 0 ? alleleCounts[n] / nonMissingChrCount : -1);
 		}
 
 		loci_out.insert(loci_out.end(), loc);

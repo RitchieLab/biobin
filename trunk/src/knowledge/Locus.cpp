@@ -46,7 +46,11 @@ float Locus::majorAlleleFreq() const{
 }
 
 float Locus::minorAlleleFreq() const{
-	return 1-majorAlleleFreq();
+	if (_alleles.size() > 1){
+		return (++_alleles.begin())->getFreq();
+	}else{
+		return 1-majorAlleleFreq();
+	}
 }
 
 bool Locus::operator <(const Locus& other) const{

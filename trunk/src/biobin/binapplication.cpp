@@ -64,7 +64,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		(*itr)->print(locusFile, sep);
 		locusFile << sep;
 		(*itr)->printAlleles(locusFile, "|");
-		locusFile << sep << string(((1.0 - (*itr)->majorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
+		locusFile << sep << string((((*itr)->minorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
 		locusFile << string("Variant") << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
