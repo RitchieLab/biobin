@@ -62,9 +62,6 @@ public:
      */
 	void InitBins();
 
-	//template<class T_cont>
-	//void loadPhenotypes(const T_cont& pheno_files){_pop_mgr.loadPhenotypes(pheno_files);}
-
 	void writeBinData(const string& filename, const string& sep=",") const;
 	void writeGenotypeData(const string& filename, const string& sep=",") const;
 	void writeLoci(const string& filename, const string& sep=",") const;
@@ -75,8 +72,6 @@ public:
 
 	
 private:
-	///< Used to build and parse data into bins and genotypes
-	// Also holds the actual bins!
 	PopulationManager _pop_mgr;
 
 	BinManager binData;

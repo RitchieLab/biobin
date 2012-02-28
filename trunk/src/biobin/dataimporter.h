@@ -39,11 +39,14 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/array.hpp>
 
 using std::string;
 using std::vector;
 using std::map;
+using std::pair;
 using boost::unordered_map;
+using boost::array;
 
 using Knowledge::Locus;
 
@@ -69,6 +72,10 @@ public:
 	template <class T_cont>
 	void getCaseAF(const T_cont& loci, const vector<bool>& controls,
 			unordered_map<Knowledge::Locus*, float>& maf_out);
+
+	template <class T_cont>
+	void getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
+			unordered_map<Knowledge::Locus*, array<uint,2> >& num_out);
 
 	static bool CompressedVCF;					///< gzipped file Y/N
 
@@ -205,6 +212,60 @@ void DataImporter::getCaseAF(const T_cont& loci, const vector<bool>& controls,
 			}else{
 				maf_out[*l_itr] = missing_val;
 			}
+		}
+		++l_itr;
+	}
+}
+
+template <class T_cont>
+void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
+		unordered_map<Knowledge::Locus*, array<uint, 2> >& num_out){
+
+	vector<bool> cases = controls;
+
+	for (unsigned int i=0; i < controls.size(); i++){
+		cases[i].flip();
+	}
+
+	typename T_cont::const_iterator l_itr = loci.begin();
+	typename T_cont::const_iterator l_end = loci.end();
+
+	vector<int> alleleCounts;
+	string line;
+	uint nmcc_case = 0;					///< Just to avoid redundant conversions
+	uint nmcc_cont  = 0;
+	VCF::vcf_entry entry(vcf.N_indv);
+
+	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_itr;
+	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_end =
+			_locus_position.end();
+
+	array<uint,2> case_cont_array;
+
+	while(l_itr != l_end){
+
+		locus_pos_itr = _locus_position.find(*l_itr);
+		if(locus_pos_itr == locus_pos_end){
+			std::cerr << "WARNING: Could not find " << (*l_itr)->getID() <<
+					" when calculating case AF" << std::endl;
+
+			//should create array of zeros
+			num_out[*l_itr];
+		} else {
+
+			vcf.get_vcf_entry((*locus_pos_itr).second, line);
+			entry.reset(line);
+			entry.parse_basic_entry(true);
+			entry.parse_genotype_entries(true);
+
+			entry.get_allele_counts(alleleCounts, nmcc_case, cases,
+					vcf.include_genotype[(*locus_pos_itr).second]);
+			entry.get_allele_counts(alleleCounts, nmcc_cont, controls,
+					vcf.include_genotype[(*locus_pos_itr).second]);
+
+			case_cont_array[0] = nmcc_cont;
+			case_cont_array[1] = nmcc_case;
+			num_out[*l_itr] = case_cont_array;
 		}
 		++l_itr;
 	}

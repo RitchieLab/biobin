@@ -36,22 +36,9 @@ string Main::c_genome_build = "37";
 vector<string> Main::c_custom_groups;
 set<uint> Main::c_source_ids;
 
-/*
-void Main::LoadConfiguration(const char *cfgFilename) {
-	cfg.SetValue("REPORT_PREFIX", Utility::ExtractBaseFilename(cfgFilename));
-	cfg.Parse(cfgFilename);
-}
-*/
-
-void Main::InitRegionData() {
-	vector<string> missingAliases;
-	vector<string> aliasList;
-
-	app.LoadRegionData(missingAliases, aliasList);
-}
-
-void Main::InitGroupData() {
-	app.LoadGroupDataByName(c_custom_groups, c_source_ids);
+void Main::initTasks(){
+	BioBin::Task::Task *t = new BioBin::Task::GenerateFiles(&app);
+	_task_list.insert(std::make_pair(t->getType(), t));
 }
 
 void Main::RunCommands() {
@@ -81,6 +68,17 @@ void Main::RunCommands() {
 
 }
 
+void Main::InitRegionData() {
+	vector<string> missingAliases;
+	vector<string> aliasList;
+
+	app.LoadRegionData(missingAliases, aliasList);
+}
+
+void Main::InitGroupData() {
+	app.LoadGroupDataByName(c_custom_groups, c_source_ids);
+}
+
 void Main::RunTasks(int level){
 	multimap<int, Task::Task*>::iterator itr = _task_list.lower_bound(level);
 	multimap<int, Task::Task*>::iterator end = _task_list.upper_bound(level);
@@ -91,10 +89,7 @@ void Main::RunTasks(int level){
 	}
 }
 
-void Main::initTasks(){
-	BioBin::Task::Task *t = new BioBin::Task::GenerateFiles(&app);
-	_task_list.insert(std::make_pair(t->getType(), t));
-}
+
 
 
 

@@ -13,6 +13,7 @@
 #include <map>
 #include <iostream>
 #include <boost/unordered_map.hpp>
+#include <boost/array.hpp>
 
 #include "knowledge/Locus.h"
 #include "Bin.h"
@@ -22,6 +23,7 @@ using std::vector;
 using std::string;
 using std::map;
 using std::ostream;
+using boost::array;
 using boost::unordered_map;
 
 using Knowledge::Locus;
@@ -100,6 +102,8 @@ private:
 
 	int getIndivContrib(const Locus& loc, short genotype) const;
 
+	array<uint, 2>& getBinCapacity(Bin& bin) const;
+
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
 	// _is_control can be passed to the VCF parser
@@ -107,10 +111,16 @@ private:
 	map<Knowledge::Locus*, vector<short> > _genotype_map;
 	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
+	unordered_map<Knowledge::Locus*, array<uint, 2> > _locus_count;
+
+	mutable unordered_map<Bin*, array<uint, 2> > _bin_capacity;
 };
 
 template <class Locus_cont>
 void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
+
+	// Get the number of people genotyped for each SNP
+	importer.getNumNonMissing(dataset, _is_control, _locus_count);
 
 	typename Locus_cont::const_iterator itr = dataset.begin();
 	typename Locus_cont::const_iterator end = dataset.end();
@@ -170,6 +180,18 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 		++b_itr;
 	}
 	os << "\n";
+
+	// Print 4th + 5th Lines (bin capacities for cases and controls)
+	for(int i=0; i<2; i++){
+		os << (i ? "Case" : "Control") << " Bin Capacity" << sep << -1;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep << getBinCapacity(**b_itr)[i];
+			++b_itr;
+		}
+		os << "\n";
+	}
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	map<string, int>::const_iterator m_end = _positions.end();
@@ -263,7 +285,7 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 			while(m_itr != m_end){
 				l_pos = _genotype_map.find((*v_itr));
 				if (l_pos != l_not_found){
-					case_cont_contrib[_is_control[(*m_itr).second]] +=
+					case_cont_contrib[!_is_control[(*m_itr).second]] +=
 							getIndivContrib(**v_itr, (*l_pos).second[(*m_itr).second]);
 				}
 				++m_itr;
@@ -272,12 +294,11 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		}
 
 		os << (*b_itr)->getName() << sep;
-		os << case_cont_contrib[1] / ((float) (*b_itr)->getVariantSize() * n_controls * (1 + (c_model == ADDITIVE)));
-		os << sep;
-		if (n_cases == 0){
-			os << -1;
-		}else{
-			os << case_cont_contrib[0] / ((float) (*b_itr)->getVariantSize() * n_cases * (1 + (c_model == ADDITIVE)));
+		int capacity = 0;
+		for (int i=0; i<=1; i++){
+			capacity = getBinCapacity(**b_itr)[i];
+			os << (capacity ? case_cont_contrib[i] / ((float) capacity) : -1);
+			os << sep;
 		}
 		os << "\n";
 

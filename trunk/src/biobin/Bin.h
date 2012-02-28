@@ -23,14 +23,53 @@ class PopulationManager;
 class Bin{
 
 public:
+	//! Typedef to hide implementation details of the Locus containment
 	typedef set<Knowledge::Locus*>::const_iterator const_locus_iterator;
 
-	Bin(const PopulationManager& pop_mgr, Knowledge::Group*);
-	Bin(const PopulationManager& pop_mgr, Knowledge::Region*);
+	/*!
+	 * \brief Construct a bin representing a Group (or Pathway)
+	 *
+	 * \param pop_mgr The population manager containing information about
+	 * the variants and people.
+	 * \param grp The group that this Bin represents
+	 */
+	Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp);
+	/*!
+	 * \brief Construct a Bin representing a Region (or Gene)
+	 *
+	 * \param pop_mgr The population manager containing information about
+	 * the variants and people.
+	 * \param reg The Region that this Bin represents
+	 */
+	Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg);
+	/*!
+	 * \brief Construct an Intergenic Bin
+	 *
+	 * \param pop_mgr The population manager containing information about
+	 * the variants and people.
+	 * \param chrom The chromosome of the bin
+	 * \param bin The bin number, counting from 0 from the beginning of the
+	 * chromosome.
+	 */
 	Bin(const PopulationManager& pop_mgr, short chrom, int bin);
 
+	/*!
+	 * \brief Return the size of the bin.
+	 *
+	 * \return The size (number of contributions) of this bin.
+	 */
 	int getSize() const;
+	/*!
+	 * \brief Return the number of variants in the bin.
+	 *
+	 * \return The number of variants (Loci) that the bin contains
+	 */
 	int getVariantSize() const {return _variants.size();}
+	/*!
+	 * \brief Return a unique ID (for type) of the bin.
+	 *
+	 * \return The ID of the
+	 */
 	int getID() const{
 		return _is_intergenic ? _member.bin_no :
 				(_is_group ? _member.group->getID() : _member.region->getID());

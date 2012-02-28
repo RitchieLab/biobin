@@ -189,6 +189,32 @@ int PopulationManager::getIndivContrib(const Locus& loc, short genotype) const {
 	}
 }
 
+array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
+	unordered_map<Bin*, array<uint, 2> >::const_iterator bin_itr =
+			_bin_capacity.find(&bin);
+	if(bin_itr == _bin_capacity.end()){
+		Bin::const_locus_iterator b_itr = bin.variantBegin();
+		Bin::const_locus_iterator b_end = bin.variantEnd();
+		array<uint, 2> capacity;
+		capacity[0] = 0;
+		capacity[1] = 0;
+		unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator l_end =
+				_locus_count.end();
+		unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator l_itr;
+		while(b_itr != b_end){
+			l_itr = _locus_count.find(*b_itr);
+			if(l_itr != l_end){
+				capacity[0]+=(*l_itr).second[0] / (1 + c_model != ADDITIVE);
+				capacity[1]+=(*l_itr).second[1] / (1 + c_model != ADDITIVE);
+			}
+			++b_itr;
+		}
+		_bin_capacity[&bin] = capacity;
+	}
+
+	return _bin_capacity[&bin];
+}
+
 
 }
 
