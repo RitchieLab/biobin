@@ -112,7 +112,6 @@ private:
 	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
 	unordered_map<Knowledge::Locus*, array<uint, 2> > _locus_count;
-
 	mutable unordered_map<Bin*, array<uint, 2> > _bin_capacity;
 };
 
@@ -162,7 +161,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	os << "\n";
 
 	// Print second Line (totals)
-	os << "Totals" << sep << -1;
+	os << "Total Variants" << sep << -1;
 	b_itr = bins.begin();
 	b_end = bins.end();
 	while(b_itr != b_end){
@@ -172,7 +171,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	os << "\n";
 
 	// Print third line (variant totals)
-	os << "Variant totals" << sep << -1;
+	os << "Total Loci" << sep << -1;
 	b_itr = bins.begin();
 	b_end = bins.end();
 	while(b_itr != b_end){
@@ -181,7 +180,38 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	}
 	os << "\n";
 
-	// Print 4th + 5th Lines (bin capacities for cases and controls)
+
+	Bin::const_locus_iterator l_itr;
+	Bin::const_locus_iterator l_end;
+
+	unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator loc_itr;
+	unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator loc_not_found =
+			_locus_count.end();
+
+	int locus_count = 0;
+	// Print 4th + 5th lines (variant totals for cases + controls
+	for(int i=0; i<2; i++){
+		os << (i ? "Case" : "Control") << " Loci Totals" << sep << -1;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			l_itr = (*b_itr)->variantBegin();
+			l_end = (*b_itr)->variantEnd();
+			locus_count = 0;
+			while(l_itr != l_end){
+				loc_itr = _locus_count.find((*l_itr));
+				if (loc_itr != loc_not_found){
+					locus_count += ((*loc_itr).second[i] != 0);
+				}
+				++l_itr;
+			}
+			os << sep << locus_count;
+			++b_itr;
+		}
+		os << "\n";
+	}
+
+	// Print 6th + 7th Lines (bin capacities for cases and controls)
 	for(int i=0; i<2; i++){
 		os << (i ? "Case" : "Control") << " Bin Capacity" << sep << -1;
 		b_itr = bins.begin();
@@ -198,9 +228,6 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 
 	map<string, float>::const_iterator pheno_status;
 	map<string, float>::const_iterator pheno_end = _phenotypes.end();
-
-	Bin::const_locus_iterator l_itr;
-	Bin::const_locus_iterator l_end;
 
 	map<Locus*, vector<short> >::const_iterator l_pos;
 	map<Locus*, vector<short> >::const_iterator l_not_found = _genotype_map.end();

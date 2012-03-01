@@ -265,6 +265,11 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 
 			case_cont_array[0] = nmcc_cont;
 			case_cont_array[1] = nmcc_case;
+			if(case_cont_array[0] == 0 || case_cont_array[1] == 0){
+				std::cerr << "WARNING: " << (*locus_pos_itr).first->getID() <<
+						" has no data for " <<
+						(case_cont_array[0] == 0 ? "controls" : "cases") << ".\n";
+			}
 			num_out[*l_itr] = case_cont_array;
 		}
 		++l_itr;
