@@ -224,9 +224,15 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BioBin::BinManager::ExpandByGenes = vm["bin-genes"].as<Bool>();
 	BioBin::BinManager::IncludeIntergenic = vm["bin-intergenic"].as<Bool>();
 	if(!BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
-		std::cerr<<"ERROR: You must bin by either pathways or genes.  You " <<
-				"cannot use both --bin-no-genes and --bin-no-pathways options\n";
-		throw validation_error(validation_error::invalid_option_value);
+		if(!BioBin::BinManager::IncludeIntergenic){
+			std::cerr << "ERROR: You must bin by either pathways, genes, or intergenic.\n";
+			throw validation_error(validation_error::invalid_option_value);
+		}else{
+			std::cerr<<"WARNING: You elected not to bin by pathways or genes.  " <<
+							"You will only get intergenic bins.\n";
+		}
+
+
 	}
 }
 
@@ -276,22 +282,3 @@ ostream& operator<<(ostream& o, const BioBin::Configuration::Bool& d){
 }
 }
 
-/*
-void validate(boost::any& v,
-		const std::vector<std::string>& values,
-		BioBin::PopulationManager::DiseaseModel*, int){
-	validators::check_first_occurrence(v);
-
-	const string& s = validators::get_single_string(values);
-
-	if(s[0] == 'a' || s[0] == 'A'){
-		v = any(BioBin::PopulationManager::ADDITIVE);
-	}else if(s[0] == 'd' || s[0] == 'D'){
-		v = any(BioBin::PopulationManager::DOMINANT);
-	}else if(s[0] == 'r' || s[0] == 'R'){
-		v = any(BioBin::PopulationManager::RECESSIVE);
-	}else{
-		throw validation_error(validation_error::invalid_option_value);
-	}
-}
-*/

@@ -65,7 +65,7 @@ void BinManager::InitBins(
 					regions.positionEnd(l.getChrom(), l.getPos());
 
 			Bin* curr_bin;
-			if (r_itr == r_end && IncludeIntergenic){
+			if ((r_itr == r_end || (!UsePathways && !ExpandByGenes)) && IncludeIntergenic){
 				//Add to intergenic
 				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinWidth*1000));
 				map<pair<short, int>, Bin*>::const_iterator i_bin =
