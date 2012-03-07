@@ -71,7 +71,7 @@ public:
 
 	template <class T_cont>
 	void getCaseAF(const T_cont& loci, const vector<bool>& controls,
-			unordered_map<Knowledge::Locus*, float>& maf_out);
+			unordered_map<Knowledge::Locus*, float>& maf_out) const;
 
 	template <class T_cont>
 	void getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
@@ -91,7 +91,7 @@ private:
 	DataImporter& operator=(const DataImporter& other);
 
 	//uint totalIndividualEntries;				///< Number of individuals in the file(s)
-	VCF::vcf_file vcf;							///< This represents the vcf object we will be using
+	mutable VCF::vcf_file vcf;							///< This represents the vcf object we will be using
 
 	// A map to keep track of where in the file a locus resides
 	unordered_map<Knowledge::Locus*, int> _locus_position;
@@ -161,7 +161,7 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 
 template <class T_cont>
 void DataImporter::getCaseAF(const T_cont& loci, const vector<bool>& controls,
-		unordered_map<Knowledge::Locus*, float>& maf_out){
+		unordered_map<Knowledge::Locus*, float>& maf_out) const{
 	int num_cases = 0;
 	vector<bool> cases = controls;
 
@@ -242,6 +242,8 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 
 	array<uint,2> case_cont_array;
 
+	int num_not_found = 0;
+
 	while(l_itr != l_end){
 
 		locus_pos_itr = _locus_position.find(*l_itr);
@@ -266,13 +268,16 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 			case_cont_array[0] = nmcc_cont;
 			case_cont_array[1] = nmcc_case;
 			if(case_cont_array[0] == 0 || case_cont_array[1] == 0){
-				std::cerr << "WARNING: " << (*locus_pos_itr).first->getID() <<
-						" has no data for " <<
-						(case_cont_array[0] == 0 ? "controls" : "cases") << ".\n";
+				++num_not_found;
 			}
 			num_out[*l_itr] = case_cont_array;
 		}
 		++l_itr;
+	}
+	if(num_not_found){
+		std::cerr << "WARNING: Data completely missing for cases or controls "
+				<< "for " << num_not_found << " loci.  See the locus.csv report"
+				<< " for details.\n";
 	}
 }
 

@@ -57,15 +57,21 @@ void BinApplication::writeGenotypeData(const string& filename, const string& sep
 void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	std::ofstream locusFile(filename.c_str());
 	locusFile << "Chromosome" << sep << "Location" << sep << "ID" << sep
-			<< "Alleles" << sep << "type" << sep << "gene(s)" << sep << "bin name(s)\n";
+			<< "Alleles" << sep << "Case Allele Freq." << sep << "Rare" << sep
+			<< "gene(s)" << sep << "bin name(s)\n";
 	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+
+	unordered_map<Knowledge::Locus*, float> case_maf;
+
+	_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
+
 	while(itr != end){
 		(*itr)->print(locusFile, sep);
 		locusFile << sep;
 		(*itr)->printAlleles(locusFile, "|");
-		locusFile << sep << string((((*itr)->minorAlleleFreq()) < BinManager::mafCutoff) ? "Rare " : "");
-		locusFile << string("Variant") << sep;
+		locusFile << sep << case_maf[*itr] << sep
+				<< (((*itr)->minorAlleleFreq()) < BinManager::mafCutoff) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
 				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
@@ -86,7 +92,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locusFile.close();
 }
 
-void BinApplication::writeAFData(const string& filename, const string& sep){
+void BinApplication::writeAFData(const string& filename, const string& sep) const{
 	std::ofstream freqFile(filename.c_str());
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
