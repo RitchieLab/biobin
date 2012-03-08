@@ -42,8 +42,13 @@ void vcf_file::parse_meta(const string &line)
 		has_file_format = true;
 		found = line.find_first_of("=");
 		string version = line.substr(found+1);
-		if (version != "VCFv4.0")
-			error("VCF version must be v4.0:\nYou are using version " + version);
+		if (version != "VCFv4.0"){
+			if (version == "VCFv4.1"){
+				printLOG("WARNING: VCF version 4.1 is not fully supported.\n");
+			}else{
+				error("VCF version must be v4.0:\nYou are using version " + version);
+			}
+		}
 	}
 
 	found=line.find("##INFO=");
