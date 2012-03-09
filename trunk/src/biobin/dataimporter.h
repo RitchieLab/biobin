@@ -90,8 +90,7 @@ private:
 	DataImporter(const DataImporter& orig);
 	DataImporter& operator=(const DataImporter& other);
 
-	//uint totalIndividualEntries;				///< Number of individuals in the file(s)
-	mutable VCF::vcf_file vcf;							///< This represents the vcf object we will be using
+	mutable VCF::vcf_file vcf;
 
 	// A map to keep track of where in the file a locus resides
 	unordered_map<Knowledge::Locus*, int> _locus_position;

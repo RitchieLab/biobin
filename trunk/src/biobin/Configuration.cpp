@@ -45,7 +45,7 @@ void Configuration::initGeneric(){
 		("settings-db,D", value<string>(&Main::c_knowledge_file)->default_value("knowledge.bio"),
 				"The location of the database")
 		("vcf-file,V",value<string>(&Main::c_vcf_file), "The file containing VCF information")
-		("compressed-vcf,C", "Flag indicating VCF file is compressed")
+		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("include-sources",value<vector<int> >()->composing()->multitoken(),
@@ -76,13 +76,14 @@ void Configuration::initGeneric(){
 				"Number of kilobases intergenic bins can hold")
 		("report-loci",value<Bool>()->default_value(true),
 				"Flag indicating desire to write locus report")
+		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-bins",value<Bool>()->default_value(true),
 				"Flag indicating desire to write bin report")
-		("report-genotypes",value<Bool>()->default_value(true),
+		("report-genotypes",value<Bool>()->default_value(false),
 				"Flag indicating desire to write genotype report")
-		("report-locus-freq",value<Bool>()->default_value(true),
+		("report-locus-freq",value<Bool>()->default_value(false),
 				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
-		("report-bin-freq",value<Bool>()->default_value(true),
+		("report-bin-freq",value<Bool>()->default_value(false),
 				"Flag indicating desire to write Bin Case v. Control Frequency report")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
@@ -184,8 +185,13 @@ void Configuration::parseOptions(const po::variables_map& vm){
 
 	if(vm.count("vcf-file")){
 		string fn(boost::filesystem::path(vm["vcf-file"].as<string>()).filename().string());
-		Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
+		if(vm.count("report-prefix")){
+			Application::reportPrefix = vm["report-prefix"].as<string>();
+		}else{
+			Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
+		}
 	}
+	DataImporter::CompressedVCF = vm["compressed-vcf"].as<Bool>();
 
 
 	if(vm.count("add-groups")){

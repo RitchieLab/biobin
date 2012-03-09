@@ -102,10 +102,10 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
 
-	freqFile << "Locus" << sep << "Control MAF" << sep << "Case MAF" << sep
+	freqFile << "Locus" << sep << "Control NMAF" << sep << "Case NMAF" << sep
 			<< "Rare" << sep << "Bins\n";
 	while(itr != end){
-		freqFile << (*itr)->getID() << sep << (*itr)->minorAlleleFreq() << sep
+		freqFile << (*itr)->getID() << sep << 1 - (*itr)->majorAlleleFreq() << sep
 				<< case_maf[*itr] << sep
 				<< ((*itr)->minorAlleleFreq() < BinManager::mafCutoff) << sep;
 
