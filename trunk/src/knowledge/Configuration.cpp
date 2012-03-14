@@ -155,7 +155,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 				vector<string> result;
 				while(data_file.good()){
 					getline(data_file, line);
-					split(result, line, is_any_of(" \n\t"));
+					split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 					GroupCollection::c_group_names.insert(GroupCollection::c_group_names.end(), result.begin(), result.end());
 				}
 				data_file.close();

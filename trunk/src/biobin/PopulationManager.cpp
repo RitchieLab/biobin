@@ -91,15 +91,19 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 	// Read the definition of the meta-group
 	string line;
 	vector<string> result;
+	int line_no = 0;
 	while(data_file.good()){
 		getline(data_file, line);
-
+		++line_no;
 		trim(line);
+
 		if(line.size() > 0 && line[0] != '#'){
-			split(result, line, is_any_of(" \n\t"));
+			split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 
 			if (result.size() && result.size() < 2){
-				std::cerr << "WARNING: improperly formatted phenotype file.\n";
+				std::cerr << "WARNING: improperly formatted phenotype file "
+						<< "on line " << line_no << ".\n";
+
 			}else if(result.size()){
 				if (_positions.find(result[0]) == _positions.end()){
 					std::cerr << "WARNING: cannot find " << result[0] << " in VCF file.\n";

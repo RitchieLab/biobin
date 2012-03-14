@@ -122,13 +122,13 @@ bool Chain::EstimateConversion(int start, int stop, BuildConversion& c) {
 
 std::string Chain::Parse(const string& data) {
 	vector<string> lines;
-	split(lines, data, is_any_of("\n"));
+	split(lines, data, is_any_of("\n"), boost::token_compress_on);
 
 	vector<string>::iterator line_itr = lines.begin();
 	vector<string>::const_iterator line_end = lines.end();
 
 	vector<string> words;
-	split(words, *line_itr, is_any_of(" \t\n"));
+	split(words, *line_itr, is_any_of(" \t\n"), boost::token_compress_on);
 
 	_score = atoi(words[0].c_str());
 	_lChrom = words[2];
@@ -153,7 +153,7 @@ std::string Chain::Parse(const string& data) {
 
 	while (++line_itr != line_end) {
 		words.clear();
-		split(words,*line_itr,is_any_of(" \t\n"));
+		split(words,*line_itr,is_any_of(" \t\n"), boost::token_compress_on);
 		size = atoi(words[0].c_str());
 
 		//At this time, we are always moving left to right on the local side (that

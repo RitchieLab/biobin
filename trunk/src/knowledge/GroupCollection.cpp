@@ -116,14 +116,14 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 	string group_def;
 	getline(data_file, group_def);
 	vector<string> result;
-	split(result, group_def, is_any_of(" \n\t"));
+	split(result, group_def, is_any_of(" \n\t"), boost::token_compress_on);
 	_name = result[0];
 	// For now, we drop the description
 
 	// Start reading groups
 	string group_init;
 	getline(data_file, group_init);
-	split(result, group_init, is_any_of(" \n\t"));
+	split(result, group_init, is_any_of(" \n\t"), boost::token_compress_on);
 	to_upper(result[0]);
 	if (!(result[0] == "GROUP")){
 		std::cerr<<"WARNING: Invalid formatting in archive file.  "
@@ -140,7 +140,7 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 	string curr_line;
 	while(data_file.good()){
 		getline(data_file, curr_line);
-		split(result, curr_line, is_any_of(" \n\t"));
+		split(result, curr_line, is_any_of(" \n\t"), boost::token_compress_on);
 		to_upper(result[0]);
 		if (result[0] == "GROUP"){
 			curr_group = initGroupFromArchive(result);

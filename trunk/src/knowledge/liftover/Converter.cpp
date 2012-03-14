@@ -151,7 +151,7 @@ void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out
 	while (file.good()) {
 		words.clear();
 		getline(file, line);
-		split(words, line, is_any_of(" \n\t"));
+		split(words, line, is_any_of(" \n\t"), boost::token_compress_on);
 
 		if (words.size() > 3){
 			array_out.push_back(new Locus(words[0], atoi(words[3].c_str()), words[1]));
