@@ -33,6 +33,8 @@
 #include <map>
 #include <iostream>
 
+#include "binmanager.h"
+
 #include "knowledge/Locus.h"
 
 #include "vcftools/vcf_file.h"
@@ -133,28 +135,29 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		}
 		nonMissingChrCount = nmcc;
 
-		Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),entry.get_ID());
+		if(KeepCommonLoci || (alleleCounts[0] / nonMissingChrCount) < BinManager::mafCutoff ){
+			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),entry.get_ID());
 
-		//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
-		//	unknownChromosomes.insert(entry->get_CHROM());
+			//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
+			//	unknownChromosomes.insert(entry->get_CHROM());
 
-		loc->addAllele(entry.get_REF(), nmcc != 0 ? (alleleCounts[0] / nonMissingChrCount) : 0);
-		if (nmcc == 0){
-			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
-			nmcc = 0;
+			loc->addAllele(entry.get_REF(), nmcc != 0 ? (alleleCounts[0] / nonMissingChrCount) : 0);
+			if (nmcc == 0){
+				entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+				nmcc = 0;
+			}
+
+			//From here, they are all "ALT" alleles. We would have to evaluate an
+			//if should we want to roll them all in together, since it's a different
+			//call (with a different index scheme...)
+			for (uint n = 1; n<alleleCount; n++)	{
+				loc->addAllele(entry.get_ALT_allele(n-1),
+						nmcc != 0 ? alleleCounts[n] / nonMissingChrCount : -1);
+			}
+
+			loci_out.insert(loci_out.end(), loc);
+			_locus_position[loc] = i;
 		}
-
-		//From here, they are all "ALT" alleles. We would have to evaluate an
-		//if should we want to roll them all in together, since it's a different
-		//call (with a different index scheme...)
-		for (uint n = 1; n<alleleCount; n++)	{
-			loc->addAllele(
-					entry.get_ALT_allele(n-1),
-					nmcc != 0 ? alleleCounts[n] / nonMissingChrCount : -1);
-		}
-
-		loci_out.insert(loci_out.end(), loc);
-		_locus_position[loc] = i;
 	}
 
 }
