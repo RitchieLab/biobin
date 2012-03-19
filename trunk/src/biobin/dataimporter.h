@@ -78,6 +78,7 @@ public:
 			unordered_map<Knowledge::Locus*, array<uint,2> >& num_out);
 
 	static bool CompressedVCF;					///< gzipped file Y/N
+	static bool KeepCommonLoci;
 
 	uint individualCount() {return vcf.N_indv;}
 	const vector<string>& getIndividualIDs() {return vcf.indv;}

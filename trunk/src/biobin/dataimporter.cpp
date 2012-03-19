@@ -18,6 +18,7 @@ using Knowledge::Locus;
 namespace BioBin {
 
 bool DataImporter::CompressedVCF = false;
+bool DataImporter::KeepCommonLoci = true;
 
 /*bool DataImporter::open(const string& filename) {
 	vcf = VCF::vcf_file(filename);

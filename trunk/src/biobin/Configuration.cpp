@@ -48,6 +48,8 @@ void Configuration::initGeneric(){
 		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
+		("keep-common-loci,k",value<Bool>()->default_value(true),
+				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
 		("include-sources",value<vector<int> >()->composing()->multitoken(),
 				"A list of source IDs to include")
 		("include-source-file",value<vector<string> >()->composing()->multitoken(),
@@ -192,6 +194,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 		}
 	}
 	DataImporter::CompressedVCF = vm["compressed-vcf"].as<Bool>();
+	DataImporter::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
 
 
 	if(vm.count("add-groups")){
