@@ -23,7 +23,7 @@ const string Locus::invalid_chrom("");
 
 Locus::Locus(short chrom, uint pos, const string& id):
 		_chrom(chrom), _pos(pos), _id(id){
-	if (id.size() == 0){
+	if (id.size() == 0 || _id == "."){
 		createID();
 	}
 
@@ -32,7 +32,7 @@ Locus::Locus(short chrom, uint pos, const string& id):
 Locus::Locus(const string& chrom_str, uint pos, const string& id):
 		_pos(pos), _id(id){
 	_chrom = getChrom(chrom_str);
-	if (_id.size() == 0){
+	if (_id.size() == 0 || _id == "."){
 		createID();
 	}
 }
