@@ -22,7 +22,7 @@ biobin_SOURCES= \
    Configuration.h \
    Configuration.cpp
    
-dist_data_DATA=$(top_srcdir)/data/knowledge.bio \
+dist_data_DATA=\
 	$(top_srcdir)/data/example.cfg \
 	$(top_srcdir)/data/example.vcf 
    
