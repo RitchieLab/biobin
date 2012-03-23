@@ -14,5 +14,6 @@ RL_CONFIGURE([1.46.0],[HAVE_BOOST HAVE_BOOST_THREAD HAVE_BOOST_FILESYSTEM HAVE_S
 AC_CONFIG_FILES([Makefile
                  src/biobin/Makefile
                  src/knowledge/Makefile
-                 src/vcftools/Makefile])
+                 src/vcftools/Makefile
+                 updater/Makefile])
 AC_OUTPUT
