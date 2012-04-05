@@ -76,9 +76,9 @@ void Configuration::initGeneric(){
 				"Flag indicating not to include intergenic bins in the analysis")
 		("intergenic-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
+		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-loci",value<Bool>()->default_value(true),
 				"Flag indicating desire to write locus report")
-		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-bins",value<Bool>()->default_value(true),
 				"Flag indicating desire to write bin report")
 		("report-genotypes",value<Bool>()->default_value(false),
