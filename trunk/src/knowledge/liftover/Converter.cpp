@@ -107,7 +107,7 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 		Locus& s = **itr;
 		if (_chains.size() == 0){
 			converted.insert(std::make_pair(&s,
-							new Locus(s.getChrom(), s.getPos(), s.getID())));
+							new Locus(s.getChrom(), s.getPos(), s.isRare(), s.getID())));
 		} else {
 
 			multimap<short,Chain*>::const_iterator citr =
@@ -126,7 +126,7 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 			//The best should "float" to the top
 			if (con.size() > 0) {
 				set<BuildConversion>::iterator bc = con.begin();
-				Locus* newSNP = new Locus(bc->getRemoteChrom(), bc->getRemoteStart(), s.getID());
+				Locus* newSNP = new Locus(bc->getRemoteChrom(), bc->getRemoteStart(), s.isRare(), s.getID());
 				
 				//std::cerr<<"ASDFASDF:"<<bc->rChrom.c_str()<<"\t"<<(int)newSNP.chr<<" "<<newSNP.pos<<" "<<newSNP.RSID()<<"\n";
 				converted.insert(std::make_pair(&s, newSNP));
@@ -154,7 +154,7 @@ void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out
 		split(words, line, is_any_of(" \n\t"), boost::token_compress_on);
 
 		if (words.size() > 3){
-			array_out.push_back(new Locus(words[0], atoi(words[3].c_str()), words[1]));
+			array_out.push_back(new Locus(words[0], atoi(words[3].c_str()), false, words[1]));
 		}
 	}
 }

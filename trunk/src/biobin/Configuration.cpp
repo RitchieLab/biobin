@@ -93,6 +93,8 @@ void Configuration::initGeneric(){
 				"Phenotype control value")
 		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125),
 				"Minimum fraction of population needed for control cases")
+		("rare-case-control", value<Bool>()->default_value(false),
+				"Flag indicating determining rarity of variants by both case and control populations")
 		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
 				"Disease model (additive, dominant, or recessive)");
 
@@ -195,6 +197,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	}
 	DataImporter::CompressedVCF = vm["compressed-vcf"].as<Bool>();
 	DataImporter::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
+	DataImporter::RareCaseControl = vm["rare-case-control"].as<Bool>();
 
 
 	if(vm.count("add-groups")){

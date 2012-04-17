@@ -21,16 +21,16 @@ const vector<string> Locus::_chrom_list(__vinit, __vinit + (sizeof(__vinit) / si
 
 const string Locus::invalid_chrom("");
 
-Locus::Locus(short chrom, uint pos, const string& id):
-		_chrom(chrom), _pos(pos), _id(id){
+Locus::Locus(short chrom, uint pos, bool rare, const string& id):
+		_chrom(chrom), _pos(pos), _id(id), _is_rare(rare){
 	if (id.size() == 0 || _id == "."){
 		createID();
 	}
 
 }
 
-Locus::Locus(const string& chrom_str, uint pos, const string& id):
-		_pos(pos), _id(id){
+Locus::Locus(const string& chrom_str, uint pos, bool rare, const string& id):
+		_pos(pos), _id(id), _is_rare(rare){
 	_chrom = getChrom(chrom_str);
 	if (_id.size() == 0 || _id == "."){
 		createID();

@@ -24,7 +24,10 @@ biobin_SOURCES= \
    
 dist_data_DATA=\
 	$(top_srcdir)/data/example.cfg \
-	$(top_srcdir)/data/example.vcf 
+	$(top_srcdir)/data/example.vcf
+
+EXTRA_DIST=\
+	$(top_srcdir)/doc/manual.doc
    
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) 

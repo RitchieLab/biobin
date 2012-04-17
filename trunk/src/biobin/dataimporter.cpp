@@ -19,6 +19,7 @@ namespace BioBin {
 
 bool DataImporter::CompressedVCF = false;
 bool DataImporter::KeepCommonLoci = true;
+bool DataImporter::RareCaseControl = false;
 
 /*bool DataImporter::open(const string& filename) {
 	vcf = VCF::vcf_file(filename);
@@ -57,6 +58,16 @@ void DataImporter::parseSNP(Knowledge::Locus& loc, vector<short>& genotype_map_o
 		}
 	}
 
+}
+
+float DataImporter::getMAF(const vector<int>& allele_count, uint nmcc){
+	if(nmcc == 0){
+		return -1;
+	}else{
+		set<int> ordered_allele_count(allele_count.begin(), allele_count.end());
+		return ordered_allele_count.size() > 1 ?
+				(*(++ordered_allele_count.begin())) / ((float) nmcc) : 0;
+	}
 }
 
 

@@ -81,6 +81,8 @@ public:
 
 	static bool CompressedVCF;					///< gzipped file Y/N
 	static bool KeepCommonLoci;
+	// determine rarity of a variant by either case or control status
+	static bool RareCaseControl;
 
 	uint individualCount() {return vcf.N_indv;}
 	const vector<string>& getIndividualIDs() {return vcf.indv;}
@@ -88,6 +90,10 @@ public:
 	void parseSNP(Knowledge::Locus& loc, vector<short>& genotypes_out);
 
 private:
+
+	// returns the minor allele frequency (frequency of the second most common
+	// allele) given the counts and total count.
+	float getMAF(const vector<int>& allele_count, uint nmcc);
 
 	// No copying or assignment!
 	DataImporter(const DataImporter& orig);
@@ -103,7 +109,10 @@ private:
 template <class T_cont>
 void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 
-
+	vector<bool> cases = controls;
+	for(vector<bool>::iterator itr = cases.begin(); itr!= cases.end(); itr++){
+		(*itr).flip();
+	}
 
 	set<string> unknownChromosomes;
 	//T_cont::const_iterator pos = loci_out.end();
@@ -117,6 +126,8 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 	vector<int> alleleCounts;
 	double nonMissingChrCount = 0.0;
 	uint nmcc = 0;					///< Just to avoid redundant conversions
+	vector<int> alleleCounts_case;
+	uint nmcc_case = 0;
 	VCF::vcf_entry entry(vcf.N_indv);
 
 	for (uint i=0; i<totalSiteCount; i++) {
@@ -132,11 +143,14 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
 		}else{
 			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
+			entry.get_allele_counts(alleleCounts_case, nmcc_case, cases, vcf.include_genotype[i]);
 		}
-		nonMissingChrCount = nmcc;
 
-		if(KeepCommonLoci || (alleleCounts[0] / nonMissingChrCount) < BinManager::mafCutoff ){
-			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),entry.get_ID());
+		bool is_rare = (getMAF(alleleCounts, nmcc) < BinManager::mafCutoff) &&
+				(!RareCaseControl || getMAF(alleleCounts_case, nmcc_case) < BinManager::mafCutoff);
+
+		if(KeepCommonLoci || is_rare ){
+			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
 
 			//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
 			//	unknownChromosomes.insert(entry->get_CHROM());
