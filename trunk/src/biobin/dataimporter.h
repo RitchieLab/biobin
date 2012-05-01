@@ -57,7 +57,7 @@ namespace BioBin {
 class DataImporter {
 public:
 
-	DataImporter(const string& filename) : vcf(filename) {}
+	DataImporter(const string& filename) : vcf(filename, CompressedVCF) {}
 	virtual ~DataImporter(){}
 	
 	//bool open(const string& filename);
@@ -124,7 +124,6 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 
 	string line;
 	vector<int> alleleCounts;
-	double nonMissingChrCount = 0.0;
 	uint nmcc = 0;					///< Just to avoid redundant conversions
 	vector<int> alleleCounts_case;
 	uint nmcc_case = 0;
@@ -244,7 +243,11 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 
 	vector<bool> cases = controls;
 
+	uint n_controls = 0;
 	for (unsigned int i=0; i < controls.size(); i++){
+		if (controls[i]){
+			++n_controls;
+		}
 		cases[i].flip();
 	}
 
@@ -295,7 +298,7 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 		}
 		++l_itr;
 	}
-	if(num_not_found){
+	if(num_not_found && n_controls < controls.size()){
 		std::cerr << "WARNING: Data completely missing for cases or controls "
 				<< "for " << num_not_found << " loci.  See the locus.csv report"
 				<< " for details.\n";

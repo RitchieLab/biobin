@@ -380,7 +380,7 @@ void vcf_file::read_line(string &out)
 		static char *buffer = new char [MAX_LINE_LEN];
 		gzgets(gzvcf_in, buffer, MAX_LINE_LEN);
 		out = buffer;
-		//out.erase( out.find_last_not_of(" \t\n\r") + 1);	// Trim whitespace at end of line
+		out.erase( out.find_last_not_of(" \t\n\r") + 1);	// Trim whitespace at end of line
 	}
 }
 }

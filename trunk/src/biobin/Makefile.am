@@ -32,8 +32,6 @@ EXTRA_DIST=\
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) 
 
-biobin_LDFLAGS=
-
 biobin_LDADD=\
 	../knowledge/libknowledge.la \
 	../vcftools/libvcftools.la \
