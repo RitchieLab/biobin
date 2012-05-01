@@ -155,7 +155,11 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 			//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
 			//	unknownChromosomes.insert(entry->get_CHROM());
 
-			loc->addAllele(entry.get_REF(), nmcc != 0 ? (alleleCounts[0] / nonMissingChrCount) : 0);
+			loc->addAllele(entry.get_REF(), nmcc != 0 ? (alleleCounts[0] / ((double) nmcc) ) : 0);
+
+			// If we are completely missing information (probably just for the controls),
+			// Then get the allele information for the entire population, so
+			// we can include the non-referent alleles with a frequency of -1
 			if (nmcc == 0){
 				entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
 				nmcc = 0;
@@ -166,7 +170,7 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 			//call (with a different index scheme...)
 			for (uint n = 1; n<alleleCount; n++)	{
 				loc->addAllele(entry.get_ALT_allele(n-1),
-						nmcc != 0 ? alleleCounts[n] / nonMissingChrCount : -1);
+						nmcc != 0 ? alleleCounts[n] / ((double) nmcc) : -1);
 			}
 
 			loci_out.insert(loci_out.end(), loc);
