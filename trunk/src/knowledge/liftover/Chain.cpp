@@ -45,12 +45,14 @@ void Chain::EstimateConversion(int pos, set<BuildConversion>& conversionOptions)
 
 bool Chain::EstimateConversion(int pos, BuildConversion& c_out) {
 
+	return EstimateConversion(pos,pos,c_out);
+
 	// TODO: Why is this necessary?
 	int pos_expand = 5;
 	BuildConversion test(c_out);
 
 	EstimateConversion(pos - pos_expand, pos + pos_expand, test);
-	if (test.getRemoteStop() - test.getRemoteStart() > 4){
+	if (test.getRemoteStop() - test.getRemoteStart() > -1){
 		return EstimateConversion(pos,pos,c_out);
 	}
 	return false;

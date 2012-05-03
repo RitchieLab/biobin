@@ -40,6 +40,8 @@ class Locus{
 
 public:
 
+	typedef set<Allele>::const_iterator const_allele_iterator;
+
 	/*!
 	 * \brief Constructs a Locus object using the chromosome string.
 	 * This constructor uses the chromosome string, along with the position to
@@ -81,6 +83,30 @@ public:
 	 * \param freq The frequency of the allele to add.
 	 */
 	void addAllele(const string& allele, float freq);
+
+	/*!
+	 * \brief Adds a list of alleles to this locus.
+	 * This function adds a list of alleles to this locus.  This is used under
+	 * the assumption that this list is coming from another Locus
+	 *
+	 * \param begin An iterator pointing to the beginning of the allele list
+	 * \param end An iterator pointing to the end of the allele list
+	 */
+	template<class Allele_itr>
+	void addAlleles(Allele_itr begin, const Allele_itr& end);
+
+	/*!
+	 * Returns an iterator to the beginning of the list of alleles.  Used when
+	 * copying Loci, especially in a liftOver situation.
+	 * \return An iterator pointing to the beginning of the allele List
+	 */
+	const_allele_iterator beginAlleles() const { return _alleles.begin(); }
+	/*!
+	 * Returns an iterator to the end of the list of alleles.  Used when
+	 * copying Loci, especially in a liftOver situation.
+	 * \return An iterator pointing to the end of the allele List
+	 */
+	const_allele_iterator endAlleles() const { return _alleles.end(); }
 
 	/*!
 	 * \brief Return the major allele frequency (that which is most common).
@@ -282,6 +308,14 @@ private:
 	//flag determining rarity
 	bool _is_rare;
 };
+
+template<class Allele_itr>
+void Locus::addAlleles(Allele_itr begin, const Allele_itr& end){
+	while(begin != end){
+		_alleles.insert(_alleles.end(), *begin);
+		++begin;
+	}
+}
 
 }
 

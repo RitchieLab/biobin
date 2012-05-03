@@ -101,18 +101,9 @@ string Application::AddReport(const string& suffix, const string& extension, con
 	return newFilename;
 }
 
-void Application::LoadBuildConverter(const string& build) {
-	buildConverter = new Knowledge::Liftover::ConverterSQLite(build, _db);
-	buildConverter->Load();
-}
-
 uint Application::GetPopulationID(const string& pop_str) {
 	return _info->getPopulationID(pop_str);
 }
-
-
-
-
 
 void Application::Init(const string& filename, bool reportVersion) {
 	dbFilename = filename;

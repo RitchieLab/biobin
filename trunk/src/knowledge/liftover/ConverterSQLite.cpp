@@ -40,12 +40,12 @@ int ConverterSQLite::Load() {
 	if (status == 0){
 		stringstream ss;
 		ss << "SELECT chain_data FROM chain_files NATURAL JOIN build_versions "
-				"WHERE build = '" << _newBuild << "';";
+				"WHERE build = '" << _origBuild << "';";
 
 		status = sqlite3_exec(_db, ss.str().c_str(), parseChainFiles, this, NULL);
 	}
 
-	return status;
+	return _chains.size();
 }
 
 int ConverterSQLite::parseCurrentVersion(

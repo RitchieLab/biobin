@@ -89,6 +89,8 @@ public:
 	
 	void parseSNP(Knowledge::Locus& loc, vector<short>& genotypes_out);
 
+	void remapLocus(Knowledge::Locus* orig_loc, Knowledge::Locus* new_loc);
+
 private:
 
 	// returns the minor allele frequency (frequency of the second most common

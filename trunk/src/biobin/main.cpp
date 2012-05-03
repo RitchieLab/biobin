@@ -46,9 +46,6 @@ void Main::RunCommands() {
 	VCF::LOG.open("vcf-responses.log");
 
 	app.Init(c_knowledge_file, true);
-	if (c_genome_build != "") {
-		app.LoadBuildConverter(c_genome_build);
-	}
 
 	//Tasks that run before SNPs load (not sure what those would be)
 	RunTasks(0);

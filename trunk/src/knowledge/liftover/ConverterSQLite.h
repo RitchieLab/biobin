@@ -28,6 +28,9 @@ public:
 
 private:
 
+	// Sets the new build based on the information from the database
+	void setNewBuild();
+
 	static int parseCurrentVersion(void*, int, char**, char**);
 	static int parseChainFiles(void*, int, char**, char**);
 

@@ -115,6 +115,8 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 		//uint validLocus = 0;
 		std::stringstream missingSNPs;
 		while (itr != end) {
+			bool pushed = false;
+
 			Knowledge::Locus &orig = **itr;
 
 			if (converted.find(&orig) != missing) {
@@ -128,6 +130,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 				}
 
 				while (map_itr != last) {
+					pushed = true;
 					if (!((*map_itr).second) || (*map_itr).second->getPos() == 0){
 						missingSNPs<<*((*map_itr).first)<<"\n";
 					}else {
@@ -138,7 +141,11 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 										<<*((*map_itr).second)<<"\n";
 							}
 
-							dataset.push_back((*map_itr).second);
+							Locus* newLoc = (*map_itr).second;
+
+							dataset.push_back(newLoc);
+							_data.remapLocus(&orig, newLoc);
+							newLoc->addAlleles(orig.beginAlleles(),orig.endAlleles());
 							//dataset.AddSNP(first->second.chrom, itr->second.pos, first->second.RSID().c_str());
 							//locusRemap[itr->second.chrom].push_back(validLocus++);
 							//locusArray[i] = itr->second;
@@ -151,7 +158,11 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 					++map_itr;
 				}
 			}
-			delete *itr;
+			if(pushed){
+				delete *itr;
+			}else{
+				dataset.push_back(*itr);
+			}
 			++itr;
 			++i;
 		}

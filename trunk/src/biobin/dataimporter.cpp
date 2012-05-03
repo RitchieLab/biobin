@@ -6,12 +6,14 @@
  */
 
 #include <utility>
+#include <algorithm>
 
 #include "dataimporter.h"
 
 #include "knowledge/Locus.h"
 
 using std::pair;
+using std::sort;
 
 using Knowledge::Locus;
 
@@ -64,12 +66,26 @@ float DataImporter::getMAF(const vector<int>& allele_count, uint nmcc){
 	if(nmcc == 0){
 		return -1;
 	}else{
-		set<int> ordered_allele_count(allele_count.begin(), allele_count.end());
-		return ordered_allele_count.size() > 1 ?
-				(*(++ordered_allele_count.begin())) / ((float) nmcc) : 0;
+		vector<int> ordered_allele_count(allele_count.begin(), allele_count.end());
+		sort(ordered_allele_count.begin(), ordered_allele_count.end());
+		float ret_val = 0;
+		if (ordered_allele_count.size() > 1){
+			ret_val = (*(++ordered_allele_count.rbegin())) / ((float) nmcc);
+		}
+		return ret_val;
+//		return ordered_allele_count.size() > 1 ?
+//				(*(++ordered_allele_count.rbegin())) / ((float) nmcc) : 0;
 	}
 }
 
+void DataImporter::remapLocus(Knowledge::Locus* orig_loc, Knowledge::Locus* new_loc){
+	unordered_map<Knowledge::Locus*, int>::const_iterator curr_pos = _locus_position.find(orig_loc);
+	if(curr_pos != _locus_position.end()){
+		_locus_position[new_loc] = (*curr_pos).second;
+		_locus_position.erase(curr_pos);
+	}
+
+}
 
 
 }

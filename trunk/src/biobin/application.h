@@ -89,8 +89,6 @@ public:
 	void SetReportPrefix(const string& pref);
 	void UseHtmlReports(bool useHtml);
 
-	void LoadBuildConverter(const string& build);
-
 	// Returns a vector of the category (source) IDs
 	vector<uint> ManagerIDs();
 	Knowledge::GroupCollection* GroupManager(uint idx);
