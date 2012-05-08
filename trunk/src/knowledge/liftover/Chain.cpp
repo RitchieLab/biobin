@@ -132,7 +132,7 @@ std::string Chain::Parse(const string& data) {
 	vector<string> words;
 	split(words, *line_itr, is_any_of(" \t\n"), boost::token_compress_on);
 
-	_score = atoi(words[0].c_str());
+	_score = atoi(words[1].c_str());
 	_lChrom = words[2];
 	_forward = words[9]=="+";
 	_id = atoi(words[12].c_str());
