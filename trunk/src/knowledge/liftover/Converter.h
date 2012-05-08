@@ -159,7 +159,7 @@ void Converter::ConvertDataset(T_iter itr, const T_iter& end,
 
 			//The best should "float" to the top
 			if (con.size() > 0) {
-				set<BuildConversion>::iterator bc = con.begin();
+				set<BuildConversion>::const_reverse_iterator bc = con.rbegin();
 				Locus* newSNP = new Locus(bc->getRemoteChrom(), bc->getRemoteStart(), s.isRare(), s.getID());
 
 				//std::cerr<<"ASDFASDF:"<<bc->rChrom.c_str()<<"\t"<<(int)newSNP.chr<<" "<<newSNP.pos<<" "<<newSNP.RSID()<<"\n";

@@ -113,6 +113,7 @@ bool Chain::EstimateConversion(int start, int stop, BuildConversion& c) {
 		}
 
 		c.setChroms(_lChrom, _rChrom);
+		c.setScore(_score);
 		// I don't need this (I think); it should be set correctly already
 		//c.setLocalStart(start);
 		//c.setLocalStop(stop);
@@ -132,7 +133,7 @@ std::string Chain::Parse(const string& data) {
 	vector<string> words;
 	split(words, *line_itr, is_any_of(" \t\n"), boost::token_compress_on);
 
-	_score = atoi(words[1].c_str());
+	_score = atol(words[1].c_str());
 	_lChrom = words[2];
 	_forward = words[9]=="+";
 	_id = atoi(words[12].c_str());

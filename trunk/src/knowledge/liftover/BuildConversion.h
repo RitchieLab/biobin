@@ -40,6 +40,9 @@ public:
 	void setLocalStop(int local){
 		_lStop = local;
 	}
+	void setScore(long score){
+		_score = score;
+	}
 
 	int getLocalStart() const { return _lStart;}
 	int getLocalStop() const {return _lStop;}

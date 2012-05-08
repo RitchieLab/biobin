@@ -95,6 +95,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	int chainCount = cnv.Load();
 
 	if (chainCount > 0) {
+		vector<Knowledge::Locus*> toDelete;
 		vector <Knowledge::Locus*> locusArray;
 		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
 		_data.getLoci(locusArray, controls);
@@ -110,9 +111,6 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 		multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator missing =
 				converted.end();
 
-
-		uint i=0;
-		//uint validLocus = 0;
 		std::stringstream missingSNPs;
 		while (itr != end) {
 			bool pushed = false;
@@ -130,22 +128,22 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 				}
 
 				while (map_itr != last) {
-					pushed = true;
 					if (!((*map_itr).second) || (*map_itr).second->getPos() == 0){
 						missingSNPs<<*((*map_itr).first)<<"\n";
 					}else {
 						if ((*map_itr).second->getChrom() != -1) {
-							if ((*map_itr).first->getChrom() != (*map_itr).second->getChrom() ||
-									((float)abs((float)(*map_itr).first->getPos() - (float)(*map_itr).second->getPos())/(float)(*map_itr).first->getPos())> 0.01){
+							if ((*map_itr).first->getChrom() != (*map_itr).second->getChrom()){
 								cnvLog<<*((*map_itr).first)<<","
 										<<*((*map_itr).second)<<"\n";
 							}
 
 							Locus* newLoc = (*map_itr).second;
-
+							pushed = true;
 							dataset.push_back(newLoc);
 							_data.remapLocus(&orig, newLoc);
-							newLoc->addAlleles(orig.beginAlleles(),orig.endAlleles());
+							newLoc->addAlleles(orig.beginAlleles(),
+									orig.endAlleles());
+
 							//dataset.AddSNP(first->second.chrom, itr->second.pos, first->second.RSID().c_str());
 							//locusRemap[itr->second.chrom].push_back(validLocus++);
 							//locusArray[i] = itr->second;
@@ -158,19 +156,25 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 					++map_itr;
 				}
 			}
+
+
 			if(pushed){
-				delete *itr;
+				toDelete.push_back(*itr);
 			}else{
 				dataset.push_back(*itr);
 			}
 			++itr;
-			++i;
 		}
 		if (missingSNPs.str().length() > 0) {
 			std::string filename = AddReport("missing-snps", "txt", "SNPs that were dropped during build conversion");
 			std::ofstream file(filename.c_str());
 			file<<missingSNPs.str();
 		}
+
+		for (vector<Knowledge::Locus*>::iterator del_it = toDelete.begin(); del_it != toDelete.end(); del_it++){
+			delete *del_it;
+		}
+
 	} else {
 		_data.getLoci(dataset, controls);
 	}
