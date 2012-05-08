@@ -7,6 +7,8 @@
 
 #include "PopulationManager.h"
 
+#include "binmanager.h"
+
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -72,6 +74,14 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 		std::cerr << "WARNING: Number of cases is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
 				" for cases may be unreliable\n";
+	}
+
+	// Print a warning if rare variants will only be fixed variants
+	if (1 / static_cast<float>(2 *control) > BinManager::mafCutoff){
+		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in controls are rare.\n";
+	}
+	if (DataImporter::RareCaseControl && control != total && 1 / static_cast<float>(2*(total - control)) > BinManager::mafCutoff){
+		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in cases are rare.\n";
 	}
 
 	return _is_control;
