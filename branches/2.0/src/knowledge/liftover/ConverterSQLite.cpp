@@ -6,6 +6,9 @@
  */
 
 #include "ConverterSQLite.h"
+
+#include "Chain.h"
+
 #include <sqlite3.h>
 #include <sstream>
 
@@ -16,13 +19,13 @@ namespace Liftover{
 
 ConverterSQLite::ConverterSQLite(const string& orig_build,
 		const string& db_filename) :
-		Converter(orig_build, orig_build), _self_open(true){
+		Converter(orig_build), _self_open(true){
 	sqlite3_open(db_filename.c_str(),&_db);
 }
 
 ConverterSQLite::ConverterSQLite(const string& orig_build,
 		sqlite3* db) :
-		Converter(orig_build, orig_build), _db(db), _self_open(false) {}
+		Converter(orig_build), _db(db), _self_open(false) {}
 
 ConverterSQLite::~ConverterSQLite(){
 	if (_self_open){
@@ -33,46 +36,74 @@ ConverterSQLite::~ConverterSQLite(){
 int ConverterSQLite::Load() {
 
 	// Find the current version that we are building to
+	stringstream ss;
+	ss << "SELECT chain_id, score, old_chr, old_start, old_end, new_chr, is_fwd "
+			"FROM chain INNER JOIN build_assembly "
+			"ON build_assembly.assembly=chain.old_assembly "
+			"WHERE build = '" << _origBuild << "';";
 
-	int status =  sqlite3_exec(_db, "SELECT version FROM versions "
-			"WHERE element='build'", parseCurrentVersion, this, NULL);
+	sqlite3_exec(_db, ss.str().c_str(), parseChains, this, NULL);
 
-	if (status == 0){
-		stringstream ss;
-		ss << "SELECT chain_data FROM chain_files NATURAL JOIN build_versions "
-				"WHERE build = '" << _origBuild << "';";
+	map<short, set<Chain*> >::iterator itr = _chains.begin();
+	while(itr != _chains.end()){
+		set<Chain*>::iterator s_itr = (*itr).second.begin();
+		while(s_itr != (*itr).second.end()){
+			stringstream ss_data;
+			ss_data << "SELECT old_start, old_end, new_start "
+					"FROM chain_data WHERE chain_id=" << (*s_itr)->getID() << ";";
 
-		status = sqlite3_exec(_db, ss.str().c_str(), parseChainFiles, this, NULL);
+			sqlite3_exec(_db, ss_data.str().c_str(), parseChainData, *s_itr, NULL);
+
+			++s_itr;
+		}
+
+		++itr;
 	}
 
 	return _chains.size();
 }
 
-int ConverterSQLite::parseCurrentVersion(
+
+
+int ConverterSQLite::parseChains(
 		void* obj, int n_cols, char** col_vals, char** col_names){
 
-	ConverterSQLite *conv = (ConverterSQLite*) obj;
+	ConverterSQLite *conv = static_cast<ConverterSQLite*>(obj);
 
-	// Not the right number of columns
-	if (n_cols != 1){
+	// Not the right # of columns
+	if (n_cols != 7){
 		return 2;
 	}
 
-	conv->_newBuild = col_vals[0];
+	int id = atoi(col_vals[0]);
+	long score = atol(col_vals[1]);
+	short o_chr = static_cast<short>(atoi(col_vals[2]));
+	int o_start = atoi(col_vals[3]);
+	int o_end = atoi(col_vals[4]);
+	short n_chr = static_cast<short>(atoi(col_vals[5]));
+	bool fwd = static_cast<bool>(atoi(col_vals[6]));
+
+	conv->_chains[o_chr].insert(new Chain(id, score, o_start, o_end, n_chr, fwd));
+
 	return 0;
 }
 
-int ConverterSQLite::parseChainFiles(
+int ConverterSQLite::parseChainData(
 		void* obj, int n_cols, char** col_vals, char** col_names){
 
-	ConverterSQLite *conv = (ConverterSQLite*) obj;
+	Chain *chn = static_cast<Chain*>(obj);
 
-	// Not the right # of columns
-	if (n_cols != 1){
+	// Not the right number of columns
+	if (n_cols != 3){
 		return 2;
 	}
 
-	conv->addChain(col_vals[0]);
+	int old_s = atoi(col_vals[0]);
+	int old_e = atoi(col_vals[1]);
+	int new_s = atoi(col_vals[2]);
+
+	chn->addSegment(old_s, old_e, new_s);
+
 	return 0;
 }
 

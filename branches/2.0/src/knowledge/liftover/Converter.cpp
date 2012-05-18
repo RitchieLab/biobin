@@ -6,71 +6,58 @@
  */
 
 #include "Converter.h"
-
-#include <iostream>
-#include <fstream>
-#include <utility>						// std::make_pair
-#include <boost/algorithm/string.hpp>
-
 #include "Chain.h"
-#include "knowledge/Locus.h"
-#include "BuildConversion.h"
 
-
+using std::make_pair;
 
 namespace Knowledge {
 namespace Liftover {
 
-Converter::Converter(const string& orig, const string& newb) :
-		_origBuild(orig), _newBuild(newb) {}
+const float Converter::MIN_MAPPING_FRACTION = 0.95;
+
+const pair <short, pair<int,int> > Converter::FAILED_REGION =
+		make_pair(-1,make_pair(-1,-1));
+
+Converter::Converter(const string& orig) :
+		_origBuild(orig){}
 
 Converter::~Converter() {
-	multimap<short, Chain*>::iterator itr = _chains.begin();
-	multimap<short, Chain*>::const_iterator end = _chains.end();
-	while(itr != end){
-		delete itr->second;
+	map<short, set<Chain*> >::iterator itr = _chains.begin();
+	map<short, set<Chain*> >::iterator end = _chains.end();
+
+	while (itr != end){
+		set<Chain*>::iterator s_itr = (*itr).second.begin();
+		set<Chain*>::iterator s_end = (*itr).second.end();
+
+		while(s_itr != s_end){
+			delete *s_itr;
+			++s_itr;
+		}
+
 		++itr;
 	}
 }
-void Converter::addChain(const string& chainDetails) {
-	Chain *c = new Chain();
-	std::string chrom = c->Parse(chainDetails);
 
-	short chr_idx = Knowledge::Locus::getChrom(chrom);
-	//std::cerr<<" Chromosome: "<<chrom<<"\t"<<chr<<"\n";
-	if (chr_idx != -1){
-		_chains.insert(std::make_pair<uint, Chain*>(chr_idx, c));
-	}else{
-		std::cerr<<"Unknown Chromosome in chain file!";
-	}
-}
+pair<short, pair<int, int> > Converter::convertRegion(short chrom, int start, int end) const {
+	pair<short, pair<int, int> > ret_val = FAILED_REGION;
 
-void Converter::ConvertDataset(const string& mapFilename, multimap<Locus*, Locus*>& converted) {
+	map<short, set<Chain*> >::const_iterator map_itr = _chains.find(chrom);
+	if (map_itr != _chains.end()){
+		set<Chain*>::const_iterator itr = (*map_itr).second.begin();
+		while(ret_val == FAILED_REGION && itr != (*map_itr).second.end()){
+			if((*itr)->overlaps(start, end)){
+				pair<int, int> new_reg = (*itr)->convertRegion(start, end, MIN_MAPPING_FRACTION);
 
-	vector<Locus*> loci;
-	readMapFile(mapFilename, loci);
-	ConvertDataset(loci.begin(), loci.end(), converted);
-}
-
-void Converter::readMapFile(const string& mapFilename, vector<Locus*>& array_out) const{
-
-	std::ifstream file(mapFilename.c_str());
-	if (!file.good()){
-		throw std::ios_base::failure("File " + mapFilename + " not found");
-	}
-
-	string line;
-	vector<string> words;
-
-	while (file.good()) {
-		words.clear();
-		getline(file, line);
-		split(words, line, is_any_of(" \n\t"), boost::token_compress_on);
-
-		if (words.size() > 3){
-			array_out.push_back(new Locus(words[0], atoi(words[3].c_str()), false, words[1]));
+				if(new_reg.first != new_reg.second){
+					ret_val = make_pair((*itr)->getNewChrom(), new_reg);
+				}
+			}
+			++itr;
 		}
 	}
+
+	return ret_val;
+
 }
 
 } // namespace Lifover

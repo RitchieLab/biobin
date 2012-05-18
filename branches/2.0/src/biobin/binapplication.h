@@ -104,65 +104,39 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 		std::ofstream cnvLog(conversionLog.c_str());
 		cnvLog<<"Chrom(Orig),Pos(Orig),RSID(Old),Chrom(New),Pos(New),RSID(New)\n";
 
-		multimap<Knowledge::Locus*, Knowledge::Locus*> converted;
-		cnv.ConvertDataset(locusArray.begin(), locusArray.end(), converted);
+		map<Knowledge::Locus*, Knowledge::Locus*> converted;
+		vector<Knowledge::Locus*> not_found;
+		cnv.convertLoci(locusArray.begin(), locusArray.end(), converted, not_found);
 		vector<Knowledge::Locus*>::iterator itr = locusArray.begin();
 		vector<Knowledge::Locus*>::iterator end = locusArray.end();
-		multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator missing =
+		map<Knowledge::Locus*, Knowledge::Locus*>::const_iterator missing =
 				converted.end();
+		map<Knowledge::Locus*, Knowledge::Locus*>::const_iterator new_loc_itr;
 
 		std::stringstream missingSNPs;
 		while (itr != end) {
-			bool pushed = false;
 
 			Knowledge::Locus &orig = **itr;
+			new_loc_itr = converted.find(&orig);
 
-			if (converted.find(&orig) != missing) {
-				multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator map_itr =
-						converted.lower_bound(&orig);
-				multimap<Knowledge::Locus*, Knowledge::Locus*>::const_iterator last  =
-						converted.upper_bound(&orig);
+			if (new_loc_itr != missing) {
 
-				if (converted.count(&orig) != 1){
-					std::cerr<<"It was observed that there are multiple hits returned by convert dataset: "<<orig.getID()<<" has "<<converted.count(&orig)<<" counterparts.\n";
-				}
-
-				while (map_itr != last) {
-					if (!((*map_itr).second) || (*map_itr).second->getPos() == 0){
-						missingSNPs<<*((*map_itr).first)<<"\n";
-					}else {
-						if ((*map_itr).second->getChrom() != -1) {
-							if ((*map_itr).first->getChrom() != (*map_itr).second->getChrom()){
-								cnvLog<<*((*map_itr).first)<<","
-										<<*((*map_itr).second)<<"\n";
-							}
-
-							Locus* newLoc = (*map_itr).second;
-							pushed = true;
-							dataset.push_back(newLoc);
-							_data.remapLocus(&orig, newLoc);
-							newLoc->addAlleles(orig.beginAlleles(),
-									orig.endAlleles());
-
-							//dataset.AddSNP(first->second.chrom, itr->second.pos, first->second.RSID().c_str());
-							//locusRemap[itr->second.chrom].push_back(validLocus++);
-							//locusArray[i] = itr->second;
-						}
-						else{
-							cnvLog<<*((*map_itr).first)<<","
-							<<" **** \n";
-						}
+				if(!((*new_loc_itr).second)){
+					missingSNPs << *((*new_loc_itr).first) << "\n";
+				} else {
+					if ((*new_loc_itr).first->getChrom() != (*new_loc_itr).second->getChrom()) {
+						cnvLog << *((*new_loc_itr).first) << ","
+								<< *((*new_loc_itr).second) << "\n";
 					}
-					++map_itr;
+
+					Locus* newLoc = (*new_loc_itr).second;
+					dataset.push_back(newLoc);
+					_data.remapLocus(&orig, newLoc);
 				}
-			}
-
-
-			if(pushed){
-				toDelete.push_back(*itr);
 			}else{
-				dataset.push_back(*itr);
+				missingSNPs << orig << "\n";
 			}
+
 			++itr;
 		}
 		if (missingSNPs.str().length() > 0) {
@@ -171,7 +145,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 			file<<missingSNPs.str();
 		}
 
-		for (vector<Knowledge::Locus*>::iterator del_it = toDelete.begin(); del_it != toDelete.end(); del_it++){
+		for (vector<Knowledge::Locus*>::iterator del_it = locusArray.begin(); del_it != locusArray.end(); del_it++){
 			delete *del_it;
 		}
 

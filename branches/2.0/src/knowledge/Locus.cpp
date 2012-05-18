@@ -86,7 +86,7 @@ const string& Locus::getChromStr(short chrom){
 	if (chrom < 0 || (uint) chrom > _chrom_list.size()-1){
 		return invalid_chrom;
 	}else{
-		return _chrom_list[chrom];
+		return _chrom_list[chrom-1];
 	}
 }
 
@@ -113,7 +113,7 @@ short Locus::getChrom(const string& chrom_str){
 	if (chr_pos == _chrom_list.end()){
 		return -1;
 	}else{
-		return chr_pos - _chrom_list.begin();
+		return chr_pos - _chrom_list.begin() + 1;
 	}
 
 }

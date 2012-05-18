@@ -28,11 +28,8 @@ public:
 
 private:
 
-	// Sets the new build based on the information from the database
-	void setNewBuild();
-
-	static int parseCurrentVersion(void*, int, char**, char**);
-	static int parseChainFiles(void*, int, char**, char**);
+	static int parseChains(void*, int, char**, char**);
+	static int parseChainData(void*, int, char**, char**);
 
 	sqlite3* _db;
 	bool _self_open;

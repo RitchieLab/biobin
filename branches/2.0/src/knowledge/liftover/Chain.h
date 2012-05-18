@@ -1,98 +1,89 @@
-/* 
- * File:   chain.h
- * Author: torstees
+/*
+ * Chain.h
  *
- * Represents a complete chain as described in the liftover chain files
- * A chromosome can have many chains.
- *
- * Created on April 28, 2011, 4:08 PM
+ *  Created on: May 18, 2012
+ *      Author: jrw32
  */
 
-#ifndef KNOWLEDGE_CHAIN_H
-#define	KNOWLEDGE_CHAIN_H
-
-#include <boost/icl/interval_set.hpp>
-#include <boost/icl/split_interval_map.hpp>
-#include <string>
+#ifndef KNOWLEDGE_LIFTOVER_CHAIN_H
+#define KNOWLEDGE_LIFTOVER_CHAIN_H
 
 #include <set>
+#include <utility>
 
-#include "RegionConverter.h"
+#include "Segment.h"
 
+using std::pair;
+using std::make_pair;
 using std::set;
-using boost::icl::interval;
 
-namespace Knowledge {
-namespace Liftover {
+namespace Knowledge{
 
-class BuildConversion;
+namespace Liftover{
 
 class Chain {
 public:
 
-typedef boost::icl::split_interval_map<uint , set<RegionConverter> > RegionMap;
+	enum error_codes{
+		NOT_INTERSECTING,
+		DELETED,
+		PARTIALLY_DELETED
+	};
 
-	Chain();
-	Chain(int id, long score, int lLength, int lOffset, 
-			const string& chrom, int rLength, int rOffset);
-	virtual ~Chain() {}
+public:
+	Chain(int id, long score, int o_s, int o_e, short n_c, bool fwd) :
+		_id(id), _score(score), _old_start(o_s), _old_end(o_e),
+		_new_chrom(n_c), _is_fwd(fwd) {};
 
 
-	/**
-	 * This is the entire chunk of data from a chain file associated
-	 * to a single chain. Each component will be separated by new lines (\n)
-	 */
-	std::string Parse(const string& data);
-
-	// Some of these should be private!!!
-	void EstimateConversion(int start, int stop, set<BuildConversion>& conversionOptions);
-	bool EstimateConversion(int start, int stop, BuildConversion& c);
-	void EstimateConversion(int pos, set<BuildConversion>& conversionOptions);
-	bool EstimateConversion(int pos, BuildConversion& c);
-	
-	int LastPosition() const{
-		return _lOffset + _lLength * Direction();
+	bool overlaps(int start, int end) const {
+		return _old_start <= end && _old_end >= start;
+	}
+	bool operator<(const Chain& other) const {
+		return _score < other._score;
 	}
 
+	short getNewChrom() const{
+		return _new_chrom;
+	}
 
-	int LLength() const {return _lLength;}					///< Local length
-	int RLength() const {return _rLength;}					///< Remote Length
-	int LStart() const {return _lOffset;}					///< Local start
-	int RStart() const {return _rOffset;}					///< Remote start (this will be flipped if it's on - strain)
-	int ID() const {return _id;}						///< Chain ID
-	int Direction() const {return _forward ? 1 : -1;}				///< direction of the remote segment
-	int Score() const {return _score;}					///< Chain's score
-	const string& LChrom() const {return _lChrom;};		///< Local Chromosome
-	const string& RChrom() const {return _rChrom;};		///< Remote chromosome
+	int getID() const{
+		return _id;
+	}
 
-	int Count();					///< Return the number of subchains
+	pair<int, int> convertRegion(int start, int end, float minMappingFrac=0.95) const;
+
+	void addSegment(int old_s, int old_e, int new_s);
+
 private:
-	// No copying or assingment!
-	Chain(const Chain& orig);
-	Chain& operator=(const Chain& orig);
+	// No copying or assignment, please (though it would probably be OK)
+	Chain(const Chain& other);
+	Chain& operator=(const Chain& other);
 
-	RegionMap _regions;			///< This represents the chaining data
 
-	string _lChrom;			///< Which chromosome we are starting from
-	string _rChrom;			///< Which chromosome this converts to
-	bool _forward;					///< When -1, the SNPs in the region are transposed in the remote build
+	int _id;
+	long _score;
+	int _old_start;
+	int _old_end;
+	short _new_chrom;
+	bool _is_fwd;
 
-	int _id;							///< ID associated with chain from the chain file
-	/**
-	 * Score is a percentage of the chain's score based on
-	 * the amount of coverage a region represents (i.e. if we return a fragment
-	 * that is 10% of the whole chain, we return score * 0.1
-	 */
-	long _score;						///< Used to rank the conversions when multiple chains are hit
-	int _lLength;					///< Length of the local chain
-	int _lOffset;					///< Offset from beginning of the local chromosome
-	
-	int _rLength;					///< Length of the remote chain
-	int _rOffset;					///< Offset from the beginning of the target chromosome
+	set<Segment> _data;
 };
 
-}// namespace Liftover
-}// namespace Knowledge
+}
+}
 
-#endif	/* CHAIN_H */
+namespace std{
 
+template<>
+struct less<Knowledge::Liftover::Chain*> {
+
+	bool operator()(const Knowledge::Liftover::Chain* x, const Knowledge::Liftover::Chain* y) const{
+		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
+	}
+};
+
+}
+
+#endif /* CHAIN_H_ */

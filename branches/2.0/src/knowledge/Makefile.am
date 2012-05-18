@@ -22,16 +22,13 @@ libknowledge_la_SOURCES=\
 	InformationSQLite.cpp \
 	Configuration.h \
 	Configuration.cpp \
-	liftover/BuildConversion.h \
-	liftover/BuildConversion.cpp \
 	liftover/Chain.h \
 	liftover/Chain.cpp \
 	liftover/Converter.h \
 	liftover/Converter.cpp \
 	liftover/ConverterSQLite.h \
 	liftover/ConverterSQLite.cpp \
-	liftover/RegionConverter.h \
-	liftover/RegionConverter.cpp
+	liftover/Segment.h
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS)

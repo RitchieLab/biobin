@@ -8,169 +8,111 @@
 #ifndef KNOWLEDGE_LIFTOVER_CONVERTER_H
 #define	KNOWLEDGE_LIFTOVER_CONVERTER_H
 
-#include <vector>
-#include <string>
-#include <ostream>
+#include <utility>
+#include <set>
 #include <map>
 
-#include "Chain.h"
 #include "knowledge/Locus.h"
-#include "BuildConversion.h"
 
-#include <iostream>
-#include <fstream>
-#include <utility>						// std::make_pair
-#include <boost/algorithm/string.hpp>
-
-using std::multimap;
-using std::string;
-using std::vector;
-using boost::algorithm::split;
-using boost::algorithm::is_any_of;
+using Knowledge::Locus;
+using std::pair;
+using std::set;
+using std::map;
 
 namespace Knowledge {
 
-
 namespace Liftover{
 
-using Knowledge::Locus;
+class Chain;
 
 class Converter {
 public:
-	Converter(const string& origBuild, const string& newBuild);
+
+	static const pair<short, pair<int, int> > FAILED_REGION;
+	static const float MIN_MAPPING_FRACTION;
+
+public:
+
+	Converter(const string& origBuild);
 	virtual ~Converter();
-
-	void addChain(const string& chainDetails);
-	
-	void ConvertDataset(const string& mapFilename, multimap<Locus*, Locus*>& converted);
-	/**
-	 * Takes a list (iterable) of Locus object ptrs, applies the chaining and
-	 * returns the converted Locus objects in the supplied container.  Also
-	 * logs any dropped Locus objects to the supplied ostream object.
-	 */
-	template <class T_iter, class T_cont>
-	void ConvertDataset(T_iter itr, const T_iter& end, T_cont& newBuild, std::ostream& droppedLog);
-
-	/**
-	 * Takes a map filename and returns the new Locus objects in the supplied
-	 * container.
-	 */
-	template <class T_cont>
-	void ConvertDataset(const string& mapFilename, T_cont& newBuild, std::ostream& droppedLog);
-
-	/**
-	 * Takes a list (iterable) of Locus object ptrs and chains them together and
-	 * returns the result as a multimap
-	 */
-	template <class T_iter>
-	void ConvertDataset(T_iter itr, const T_iter& end,
-			multimap<Locus*, Locus*>& converted);
 
 	/**
 	 * Loads all of the chain files from a given source (pure virtual)
 	 */
 	virtual int Load() = 0;
 
+	/**
+	 * \brief Converts a region using the loaded chain files.
+	 * This function will lift a given region on a chromosome to another region
+	 * in a new build, using the loaded chains and segments.  If a conversion
+	 * fails, this will return (-1, (-1,-1) ), or the FAILED_REGION.
+	 *
+	 * NOTE: It is imperative that the start and end positions are at least 1
+	 * apart, as in the standard liftOver algorithm.  if you wish to lift a
+	 * single position, call convertRegion(chr, pos, pos+1) and simply take
+	 * the first element of the second element in the return value.
+	 *
+	 * \param chrom The old chromosome
+	 * \param start The starting position of the region
+	 * \param end The ending position of the region
+	 *
+	 * \return A pair containing the new chromosome and a pair of the
+	 * new region's boundaries.  If unable to map, returns the FAILED_REGION
+	 */
+	pair<short, pair<int, int> > convertRegion(short chrom, int start, int end) const;
+
+	/**
+	 * \brief Converts an (iterable) set of Loci.
+	 * This function takes two iterators that define a collection of Locus*
+	 * objects and converts them using the chain files.  This function will
+	 * create new Locus objects and insert them into the locus_map_out container
+	 * which is assumed to be a map of Locus* to Locus* objects (or an object
+	 * that conforms to the map specification).  The unmapped_out is a container
+	 * that will hold the Locus* objects that were not mapped to any new Locus.
+	 *
+	 * \param itr The iterator to the beginning of the Locus* sequence
+	 * \param end An iterator to the end of the Locus* sequence
+	 * \param locus_map_out A mapping of old Locus* to newly converted Locus*
+	 * \param unmapped_out A container of unmapped Locus* objects
+	 */
+	template <class T_iter, class T_map, class T_cont>
+	void convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out, T_cont& unmapped_out) const;
 
 protected:
-	multimap<short, Chain*> _chains;					///< Chrom -> chains
+	// A mapping of chromosome -> chains, ordered by score
+	map<short, set<Chain*> > _chains;
+
+	// The string describing the original build to lift from
 	string _origBuild;
-	string _newBuild;
 
 private:
 	// No copying or assignment allowed
 	Converter(const Converter& orig);
 	Converter& operator=(const Converter& other);
 
-	// Function to read a map filename and return the results in a vector of
-	// Locus Objects
-	void readMapFile(const string& mapFilename, vector<Locus*>& array_out) const;
 };
 
-template <class T_cont>
-void Converter::ConvertDataset(const string& mapFilename, T_cont& newBuild, std::ostream& droppedLog) {
+template <class T_iter, class T_map, class T_cont>
+void Converter::convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out, T_cont& unmapped_out) const{
 
-	vector<Locus*> loci;
-	readMapFile(mapFilename, loci);
+	while (itr != end){
+		pair<short, pair<int, int> > new_region =
+				convertRegion((*itr)->getChrom(), (*itr)->getPos(), (*itr)->getPos()+1);
 
-	ConvertDataset(loci.begin(), loci.end(), newBuild, droppedLog);
-	vector<Locus*>::iterator itr = loci.begin();
-	vector<Locus*>::iterator end = loci.end();
-	while(itr != end){
-		delete *itr;
-		++itr;
-	}
-}
-
-template <class T_iter, class T_cont>
-void Converter::ConvertDataset(T_iter itr, const T_iter& end, T_cont& newBuild, std::ostream& droppedLog) {
-	multimap<Locus*, Locus*> converted;
-	ConvertDataset(itr, end, converted);
-	multimap<Locus*, Locus*>::const_iterator map_itr = converted.begin();
-	multimap<Locus*, Locus*>::const_iterator map_end = converted.end();
-
-	std::stringstream missingSNPs;
-	while (map_itr != map_end) {
-		//Report any bad SNPS
-		if (map_itr->second && map_itr->second->getPos() == 0){
-			missingSNPs<<*(itr->first);
+		if (new_region == FAILED_REGION){
+			unmapped_out.insert(unmapped_out.end(), *itr);
 		}else{
-			newBuild.insert(itr->second);
+			Locus* converted =
+					new Locus(new_region.first, new_region.second.first,
+							(*itr)->isRare(), (*itr)->getID());
+			converted->addAlleles((*itr)->beginAlleles(), (*itr)->endAlleles());
+			locus_map_out[*itr] = converted;
 		}
-		++map_itr;
-	}
 
-	if (missingSNPs.str().length() > 0) {
-		droppedLog<<"SNPs that weren't translated properly to the new build:\n";
-		droppedLog<<"Chr/tPos/tRS ID\n"<<missingSNPs.str()<<"\n";
-	}
-}
-
-template <class T_iter>
-void Converter::ConvertDataset(T_iter itr, const T_iter& end,
-		multimap<Locus*, Locus*>& converted) {
-	//If there are no chains, then there is nothing to convert and we'll assume we
-	//are at the right build already
-
-
-	//SnpArray::const_iterator itr = originalBuild.begin();
-	//SnpArray::const_iterator end = originalBuild.end();
-
-	Locus* not_found = NULL;
-	while (itr != end) {
-		Locus& s = **itr;
-		if (_chains.size() == 0){
-			converted.insert(std::make_pair(&s,
-							new Locus(s.getChrom(), s.getPos(), s.isRare(), s.getID())));
-		} else {
-
-			multimap<short,Chain*>::const_iterator citr =
-					_chains.lower_bound(s.getChrom());
-			multimap<short,Chain*>::const_iterator cend =
-					_chains.upper_bound(s.getChrom());
-
-			set<BuildConversion> con;
-
-			//Accumulate the various conversions
-			while (citr != cend){
-				citr->second->EstimateConversion(s.getPos(), con);
-				++citr;
-			}
-
-			//The best should "float" to the top
-			if (con.size() > 0) {
-				set<BuildConversion>::const_reverse_iterator bc = con.rbegin();
-				Locus* newSNP = new Locus(bc->getRemoteChrom(), bc->getRemoteStart(), s.isRare(), s.getID());
-
-				//std::cerr<<"ASDFASDF:"<<bc->rChrom.c_str()<<"\t"<<(int)newSNP.chr<<" "<<newSNP.pos<<" "<<newSNP.RSID()<<"\n";
-				converted.insert(std::make_pair(&s, newSNP));
-			} else {
-				converted.insert(std::make_pair(&s, not_found));
-			}
-		}
 		++itr;
 	}
 }
+
 
 
 }
