@@ -45,7 +45,7 @@ void Configuration::initGeneric(){
 					"A list of group names to include")
 			("include-group-file", value<vector<string> >()->composing(),
 					"A file containg a group definition")
-			("population,P", value<string>(&RegionCollection::pop_str)->default_value("NO-LD"),
+			("population,P", value<string>(&RegionCollection::pop_str)->default_value("n/a"),
 					"The population to base the gene boundaries on")
 			("gene-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
 					"The amount to expand the genes by (when using NO-LD)");

@@ -128,7 +128,7 @@ void Application::Init(const string& filename, bool reportVersion) {
 
 	sqlite3_open(dbPath.c_str(), &_db);
 	_info = new Knowledge::InformationSQLite(_db);
-	regions = new Knowledge::RegionCollectionSQLite(_db);
+	regions = new Knowledge::RegionCollectionSQLite(_db, dataset);
 
 	string dbSnp = _info->getResourceVersion("ncbi");
 	string ensembl = _info->getResourceVersion("ensembl");

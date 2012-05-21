@@ -28,7 +28,11 @@ libknowledge_la_SOURCES=\
 	liftover/Converter.cpp \
 	liftover/ConverterSQLite.h \
 	liftover/ConverterSQLite.cpp \
-	liftover/Segment.h
+	liftover/Segment.h \
+	any_iterator.hpp \
+	detail/any_iterator_abstract_base.hpp \
+	detail/any_iterator_metafunctions.hpp \
+	detail/any_iterator_wrapper.hpp
 	
 	
 AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS)

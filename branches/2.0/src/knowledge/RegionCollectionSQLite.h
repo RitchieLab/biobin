@@ -9,12 +9,12 @@
 #define KNOWLEDGE_REGIONCOLLECTIONSQLITE_H_
 
 #include "RegionCollection.h"
+#include "InformationSQLite.h"
 
-class sqlite3;
+#include <sqlite3.h>
+#include "any_iterator.hpp"
 
 namespace Knowledge{
-
-class Information;
 
 /*!
  * \brief A class that implements the region collection from a SQLite database.
@@ -27,6 +27,31 @@ class Information;
  */
 class RegionCollectionSQLite : public RegionCollection{
 
+	class Container {
+
+	public:
+		typedef IteratorTypeErasure::any_iterator<Knowledge::Locus* const, boost::bidirectional_traversal_tag> const_iterator;
+
+		virtual ~Container() {}
+		virtual const_iterator begin() const = 0;
+		virtual const_iterator end() const = 0;
+	};
+
+	template <class T_cont>
+	class LocusContainer : virtual public Container {
+	public:
+
+		LocusContainer(const T_cont& c) : _data(c) {}
+		virtual ~LocusContainer() {}
+
+		virtual const_iterator begin() const {return static_cast<const_iterator>(_data.begin());}
+		virtual const_iterator end() const {return static_cast<const_iterator>(_data.end());}
+
+	private:
+		const T_cont& _data;
+	};
+
+
 public:
 	/*!
 	 * \brief Create a RegionCollection giving the DB location.
@@ -35,7 +60,8 @@ public:
 	 *
 	 * \param fn The filename of the LOKI database.
 	 */
-	RegionCollectionSQLite(const string& fn);
+	template <class T_cont>
+	RegionCollectionSQLite(const string& fn, const T_cont& loci);
 	/*!
 	 * \brief Create a RegionCollection giving an open DB connection.
 	 * Creates a RegionCollection with an already open databse connection that
@@ -45,7 +71,8 @@ public:
 	 *
 	 * \param db The database connection to the LOKI database.
 	 */
-	RegionCollectionSQLite(sqlite3 *db);
+	template <class T_cont>
+	RegionCollectionSQLite(sqlite3 *db, const T_cont& loci);
 	/*!
 	 * Destroys the RegionCollection objects, and if necessary closes the
 	 * database connection.
@@ -75,12 +102,30 @@ private:
 	//! object to get generalized information
 	Information* _info;
 
+	const Container* const _dataset;
+
 	/*!
 	 * callback functions for sqlite interface.
 	 * NOTE: the 1st argument will be a pointer to a RegionCollection object
 	 */
 	static int parseRegionQuery(void*, int, char**, char**);
 };
+
+template<class T_cont>
+RegionCollectionSQLite::RegionCollectionSQLite(const string& fn,
+		const T_cont& loci) :
+		self_open(true), _dataset(new LocusContainer<T_cont>(loci)) {
+
+	_info = new InformationSQLite(db);
+	sqlite3_open(fn.c_str(), &db);
+}
+
+template<class T_cont>
+RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn,
+		const T_cont& loci) :
+		self_open(false), db(db_conn), _dataset(new LocusContainer<T_cont>(loci)) {
+	_info = new InformationSQLite(db);
+}
 
 }
 

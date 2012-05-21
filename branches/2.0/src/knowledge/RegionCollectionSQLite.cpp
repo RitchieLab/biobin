@@ -7,12 +7,9 @@
 
 #include "RegionCollectionSQLite.h"
 
-// Use the straight-up sqlite interface
-#include <sqlite3.h>
 #include <stdlib.h>
 #include <sstream>
 
-#include "InformationSQLite.h"
 
 #include "Locus.h"
 
@@ -20,22 +17,15 @@ using std::stringstream;
 
 namespace Knowledge{
 
-RegionCollectionSQLite::RegionCollectionSQLite(const string& fn) : self_open(true){
-	sqlite3_open(fn.c_str(),&db);
-	_info = new InformationSQLite(db);
-}
-
-RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn) :
-		self_open(false), db(db_conn) {
-	_info = new InformationSQLite(db);
-}
 
 RegionCollectionSQLite::~RegionCollectionSQLite(){
 	if (self_open){
 		sqlite3_close(db);
 	}
 	delete _info;
+	delete _dataset;
 }
+
 uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		const vector<string>& alias_list){
 
