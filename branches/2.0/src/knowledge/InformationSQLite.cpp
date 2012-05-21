@@ -27,15 +27,20 @@ InformationSQLite::~InformationSQLite(){
 }
 
 int InformationSQLite::getPopulationID(const string& pop_str){
-	string queryStr = string("SELECT population_id FROM populations "
-			"WHERE population_label='") + pop_str + string("')");
+	string queryStr = string("SELECT population_id FROM population "
+			"WHERE population='") + pop_str + string("')");
 
 	string result;
 	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
 			&result, NULL);
 
 	if (err_code != 0){
-		return 0;
+		string queryStr = string("SELECT population_id FROM population "
+				"WHERE population='n/a'");
+		if(sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery, &result, NULL)){
+			//NOTE: I should never get here in a properly formatted LOKI 2.0 database!
+			return 1;
+		}
 	}
 	return atoi(result.c_str());
 }

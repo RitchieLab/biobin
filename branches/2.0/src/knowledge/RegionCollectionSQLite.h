@@ -104,11 +104,13 @@ private:
 
 	const Container* const _dataset;
 
+	//! Adds a region based on the row (or returns the already added region)
+	Knowledge::Region* addRegion(sqlite3_stmt* row);
+
 	/*!
-	 * callback functions for sqlite interface.
-	 * NOTE: the 1st argument will be a pointer to a RegionCollection object
+	 * Callback to parse a list of region IDs and add them to the undordered_list
 	 */
-	static int parseRegionQuery(void*, int, char**, char**);
+	static int parseRegionIDQuery(void*, int, char**, char**);
 };
 
 template<class T_cont>

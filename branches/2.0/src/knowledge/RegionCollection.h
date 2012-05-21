@@ -68,7 +68,7 @@ public:
      * \param stop The true and effective stop of the region to add
 	 * \param aliases Comma separated list of aliases
      */
-	void AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
+	Region* AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
 
 	/*!
 	 * \brief Adds a region to the collection.
@@ -83,7 +83,7 @@ public:
      * \param trueStop The true stop of the Region to add
 	 * \param aliases Comma separated list of aliases
      */
-	void AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
+	Region* AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
 	
 	/*!
 	 * \brief Access bracket operator, indexing by id.

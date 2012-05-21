@@ -112,35 +112,44 @@ void RegionCollection::Squeeze(){
 	}
 }
 
-void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
-	// Insert the region into the map
-	Region& new_region = *(new Region(name, id, chrom, effStart, effStop, trueStart, trueStop));
+Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
 
-	// WARNING: inserting a region with an identical ID will result in a memory leak!
-	_region_map.insert(std::make_pair(id, &new_region));
-	new_region.addAliases(aliases);
+	if (_region_map.find(id) == _region_map.end()) {
+		// Insert the region into the map
+		Region& new_region = *(new Region(name, id, chrom, effStart, effStop,
+				trueStart, trueStop));
 
-	set<Region*> new_set;
-	new_set.insert(&new_region);
+		// WARNING: inserting a region with an identical ID will result in a memory leak!
+		_region_map.insert(std::make_pair(id, &new_region));
+		new_region.addAliases(aliases);
 
-	// Make it available to the interval map
-	_region_bounds[chrom].add(
-			std::make_pair(interval<uint>::closed(effStart, effStop), new_set));
+		set<Region*> new_set;
+		new_set.insert(&new_region);
 
-	// Add all aliases, including the canonical name
-	_alias_map[name].insert(&new_region);
-	vector<string> aliasList;
-	split(aliasList, aliases, is_any_of(","));
-	vector<string>::const_iterator itr = aliasList.begin();
-	vector<string>::const_iterator end = aliasList.end();
-	while (itr != end){
-		_alias_map[*itr++].insert(&new_region);
+		// Make it available to the interval map
+		_region_bounds[chrom].add(
+				std::make_pair(interval<uint>::closed(effStart, effStop),
+						new_set));
+
+		// Add all aliases, including the canonical name
+		_alias_map[name].insert(&new_region);
+		vector<string> aliasList;
+		split(aliasList, aliases, is_any_of(","));
+		vector<string>::const_iterator itr = aliasList.begin();
+		vector<string>::const_iterator end = aliasList.end();
+		while (itr != end) {
+			_alias_map[*itr++].insert(&new_region);
+		}
+
+		return &new_region;
+	} else {
+		return (*_region_map.find(id)).second;
 	}
 
 }
 
-void RegionCollection::AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases) {
-	AddRegion(name, id, chrom, start, stop, start, stop, aliases);
+Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases) {
+	return AddRegion(name, id, chrom, start, stop, start, stop, aliases);
 }
 
 uint RegionCollection::Load(){
