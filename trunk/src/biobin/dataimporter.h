@@ -147,8 +147,8 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 			entry.get_allele_counts(alleleCounts_case, nmcc_case, cases, vcf.include_genotype[i]);
 		}
 
-		bool is_rare = (getMAF(alleleCounts, nmcc) < BinManager::mafCutoff) &&
-				(!RareCaseControl || getMAF(alleleCounts_case, nmcc_case) < BinManager::mafCutoff);
+		bool is_rare = (getMAF(alleleCounts, nmcc) < BinManager::mafCutoff) ||
+				(RareCaseControl && getMAF(alleleCounts_case, nmcc_case) < BinManager::mafCutoff);
 
 		if(KeepCommonLoci || is_rare ){
 			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
