@@ -5,6 +5,8 @@
 #include <vector>
 #include <set>
 
+#include "any_iterator.hpp"
+
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/icl/interval_map.hpp>
@@ -21,6 +23,8 @@ using std::set;
 
 
 namespace Knowledge{
+
+class Information;
 
 /*!
  * \brief A class to manage a group of Regions.
@@ -40,6 +44,35 @@ namespace Knowledge{
  */
 class RegionCollection{
 	
+protected:
+
+	//NOTE: The following 2 classes are designed to allow for the creation
+	//of a RegionCollection from a collection of forward-traversable Locus* objects
+
+	class Container {
+
+	public:
+		typedef IteratorTypeErasure::any_iterator<Knowledge::Locus* const, boost::forward_traversal_tag> const_iterator;
+
+		virtual ~Container() {}
+		virtual const_iterator begin() const = 0;
+		virtual const_iterator end() const = 0;
+	};
+
+	template <class T_cont>
+	class LocusContainer : public Container {
+	public:
+
+		LocusContainer(const T_cont& c) : _data(c) {}
+		virtual ~LocusContainer() {}
+
+		virtual const_iterator begin() const {return static_cast<const_iterator>(_data.begin());}
+		virtual const_iterator end() const {return static_cast<const_iterator>(_data.end());}
+
+	private:
+		const T_cont& _data;
+	};
+
 public:
 	/*!
 	 * Typedef to hide implementation of the collection of Regions.
@@ -50,7 +83,11 @@ public:
 	 * Create a new RegionCollection and initialize the special "region not found"
 	 * object that is returned when needed.
 	 */
-	RegionCollection():region_not_found("Not Found",-1,-1, 0, 0){};
+
+	template<class T_cont>
+	RegionCollection(const T_cont& loci) :
+			_dataset(new LocusContainer<T_cont>(loci)),
+			region_not_found("Not Found", -1, -1, 0, 0) {}
 	/*!
 	 * Destroy the RegionCollection object.  This will in turn also delete any
 	 * Regions that were created with the AddRegion methods.
@@ -67,6 +104,8 @@ public:
      * \param start	The true and effective start of the region to add
      * \param stop The true and effective stop of the region to add
 	 * \param aliases Comma separated list of aliases
+	 *
+	 * \return The region added (or the Region found by the id)
      */
 	Region* AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
 
@@ -82,6 +121,8 @@ public:
      * \param trueStart The true start of the Region to add
      * \param trueStop The true stop of the Region to add
 	 * \param aliases Comma separated list of aliases
+	 *
+	 * \return The region added (or the region found by the id)
      */
 	Region* AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
 	
@@ -196,19 +237,6 @@ public:
 	bool isValid(const Region& other) const;
 
 	/*!
-	 * \brief Associates a collection of Loci to the Regions that contain them.
-	 * Takes a list of Locus objects (realistically, just chrom->bp locations)
-	 * and adds them to the Regions that contain them.  The template parameters
-	 * must be incrementable iterators that return a Locus* object when
-	 * dereferenced.
-	 *
-	 * \tparam begin A forward iterator of Locus* objects
-	 * \tparam end The end iterator of a collection of Locus* objects
-	 */
-	template <class T_iter>
-	void associateLoci(T_iter begin, const T_iter& end);
-
-	/*!
 	 * \brief The Loading function - must be subclassed.
 	 * This function does the heavy lifting, loading a collection of regions
 	 * that are identified by the given IDs or aliases.  If both are empty, load
@@ -244,11 +272,6 @@ public:
 	 */
 	uint Load(const unordered_set<uint>& ids);
 
-	/**
-	 * Calls Load(...) with an empty set of ids and and empty aliasList
-	 */
-	//virtual uint Load(const uint popID);
-
 	/*!
 	 * \brief Calls Load(...) with empty set of ids.
 	 * This function calls the Load function with an empty set of IDs (which
@@ -271,12 +294,18 @@ protected:
 	//! A map from alias -> set of Region*
 	unordered_map<string,set<Region*> > _alias_map;
 
+	//! object to get generalized information
+	Information* _info;
+
+	const Container* const _dataset;
 
 	// OK, this is ugly!
 	/*!
 	 * It's a map from chromosome -> map of intervals -> set of Regions
 	 * Basically, use as the following:
 	 * _region_bounds[chromosome][position] = {All Regions containing that position}
+	 *
+	 * TODO: Do I need this any more???
 	 */
 	unordered_map<short,interval_map<uint, set<Region*> > > _region_bounds;
 
@@ -287,11 +316,6 @@ private:
 	 */
 	RegionCollection(const RegionCollection&);
 	RegionCollection& operator=(const RegionCollection&);
-
-	/*!
-	 * Deletes regions that have no SNPs associated with them
-	 */
-	void Squeeze();
 
 	/*!
 	 * Special value used for if the requested region is not in the map
@@ -306,24 +330,6 @@ private:
 
 };
 
-template <class T_iter>
-void RegionCollection::associateLoci(T_iter begin, const T_iter& end){
-	while (begin != end){
-		interval_map<uint, set<Region*> >& chrom_map =
-				_region_bounds[(*begin)->getChrom()];
-		interval_map<uint, set<Region*> >::const_iterator region_itr =
-				chrom_map.find((*begin)->getPos());
-		if (region_itr != chrom_map.end()){
-			set<Region*>::iterator set_itr=region_itr->second.begin();
-			set<Region*>::const_iterator set_end=region_itr->second.end();
-			while (set_itr != set_end){
-				(*set_itr)->addLocus(*begin);
-				++set_itr;
-			}
-		}
-		++begin;
-	}
-}
 }
 
 

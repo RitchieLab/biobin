@@ -22,8 +22,6 @@ RegionCollectionSQLite::~RegionCollectionSQLite(){
 	if (self_open){
 		sqlite3_close(db);
 	}
-	delete _info;
-	delete _dataset;
 }
 
 uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,

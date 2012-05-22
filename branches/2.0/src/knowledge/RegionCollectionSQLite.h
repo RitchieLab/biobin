@@ -12,7 +12,6 @@
 #include "InformationSQLite.h"
 
 #include <sqlite3.h>
-#include "any_iterator.hpp"
 
 namespace Knowledge{
 
@@ -27,29 +26,7 @@ namespace Knowledge{
  */
 class RegionCollectionSQLite : public RegionCollection{
 
-	class Container {
 
-	public:
-		typedef IteratorTypeErasure::any_iterator<Knowledge::Locus* const, boost::bidirectional_traversal_tag> const_iterator;
-
-		virtual ~Container() {}
-		virtual const_iterator begin() const = 0;
-		virtual const_iterator end() const = 0;
-	};
-
-	template <class T_cont>
-	class LocusContainer : virtual public Container {
-	public:
-
-		LocusContainer(const T_cont& c) : _data(c) {}
-		virtual ~LocusContainer() {}
-
-		virtual const_iterator begin() const {return static_cast<const_iterator>(_data.begin());}
-		virtual const_iterator end() const {return static_cast<const_iterator>(_data.end());}
-
-	private:
-		const T_cont& _data;
-	};
 
 
 public:
@@ -99,11 +76,6 @@ private:
 	//! sqlite connection
 	sqlite3 *db;
 
-	//! object to get generalized information
-	Information* _info;
-
-	const Container* const _dataset;
-
 	//! Adds a region based on the row (or returns the already added region)
 	Knowledge::Region* addRegion(sqlite3_stmt* row);
 
@@ -115,17 +87,15 @@ private:
 
 template<class T_cont>
 RegionCollectionSQLite::RegionCollectionSQLite(const string& fn,
-		const T_cont& loci) :
-		self_open(true), _dataset(new LocusContainer<T_cont>(loci)) {
-
-	_info = new InformationSQLite(db);
+		const T_cont& loci) : RegionCollection(loci), self_open(true) {
 	sqlite3_open(fn.c_str(), &db);
+	_info = new InformationSQLite(db);
 }
 
 template<class T_cont>
 RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn,
-		const T_cont& loci) :
-		self_open(false), db(db_conn), _dataset(new LocusContainer<T_cont>(loci)) {
+		const T_cont& loci) : RegionCollection(loci),
+		self_open(false), db(db_conn) {
 	_info = new InformationSQLite(db);
 }
 

@@ -147,7 +147,6 @@ template <class T_cont>
 uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& aliasList) {
 
 	regions->Load(aliasList);
-	regions->associateLoci(dataset.begin(), dataset.end());
 
 	//T_cont::const_iterator pos = aliasesNotFound.end();
 

@@ -32,6 +32,8 @@ RegionCollection::~RegionCollection(){
 		delete itr->second;
 		++itr;
 	}
+
+	delete _dataset;
 }
 
 Region& RegionCollection::operator[](const uint idx){
@@ -90,26 +92,6 @@ RegionCollection::const_region_iterator RegionCollection::positionEnd(short chro
 		}
 	}
 	return empty_region_set.end();
-}
-
-
-/**
- * Erases all regions which are not associated with any SNPs in the dataset
- * This should be called only by AssociateSNPs
- */
-void RegionCollection::Squeeze(){
-	unordered_map<uint, Region*>::iterator end = _region_map.end();
-	for (unordered_map<uint, Region*>::iterator itr = _region_map.begin(); itr!=end;itr++){
-		if (itr->second->locusCount() == 0){
-			// Erase all of the aliases associated with this region
-			for (Region::const_alias_iterator alias_itr=itr->second->aliasBegin(); alias_itr != itr->second->aliasEnd(); alias_itr++){
-				_alias_map[*alias_itr].erase(itr->second);
-			}
-			// And get rid of the region
-			_region_map.erase(itr);
-			delete itr->second;
-		}
-	}
 }
 
 Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
