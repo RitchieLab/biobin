@@ -26,6 +26,10 @@ using boost::to_upper;
 
 namespace Knowledge{
 
+string __child_type_init[] = {"is_a", "part_of"};
+
+const vector<string> GroupCollection::child_types(__child_type_init, __child_type_init + (sizeof(__child_type_init) / sizeof(__child_type_init[0])));
+
 vector<string> GroupCollection::c_group_names;
 unordered_set<uint> GroupCollection::c_id_list;
 uint GroupCollection::_max_group = 0;
@@ -42,9 +46,15 @@ GroupCollection::~GroupCollection(){
 	}
 }
 
-void GroupCollection::addGroup(uint id, const string& name, const string& desc){
-	Group* new_group = new Group(id, name, desc);
-	_group_map.insert(std::make_pair(id, new_group));
+Group* GroupCollection::AddGroup(uint id, const string& name, const string& desc){
+	if (_group_map.find(id) != _group_map.end()){
+		return _group_map[id];
+	}
+	else{
+		Group* new_group = new Group(id, name, desc);
+		_group_map.insert(std::make_pair(id, new_group));
+		return new_group;
+	}
 }
 
 void GroupCollection::addRelationship(uint parent_id, uint child_id){
@@ -91,25 +101,25 @@ bool GroupCollection::isValid(const Group& other) const{
 	return other.getID() != _group_not_found.getID();
 }
 
-uint GroupCollection::Load(RegionCollection& regions,
+void GroupCollection::Load(RegionCollection& regions,
 		const vector<string>& group_names){
 	unordered_set<uint> empty_set;
-	return Load(regions, group_names, empty_set);
+	Load(regions, group_names, empty_set);
 }
 
-uint GroupCollection::Load(RegionCollection& regions){
+void GroupCollection::Load(RegionCollection& regions){
 	vector<string> empty_set;
-	return Load(regions, empty_set);
+	Load(regions, empty_set);
 }
 
-uint GroupCollection::LoadArchive(RegionCollection& regions,
+void GroupCollection::LoadArchive(RegionCollection& regions,
 		const string& filename, vector<string>& unmatched_aliases){
 
 	// Open the file
 	ifstream data_file(filename.c_str());
 	if (!data_file.is_open()){
 		std::cerr<<"WARNING: cannot find " << filename <<", ignoring.";
-		return 1;
+		return;
 	}
 
 	// Read the definition of the meta-group
@@ -128,7 +138,7 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 	if (!(result[0] == "GROUP")){
 		std::cerr<<"WARNING: Invalid formatting in archive file.  "
 				<< filename << " will be ignored.";
-		return 2;
+		return;
 	}
 
 	uint num_groups = 0;
@@ -166,8 +176,6 @@ uint GroupCollection::LoadArchive(RegionCollection& regions,
 			}
 		}
 	}
-
-	return 0;
 }
 
 uint GroupCollection::initGroupFromArchive(const vector<string>& split_line){
@@ -185,7 +193,7 @@ uint GroupCollection::initGroupFromArchive(const vector<string>& split_line){
 	while (++itr != end){
 		ss << " " << *itr;
 	}
-	addGroup(++_max_group, split_line[1], ss.str());
+	AddGroup(++_max_group, split_line[1], ss.str());
 	return _max_group;
 }
 

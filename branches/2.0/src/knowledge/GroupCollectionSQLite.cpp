@@ -8,11 +8,14 @@
 #include <sstream>
 #include <stdlib.h>
 #include <utility>
+#include <deque>
 
 #include "GroupCollectionSQLite.h"
+#include "RegionCollection.h"
 
 using std::stringstream;
 using std::pair;
+using std::deque;
 
 namespace Knowledge{
 
@@ -35,116 +38,156 @@ GroupCollectionSQLite::~GroupCollectionSQLite(){
 	}
 }
 
-uint GroupCollectionSQLite::Load(RegionCollection& regions,
+void GroupCollectionSQLite::Load(RegionCollection& regions,
 		const vector<string>& group_names, const unordered_set<uint>& ids){
 
-	stringstream where_stream;
-	where_stream << "WHERE groups.group_type_id = " << _id;
+	//First, get a list of IDs corresponding to the group names
+	unordered_set<uint> id_list(ids);
 
-	bool two_constraint = false;
-	if ((group_names.size()  != 0 || c_group_names.size() != 0) &&
-			(ids.size() != 0 || c_id_list.size() != 0)){
-		two_constraint = true;
+	if(group_names.size() > 0){
+		string command = "SELECT group_id FROM group_name "
+				"WHERE source_id=:id AND name=:label";
+		sqlite3_stmt* name_stmt;
+		sqlite3_prepare_v2(_db, command.c_str(), -1, &name_stmt, NULL);
+		int id_idx = sqlite3_bind_parameter_index(name_stmt, "id");
+		int label_idx = sqlite3_bind_parameter_index(name_stmt, "label");
+
+		sqlite3_bind_int(name_stmt, id_idx, _id);
+
+		vector<string>::const_iterator n_itr = group_names.begin();
+		while(n_itr != group_names.end()){
+			sqlite3_bind_text(name_stmt, label_idx, (*n_itr).c_str(), -1, SQLITE_STATIC);
+			while(sqlite3_step(name_stmt)==SQLITE_ROW){
+				id_list.insert(static_cast<uint>(sqlite3_column_int(name_stmt, 0)));
+			}
+			sqlite3_reset(name_stmt);
+			++n_itr;
+		}
+
+		sqlite3_finalize(name_stmt);
 	}
 
-	if (group_names.size() != 0 || c_group_names.size() != 0){
-		vector<string>::const_iterator itr = group_names.begin();
-		vector<string>::const_iterator end = group_names.end();
-		vector<string>::const_iterator c_itr = c_group_names.begin();
-		vector<string>::const_iterator c_end = c_group_names.end();
-		where_stream << " AND ";
-		if (two_constraint){
-			where_stream << "(";
-		}
-		where_stream << "groups.group_name IN (";
-		if (itr != end){
-			where_stream << *itr;
-			while (++itr != end){
-				where_stream << "," << *itr;
-			}
+	vector<string>::const_iterator rel_type = child_types.begin();
+	stringstream rel_stream;
+	rel_stream << "('" << *rel_type << "'";
+	while(++rel_type != child_types.end()){
+		rel_stream << "'" << *rel_type << "'";
+	}
+	rel_stream << ")";
 
-			if(c_itr != c_end){
-				where_stream << ",";
+	// OK, now get a list of IDs that are children of anything in the group,
+	// but only if we are filtering
+	if (id_list.size() > 0){
+
+		// We're going to check all of the groups we have, and add the
+		// new groups to the list here
+		deque<uint> loadables(id_list.begin(), id_list.end());
+
+		string child_cmd = "SELECT related_group_id FROM group_group "
+				"INNER JOIN relationship USING (relationship_id) "
+				"WHERE relationship IN " + rel_stream.str() + " "
+				"AND direction=1 AND source_id=:id AND group_id=:gid";
+
+		sqlite3_stmt* child_stmt;
+		sqlite3_prepare_v2(_db, child_cmd.c_str(), -1, &child_stmt, NULL);
+		int id_idx = sqlite3_bind_parameter_index(child_stmt, "id");
+		int group_idx = sqlite3_bind_parameter_index(child_stmt, "gid");
+
+		sqlite3_bind_int(child_stmt, id_idx, _id);
+
+		while(loadables.size() > 0){
+			sqlite3_bind_int(child_stmt, group_idx, loadables.front());
+			while(sqlite3_step(child_stmt) == SQLITE_ROW){
+				uint new_id = static_cast<uint>(sqlite3_column_int(child_stmt, 0));
+				if (id_list.find(new_id) != id_list.end()){
+					id_list.insert(new_id);
+					loadables.push_back(new_id);
+				}
 			}
+			sqlite3_reset(child_stmt);
+			loadables.pop_front();
 		}
-		if(c_itr != c_end){
-			where_stream << *c_itr;
-			while(++c_itr != c_end){
-				where_stream << "," << *c_itr;
-			}
-		}
-		where_stream << ")";
+
+		sqlite3_finalize(child_stmt);
 	}
 
-	if (ids.size() != 0 || c_id_list.size() != 0){
-		unordered_set<uint>::const_iterator itr = ids.begin();
-		unordered_set<uint>::const_iterator end = ids.end();
-		unordered_set<uint>::const_iterator c_itr = c_id_list.begin();
-		unordered_set<uint>::const_iterator c_end = c_id_list.end();
 
-		if (two_constraint){
-			where_stream << " OR ";
-		}else{
-			where_stream << " AND ";
-		}
+	// At this point we have a list of IDs to filter on, so start creating groups!
+	string group_cmd = "SELECT group_region.group_id, 'group'.label, "
+			"'group'.description, group_concat(group_name.name) "
+			"FROM group_region INNER JOIN 'group' USING (group_id) "
+			"INNER JOIN group_name USING (group_id) "
+			"WHERE group_region.region_id=:region_id AND group_region.source_id=:id "
+			"GROUP BY group_region.group_id";
 
-		where_stream << "groups.group_id IN (";
-		if(itr != end){
-			where_stream << *itr;
-			while (++itr != end){
-				where_stream << "," << *itr;
-			}
+	sqlite3_stmt* group_stmt;
+	sqlite3_prepare_v2(_db, group_cmd.c_str(), -1, &group_stmt, NULL);
+	int region_idx = sqlite3_bind_parameter_index(group_stmt, "region_id");
+	int src_idx = sqlite3_bind_parameter_index(group_stmt, "id");
 
-			if(c_itr != c_end){
-				where_stream << ",";
+	sqlite3_bind_int(group_stmt, src_idx, _id);
+
+	deque<uint> child_groups;
+
+	RegionCollection::const_iterator r_itr = regions.begin();
+	while(r_itr != regions.end()){
+		sqlite3_bind_int(group_stmt, region_idx, (*r_itr)->getID());
+		while(sqlite3_step(group_stmt)==SQLITE_ROW){
+			uint group_id = static_cast<uint>(sqlite3_column_int(group_stmt, 0));
+			if(id_list.size() > 0 && id_list.find(group_id) != id_list.end()){
+				Group* gp;
+				if (_group_map.find(group_id) != _group_map.end()){
+					child_groups.push_back(group_id);
+					gp = addGroup(group_stmt);
+				} else {
+					gp = _group_map[group_id];
+				}
+				gp->addRegion(**r_itr);
+				_group_associations[group_id].insert(*r_itr);
 			}
-		}
-		if(c_itr != c_end){
-			where_stream << *c_itr;
-			while(++c_itr != c_end){
-				where_stream << "," << *c_itr;
-			}
-		}
-		where_stream << ")";
-		if (two_constraint){
-			where_stream << ")";
 		}
 	}
 
-	string where_clause = where_stream.str();
+	sqlite3_finalize(group_stmt);
 
-	string group_query = "SELECT group_id, group_name, group_desc FROM groups " +
-			where_clause;
+	// OK, now load parents of all of the groups that contain the regions
+	string parent_cmd = "SELECT group_group.group_id, 'group'.label, "
+			"'group'.description, group_concat(group_name.name) "
+			"FROM group_group INNER JOIN 'group' USING (group_id) "
+			"INNER JOIN group_name USING (group_id) "
+			"INNER JOIN relationship ON group_group.relationship_id=relationship.relationship_id "
+			"WHERE group_group.related_group_id=:gid AND direction=-1 "
+			"AND relationship IN " + rel_stream.str();
 
-	uint result = sqlite3_exec(_db, group_query.c_str(), parseGroupQuery, this, NULL);
+	sqlite3_stmt* parent_stmt;
+	sqlite3_prepare_v2(_db, parent_cmd.c_str(), -1, &parent_stmt, NULL);
+	int gp_idx = sqlite3_bind_parameter_index(parent_stmt, "gid");
 
-	if (result == 0){
-		string relationship_query = "SELECT parent_id, child_id FROM group_relationships "
-				"INNER JOIN groups ON group_relationships.parent_id = groups.group_id " +
-				where_clause;
-
-		result = sqlite3_exec(_db, relationship_query.c_str(),
-				parseGroupRelationshipQuery, this, NULL);
+	while(child_groups.size() > 0){
+		sqlite3_bind_int(parent_stmt, gp_idx, child_groups.front());
+		while(sqlite3_step(parent_stmt)==SQLITE_ROW){
+			uint parent_id = static_cast<uint>(sqlite3_column_int(parent_stmt,0));
+			if(id_list.size() > 0 && id_list.find(parent_id) != id_list.end()){
+				Group* parent;
+				if (_group_map.find(parent_id) != _group_map.end()){
+					parent = addGroup(parent_stmt);
+					child_groups.push_back(parent_id);
+				}else{
+					parent = _group_map[parent_id];
+				}
+				parent->addChild(*_group_map[child_groups.front()]);
+				_group_relationships[parent_id].insert(child_groups.front());
+			}
+		}
+		child_groups.pop_front();
 	}
 
-	if (result == 0){
-		string association_query = "SELECT group_id, gene_id FROM group_associations "
-				"INNER JOIN groups USING (group_id) " + where_clause;
-
-		pair<GroupCollection*, RegionCollection*> input =
-				std::make_pair(this, &regions);
-
-		result = sqlite3_exec(_db, association_query.c_str(),
-				parseGroupAssociationQuery, &input, NULL);
-	}
-
-	return result;
-
+	sqlite3_finalize(parent_stmt);
 }
 
 uint GroupCollectionSQLite::getMaxGroup() {
 	if (_max_group == 0){
-		string query_str = "SELECT MAX(group_id) FROM groups";
+		string query_str = "SELECT IFNULL(MAX(rowid), 1) FROM 'group'";
 		sqlite3_exec(_db, query_str.c_str(), parseMaxGroupQuery, &_max_group, NULL);
 	}
 
@@ -152,18 +195,14 @@ uint GroupCollectionSQLite::getMaxGroup() {
 
 }
 
-int GroupCollectionSQLite::parseGroupQuery(void* obj, int n_cols, char** col_vals, char** col_names){
+Group* GroupCollectionSQLite::addGroup(sqlite3_stmt* group_query){
 
-	GroupCollection *groups = (GroupCollection*) obj;
+	uint group_id = static_cast<uint>(sqlite3_column_int(group_query, 0));
+	string gp_name = (const char *) (sqlite3_column_text(group_query, 1));
+	string gp_desc = (const char *) (sqlite3_column_text(group_query, 2));
+	string gp_alias = (const char *) (sqlite3_column_text(group_query, 3));
 
-	// wrong # of columns!!
-	if(n_cols != 3){
-		return 2;
-	}
-
-	int group_id = atoi(col_vals[0]);
-	groups->addGroup(group_id, col_vals[1], col_vals[2]);
-	return 0;
+	return this->AddGroup(group_id, gp_name, gp_desc);
 }
 
 int GroupCollectionSQLite::parseGroupRelationshipQuery(void* obj, int n_cols, char** col_vals, char** col_names){

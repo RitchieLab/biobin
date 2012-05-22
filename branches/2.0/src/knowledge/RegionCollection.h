@@ -10,6 +10,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/icl/interval_map.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 
 #include "Region.h"
 
@@ -47,8 +48,8 @@ class RegionCollection{
 protected:
 
 	//NOTE: The following 2 classes are designed to allow for the creation
-	//of a RegionCollection from a collection of forward-traversable Locus* objects
-
+	//of a RegionCollection from an arbitrary collection of forward-traversable
+	//Locus* objects
 	class Container {
 
 	public:
@@ -74,6 +75,27 @@ protected:
 	};
 
 public:
+	/*!
+	 * A means to iterate over the elements in the collection consistent with
+	 * being in a set
+	 */
+	class const_iterator : public boost::iterator_facade<const_iterator, Region* const, boost::forward_traversal_tag>{
+
+	public:
+		const_iterator(unordered_map<uint, Region*>::const_iterator itr) : _itr(itr){}
+
+	private:
+		friend class boost::iterator_core_access;
+
+		void increment() { ++_itr;}
+		bool equal(const const_iterator& other) const { return _itr == other._itr;}
+		Region* const& dereference() const { return (*_itr).second;}
+
+		unordered_map<uint, Region*>::const_iterator _itr;
+
+	};
+
+
 	/*!
 	 * Typedef to hide implementation of the collection of Regions.
 	 */
@@ -155,6 +177,26 @@ public:
 	 * \return A reference to the Region.
 	 */	
 	const Region& operator[](const uint id) const;
+
+	/*!
+	 * \brief An iterator to the beginning of the collection of Regions.
+	 * This is an iterator the the beginning of the collection of Regions, but
+	 * the iterator hides the fact that the implementation of the collection
+	 * is a map (ie, *begin() == (*_region_map.begin()).second)
+	 *
+	 * \return an iterator to the beginning of the collection.
+	 */
+	const_iterator begin() const {return const_iterator(_region_map.begin());}
+
+	/*!
+	 * \brief An iterator to the end of the collection of Regions.
+	 * This is an iterator the the end of the collection of Regions, but
+	 * the iterator hides the fact that the implementation of the collection
+	 * is a map (ie, *end() == (*_region_map.end()).second)
+	 *
+	 * \return an iterator to the end of the collection.
+	 */
+	const_iterator end() const {return const_iterator(_region_map.end());}
 
 	/*!
 	 * \brief Access all Regions that have the given alias.

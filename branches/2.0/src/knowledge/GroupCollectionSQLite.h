@@ -29,7 +29,7 @@ public:
 
 	virtual ~GroupCollectionSQLite();
 
-	virtual uint Load(RegionCollection& regions, const vector<string>& group_names,
+	virtual void Load(RegionCollection& regions, const vector<string>& group_names,
 			const unordered_set<uint>& ids);
 
 	virtual uint getMaxGroup();
@@ -38,6 +38,8 @@ private:
 	bool _self_open;
 	// sqlite connection
 	sqlite3 *_db;
+
+	Group* addGroup(sqlite3_stmt* group_query);
 
 	static int parseGroupQuery(void*, int, char**, char**);
 	static int parseGroupRelationshipQuery(void*, int, char**, char**);

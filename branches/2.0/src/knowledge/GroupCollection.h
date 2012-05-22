@@ -54,7 +54,7 @@ public:
 	 * \param name The name of the group
 	 * \param desc A description of the group's functionality
 	 */
-	void addGroup(uint id, const string& name, const string& desc="");
+	Group* AddGroup(uint id, const string& name, const string& desc="");
 	/*!
 	 * Adds a parent/child relationship between two groups.  This will also add
 	 * the reltationship to the group objects themselves.
@@ -115,7 +115,7 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	virtual uint Load(RegionCollection& regions, const vector<string>& groupNames,
+	virtual void Load(RegionCollection& regions, const vector<string>& groupNames,
 			const unordered_set<uint>& ids) = 0;
 
 	/*!
@@ -129,7 +129,7 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	uint Load(RegionCollection& regions, const vector<string>& groupNames);
+	void Load(RegionCollection& regions, const vector<string>& groupNames);
 	/*!
 	 * \brief Load all IDs into memory.
 	 * Load all IDs into memory.  Calls Load(regions, ids) with an empty set of
@@ -139,7 +139,7 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	uint Load(RegionCollection& regions);
+	void Load(RegionCollection& regions);
 
 	/*!
 	 * \brief Loads Groups from a file.
@@ -154,7 +154,7 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	uint LoadArchive(RegionCollection& regions, const string& filename,
+	void LoadArchive(RegionCollection& regions, const string& filename,
 			vector<string>& unmatched_aliases);
 
 	/*!
@@ -195,6 +195,8 @@ protected:
 	unordered_map<uint, unordered_set<uint> > _group_relationships;
 	//! mapping of group->region relationships
 	unordered_map<uint, unordered_set<Region*> > _group_associations;
+
+	static const vector<string> child_types;
 
 private:
 	Group _group_not_found;
