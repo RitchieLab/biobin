@@ -45,14 +45,7 @@ public:
 	 * \return The integer index of the given population, or 0 if not found.
 	 */
 	virtual int getPopulationID(const string& pop_str) = 0;
-	/*!
-	 * \brief Finds the version of a given resource.
-	 * This function gives the version of the given resource.  Basically, this
-	 * is querying the "versions" table for the given element (resource).
-	 *
-	 * \param resource The version
-	 */
-	virtual const string getResourceVersion(const string& resource) = 0;
+
 	/*!
 	 * \brief Gets the names of the sources for the given IDs
 	 * Queries the database and returns a map of IDs to source name.
@@ -64,7 +57,12 @@ public:
 	virtual void getGroupTypes(const set<uint>& group_ids,
 			map<int, string>& type_names_out) = 0;
 
-
+	/*!
+	 * \brief Gets the zone size.
+	 * Queries the database and returns the size of the zones used in building
+	 * the region_zone table.
+	 */
+	virtual int getZoneSize() = 0;
 
 };
 

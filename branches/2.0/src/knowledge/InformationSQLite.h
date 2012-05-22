@@ -47,9 +47,9 @@ public:
 	InformationSQLite(sqlite3* db);
 
 	virtual int getPopulationID(const string& pop_str);
-	virtual const string getResourceVersion(const string& resource);
 	virtual void getGroupTypes(const set<uint>& type_ids,
 			map<int, string>& group_types_out);
+	virtual int getZoneSize();
 
 private:
 	/*!
@@ -63,6 +63,11 @@ private:
 	 * a map of integers to strings.
 	 */
 	static int parseGroupTypeQuery(void*, int, char**, char**);
+
+	/*!
+	 * SQLite callback to parse the zone
+	 */
+	static int parseSingleIntQuery(void*, int, char**, char**);
 
 	sqlite3* _db;
 	bool _self_open;

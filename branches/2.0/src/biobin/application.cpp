@@ -130,43 +130,6 @@ void Application::Init(const string& filename, bool reportVersion) {
 	_info = new Knowledge::InformationSQLite(_db);
 	regions = new Knowledge::RegionCollectionSQLite(_db, dataset);
 
-	string dbSnp = _info->getResourceVersion("ncbi");
-	string ensembl = _info->getResourceVersion("ensembl");
-	string hapmap = _info->getResourceVersion("hapmap");
-	variationFilename = _info->getResourceVersion("variations");
-	string build = _info->getResourceVersion("build");
-	string variations;
-
-	// TODO: I think this will always give 0 because we haven't even set the
-	// variations string yet!!
-	this->varVersion = atoi(variations.c_str());
-
-	if (reportVersion) {
-		std::cerr<<"\n------------------------- Dependency Versions ----------\n";
-		std::cerr<<std::setw(38)<<std::right<<"dbSNP : "<<dbSnp<<"\n";
-		std::cerr<<std::setw(38)<<std::right<<"Ensembl : "<<ensembl<<"\n";
-		std::cerr<<std::setw(38)<<std::right<<"Hap Map LD : "<<hapmap<<"\n";
-		std::cerr<<std::setw(38)<<std::right<<"Variation Filename : "<<variationFilename<<"\n";
-		std::cerr<<std::setw(38)<<std::right<<"Genome Build : "<<build<<"\n";
-
-	}
-
-	// TODO: Load SNP role information here
-	/*
-	try {
-		soci::rowset<soci::row> rs = (sociDB.prepare << "SELECT id, role FROM snp_role");
-
-		for (soci::rowset<soci::row>::const_iterator itr = rs.begin(); itr != rs.end(); ++itr) {
-			soci::row const& row = *itr;
-			uint id = row.get<int>(0);
-			std::string name = row.get<std::string>(1);
-
-			dataset.RoleDescription(id, name.c_str());
-		}
-	} catch (soci::soci_error const &e) {
-		std::cerr<<"An error was encountered trying to load the role data. SNP role information will not be available.\n";
-	}
-	*/
 }
 
 

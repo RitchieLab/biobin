@@ -45,28 +45,20 @@ int InformationSQLite::getPopulationID(const string& pop_str){
 	return atoi(result.c_str());
 }
 
-const string InformationSQLite::getResourceVersion(const string& resource){
-	string queryStr = string("SELECT version FROM versions WHERE element='") +
-			resource + string("'");
+int InformationSQLite::getZoneSize(){
+	// TODO: Add db query to get the zone size
 
-	string result;
-	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
-			&result, NULL);
-
-	if (err_code != 0){
-		return "";
-	}
-	return result;
+	return 100000;
 }
 
 void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 		map<int, string>& group_types_out){
-	string query_str = string("SELECT group_type_id, group_type FROM group_type");
+	string query_str = string("SELECT source_id, source FROM source");
 
 	if (type_ids.size() != 0){
 		set<uint>::const_iterator itr = type_ids.begin();
 		set<uint>::const_iterator end = type_ids.end();
-		query_str += " WHERE group_type_id IN (";
+		query_str += " WHERE source_id IN (";
 		stringstream id_stream;
 		id_stream << *itr;
 		while(++itr != end){
@@ -93,6 +85,24 @@ int InformationSQLite::parseSingleStringQuery(void* obj, int n_cols,
 	}
 	string* ret_str_p = (string*) (obj);
 	(*ret_str_p) = col_vals[0];
+	return 0;
+}
+
+int InformationSQLite::parseSingleIntQuery(void* obj, int n_cols,
+		char** col_vals, char** col_names){
+
+	// Incorrect number of columns
+	if (n_cols > 1){
+		return 2;
+	}
+
+	// Not enough data!  Make sure to handle this case, because I think it
+	// will actually come up.
+	if (n_cols == 0){
+		return 1;
+	}
+	int* ret_int_p = (int*) (obj);
+	(*ret_int_p) = atoi(col_vals[0]);
 	return 0;
 }
 

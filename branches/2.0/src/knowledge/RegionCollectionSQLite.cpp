@@ -93,11 +93,11 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 	// OK, now iterate over the dataset we have
 	Container::const_iterator itr = _dataset->begin();
+	int zone_size = _info->getZoneSize();
 	while(itr != _dataset->end()){
 		sqlite3_bind_int(region_stmt, chr_idx, (*itr)->getChrom());
 		sqlite3_bind_int(region_stmt, pos_idx, static_cast<int>((*itr)->getPos()));
-		//TODO: dynamically determine the zone size
-		sqlite3_bind_int(region_stmt, pos_zone_idx, (*itr)->getPos()/100000);
+		sqlite3_bind_int(region_stmt, pos_zone_idx, (*itr)->getPos()/zone_size);
 
 		// Now, execute the query!
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){

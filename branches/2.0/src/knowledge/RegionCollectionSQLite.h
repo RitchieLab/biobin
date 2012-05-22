@@ -26,9 +26,6 @@ namespace Knowledge{
  */
 class RegionCollectionSQLite : public RegionCollection{
 
-
-
-
 public:
 	/*!
 	 * \brief Create a RegionCollection giving the DB location.
