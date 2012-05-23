@@ -54,7 +54,7 @@ void BinManager::InitBins(
 
 	while(l_itr != l_end){
 		Knowledge::Locus& l = **l_itr;
-		if ((l.minorAlleleFreq()) < mafCutoff) {
+		if (l.isRare()) {
 
 			_rare_variants.insert(&l);
 

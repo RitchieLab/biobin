@@ -71,7 +71,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		locusFile << sep;
 		(*itr)->printAlleles(locusFile, "|");
 		locusFile << sep << case_maf[*itr] << sep
-				<< (((*itr)->minorAlleleFreq()) < BinManager::mafCutoff) << sep;
+				<< static_cast<int>((*itr)->isRare()) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
 				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
@@ -107,7 +107,7 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 	while(itr != end){
 		freqFile << (*itr)->getID() << sep << 1 - (*itr)->majorAlleleFreq() << sep
 				<< case_maf[*itr] << sep
-				<< ((*itr)->minorAlleleFreq() < BinManager::mafCutoff) << sep;
+				<< static_cast<int>((*itr)->isRare()) << sep;
 
 		binData.printBins(freqFile, *itr, "|");
 
