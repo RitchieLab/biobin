@@ -82,11 +82,11 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 	sqlite3_prepare_v2(db, stmt.c_str(), -1, &region_stmt, NULL);
 
-	int pop_idx = sqlite3_bind_parameter_index(region_stmt, "pop_id");
-	int def_pop_idx = sqlite3_bind_parameter_index(region_stmt, "def_pop_id");
-	int chr_idx = sqlite3_bind_parameter_index(region_stmt, "chrom");
-	int pos_zone_idx = sqlite3_bind_parameter_index(region_stmt, "pos_zone");
-	int pos_idx = sqlite3_bind_parameter_index(region_stmt, "pos");
+	int pop_idx = sqlite3_bind_parameter_index(region_stmt, ":pop_id");
+	int def_pop_idx = sqlite3_bind_parameter_index(region_stmt, ":def_pop_id");
+	int chr_idx = sqlite3_bind_parameter_index(region_stmt, ":chrom");
+	int pos_zone_idx = sqlite3_bind_parameter_index(region_stmt, ":pos_zone");
+	int pos_idx = sqlite3_bind_parameter_index(region_stmt, ":pos");
 
 	sqlite3_bind_int(region_stmt, pop_idx, popID);
 	sqlite3_bind_int(region_stmt, def_pop_idx, def_id);

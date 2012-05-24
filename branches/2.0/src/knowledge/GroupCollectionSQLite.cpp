@@ -49,8 +49,8 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 				"WHERE source_id=:id AND name=:label";
 		sqlite3_stmt* name_stmt;
 		sqlite3_prepare_v2(_db, command.c_str(), -1, &name_stmt, NULL);
-		int id_idx = sqlite3_bind_parameter_index(name_stmt, "id");
-		int label_idx = sqlite3_bind_parameter_index(name_stmt, "label");
+		int id_idx = sqlite3_bind_parameter_index(name_stmt, ":id");
+		int label_idx = sqlite3_bind_parameter_index(name_stmt, ":label");
 
 		sqlite3_bind_int(name_stmt, id_idx, _id);
 
@@ -90,8 +90,8 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 
 		sqlite3_stmt* child_stmt;
 		sqlite3_prepare_v2(_db, child_cmd.c_str(), -1, &child_stmt, NULL);
-		int id_idx = sqlite3_bind_parameter_index(child_stmt, "id");
-		int group_idx = sqlite3_bind_parameter_index(child_stmt, "gid");
+		int id_idx = sqlite3_bind_parameter_index(child_stmt, ":id");
+		int group_idx = sqlite3_bind_parameter_index(child_stmt, ":gid");
 
 		sqlite3_bind_int(child_stmt, id_idx, _id);
 
@@ -122,8 +122,8 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 
 	sqlite3_stmt* group_stmt;
 	sqlite3_prepare_v2(_db, group_cmd.c_str(), -1, &group_stmt, NULL);
-	int region_idx = sqlite3_bind_parameter_index(group_stmt, "region_id");
-	int src_idx = sqlite3_bind_parameter_index(group_stmt, "id");
+	int region_idx = sqlite3_bind_parameter_index(group_stmt, ":region_id");
+	int src_idx = sqlite3_bind_parameter_index(group_stmt, ":id");
 
 	sqlite3_bind_int(group_stmt, src_idx, _id);
 
@@ -161,7 +161,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 
 	sqlite3_stmt* parent_stmt;
 	sqlite3_prepare_v2(_db, parent_cmd.c_str(), -1, &parent_stmt, NULL);
-	int gp_idx = sqlite3_bind_parameter_index(parent_stmt, "gid");
+	int gp_idx = sqlite3_bind_parameter_index(parent_stmt, ":gid");
 
 	while(child_groups.size() > 0){
 		sqlite3_bind_int(parent_stmt, gp_idx, child_groups.front());
