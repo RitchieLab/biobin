@@ -83,7 +83,7 @@ pair<uint, uint> Locus::decodeGenotype(short encoded_type) const{
 
 
 const string& Locus::getChromStr(short chrom){
-	if (chrom < 0 || (uint) chrom > _chrom_list.size()-1){
+	if (chrom < 0 || (uint) chrom > _chrom_list.size()){
 		return invalid_chrom;
 	}else{
 		return _chrom_list[chrom-1];
