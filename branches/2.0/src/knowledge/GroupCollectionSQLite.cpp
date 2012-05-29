@@ -147,8 +147,8 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 				gp->addRegion(**r_itr);
 				_group_associations[group_id].insert(*r_itr);
 			}
-			sqlite3_reset(group_stmt);
 		}
+		sqlite3_reset(group_stmt);
 		++r_itr;
 	}
 

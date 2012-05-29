@@ -42,8 +42,6 @@ int ConverterSQLite::Load() {
 			"ON build_assembly.assembly=chain.old_assembly "
 			"WHERE build = '" << _origBuild << "';";
 
-	string sql = ss.str();
-
 	sqlite3_exec(_db, ss.str().c_str(), parseChains, this, NULL);
 
 	map<short, set<Chain*> >::iterator itr = _chains.begin();
