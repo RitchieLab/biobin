@@ -173,7 +173,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 			uint parent_id = static_cast<uint>(sqlite3_column_int(parent_stmt,0));
 			if(id_list.size() == 0 || id_list.find(parent_id) != id_list.end()){
 				Group* parent;
-				if (_group_map.find(parent_id) != _group_map.end()){
+				if (_group_map.find(parent_id) == _group_map.end()){
 					parent = addGroup(parent_stmt);
 					child_groups.push_back(parent_id);
 				}else{
