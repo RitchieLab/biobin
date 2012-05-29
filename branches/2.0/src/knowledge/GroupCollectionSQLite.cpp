@@ -134,9 +134,11 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 		sqlite3_bind_int(group_stmt, region_idx, (*r_itr)->getID());
 		while(sqlite3_step(group_stmt)==SQLITE_ROW){
 			uint group_id = static_cast<uint>(sqlite3_column_int(group_stmt, 0));
-			if(id_list.size() > 0 && id_list.find(group_id) != id_list.end()){
+			if(id_list.size() == 0 || id_list.find(group_id) != id_list.end()){
 				Group* gp;
-				if (_group_map.find(group_id) != _group_map.end()){
+				unordered_map<uint, Group*>::const_iterator test_itr = _group_map.find(group_id);
+				unordered_map<uint, Group*>::const_iterator test_end = _group_map.end();
+				if (_group_map.find(group_id) == _group_map.end()){
 					child_groups.push_back(group_id);
 					gp = addGroup(group_stmt);
 				} else {
@@ -145,7 +147,9 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 				gp->addRegion(**r_itr);
 				_group_associations[group_id].insert(*r_itr);
 			}
+			sqlite3_reset(group_stmt);
 		}
+		++r_itr;
 	}
 
 	sqlite3_finalize(group_stmt);
@@ -179,6 +183,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 				_group_relationships[parent_id].insert(child_groups.front());
 			}
 		}
+		sqlite3_reset(parent_stmt);
 		child_groups.pop_front();
 	}
 

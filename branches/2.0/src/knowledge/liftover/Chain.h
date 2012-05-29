@@ -40,7 +40,7 @@ public:
 		return _old_start <= end && _old_end >= start;
 	}
 	bool operator<(const Chain& other) const {
-		return _score < other._score;
+		return _score > other._score;
 	}
 
 	short getNewChrom() const{

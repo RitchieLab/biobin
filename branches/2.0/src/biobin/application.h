@@ -68,23 +68,6 @@ public:
 
 	Knowledge::RegionCollection* GetRegions();
 
-	/**
-	 * Streams population IDs to stdout
-	 */
-	//void ListPopulationIDs(std::ostream& os);
-
-	/**
-	 * Generates group/ID report showing meta groups, their children and all IDs in the current dataset
-	 */
-	//void ListGroupIDs(std::ostream& os, const vector<string>& searchList);
-
-	/**
-	 * Update the database with new variation filename (allow users to move the file to a permanent location specific to their system)
-	 */
-	//void SetVariationFilename(const string& variationFilename);
-
-	//void ListGenes(std::ostream& os, const vector<string>& aliasList, const vector<string>& aliasType);
-
 	void SetGeneExtension(uint geneBoundaryExt);
 	void SetReportPrefix(const string& pref);
 	void UseHtmlReports(bool useHtml);
@@ -102,8 +85,6 @@ protected:
 	///< The name of the database file
 	std::string dbFilename;
 
-	///< The database session - going to not use this
-	//soci::session sociDB;
 	// Instead, use a standard sqlite3 database.
 	sqlite3* _db;
 
@@ -129,12 +110,8 @@ protected:
 	///< Turn on/off HTML report generation
 	bool htmlReports;
 
-
 	///< Converter structure for map files (using liftover chains)
 	Knowledge::Liftover::Converter* buildConverter;
-
-	//std::multimap<uint, uint> geneLookup;
-
 private:
 
 

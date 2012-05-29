@@ -24,9 +24,12 @@ pair<int, int> Chain::convertRegion(int start, int end, float minMappingFrac) co
 		Segment end_seg;
 		// Get all segments that intersect this region
 		set<Segment>::const_iterator seg_itr = _data.lower_bound(start);
+		if (seg_itr != _data.begin()){
+			--seg_itr;
+		}
 		bool is_first = true;
 		int total_size = 0;
-		while(seg_itr != _data.end() && (*seg_itr).getOldEnd() <= end){
+		while(seg_itr != _data.end() && (*seg_itr).getOldStart() <= end){
 			if((*seg_itr).getOldEnd() >= start){
 				if(is_first){
 					first_seg = *seg_itr;

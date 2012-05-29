@@ -70,10 +70,10 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 			"INNER JOIN region USING (region_id) "
 			"LEFT JOIN region_bound AS rb_default "
 				"ON region_bound.region_id=rb_default.region_id "
-					"AND rb_default.population_id=:def_pop_id"
+					"AND rb_default.population_id=:def_pop_id "
 			"LEFT JOIN region_name ON region.region_id=region_name.region_id ";
 
-	where_clause += "WHERE region_bound.chr=:chrom AND region_bound.population_id=:pop_id "
+	where_clause += "region_bound.chr=:chrom AND region_bound.population_id=:pop_id "
 			"AND zone=:pos_zone AND region_bound.posMin<:pos AND region_bound.posMax>:pos ";
 
 	string stmt = command + where_clause + "GROUP BY region.region_id";
@@ -105,6 +105,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 			reg->addLocus(*itr);
 		}
 		sqlite3_reset(region_stmt);
+		++itr;
 	}
 
 	sqlite3_finalize(region_stmt);
