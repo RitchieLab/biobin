@@ -71,7 +71,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 	stringstream rel_stream;
 	rel_stream << "('" << *rel_type << "'";
 	while(++rel_type != child_types.end()){
-		rel_stream << "'" << *rel_type << "'";
+		rel_stream << ", '" << *rel_type << "'";
 	}
 	rel_stream << ")";
 
@@ -161,7 +161,8 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 			"INNER JOIN group_name USING (group_id) "
 			"INNER JOIN relationship ON group_group.relationship_id=relationship.relationship_id "
 			"WHERE group_group.related_group_id=:gid AND direction=-1 "
-			"AND relationship IN " + rel_stream.str();
+			"AND relationship IN " + rel_stream.str() + " "
+			"GROUP BY group_group.group_id";
 
 	sqlite3_stmt* parent_stmt;
 	sqlite3_prepare_v2(_db, parent_cmd.c_str(), -1, &parent_stmt, NULL);
@@ -204,7 +205,10 @@ Group* GroupCollectionSQLite::addGroup(sqlite3_stmt* group_query){
 
 	uint group_id = static_cast<uint>(sqlite3_column_int(group_query, 0));
 	string gp_name = (const char *) (sqlite3_column_text(group_query, 1));
-	string gp_desc = (const char *) (sqlite3_column_text(group_query, 2));
+	string gp_desc = "";
+	if(sqlite3_column_type(group_query,2) != SQLITE_NULL){
+		gp_desc = (const char *) (sqlite3_column_text(group_query, 2));
+	}
 	string gp_alias = (const char *) (sqlite3_column_text(group_query, 3));
 
 	return this->AddGroup(group_id, gp_name, gp_desc);
