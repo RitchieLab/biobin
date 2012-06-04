@@ -48,7 +48,13 @@ int InformationSQLite::getPopulationID(const string& pop_str){
 int InformationSQLite::getZoneSize(){
 	// TODO: Add db query to get the zone size
 
-	return 100000;
+	// default is 100K
+	int zone_size = 100000;
+	string zone_sql = "SELECT value FROM setting "
+			"WHERE setting='region_zone_size'";
+	sqlite3_exec(_db, zone_sql.c_str(), &parseSingleIntQuery, &zone_size, NULL);
+
+	return zone_size;
 }
 
 void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
