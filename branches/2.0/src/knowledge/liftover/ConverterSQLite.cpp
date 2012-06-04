@@ -12,6 +12,8 @@
 #include <sqlite3.h>
 #include <sstream>
 
+#include <iostream>
+
 using std::stringstream;
 
 namespace Knowledge {

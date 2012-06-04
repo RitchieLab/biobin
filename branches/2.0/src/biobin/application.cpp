@@ -33,6 +33,22 @@ Application::~Application(){
 
 	delete _info;
 	delete regions;
+
+	vector<Knowledge::Locus*>::iterator d_itr = dataset.begin();
+	while(d_itr != dataset.end()){
+		delete *d_itr;
+		++d_itr;
+	}
+	dataset.clear();
+
+	map<uint, Knowledge::GroupCollection*>::iterator g_itr = groups.begin();
+	while(g_itr != groups.end()){
+		delete (*g_itr).second;
+		++g_itr;
+	}
+	groups.clear();
+
+
 }
 
 Knowledge::RegionCollection* Application::GetRegions() {
@@ -75,19 +91,6 @@ Knowledge::GroupCollection* Application::GroupManager(uint idx) {
 string Application::GetReportLog() {
 	return reportLog.str();
 }
-/*
-void Application::ListGenes(std::ostream& os, const vector<string>& aliasList, const vector<string>& aliasType) {
-	_info->listRegions(os, aliasList, aliasType);
-}
-
-void Application::ListGroupIDs(std::ostream& os, const vector<string>& searchList) {
-	_info->listGroupIDs(os, searchList);
-}
-
-void Application::ListPopulationIDs(std::ostream& os) {
-	_info->listPopulationIDs(os);
-}
-*/
 
 string Application::AddReport(const string& suffix, const string& extension, const string& description) {
 	string newFilename(reportPrefix);

@@ -10,6 +10,8 @@
 
 using std::make_pair;
 
+#include <iostream>
+
 namespace Knowledge {
 namespace Liftover {
 
@@ -23,9 +25,8 @@ Converter::Converter(const string& orig) :
 
 Converter::~Converter() {
 	map<short, set<Chain*> >::iterator itr = _chains.begin();
-	map<short, set<Chain*> >::iterator end = _chains.end();
 
-	while (itr != end){
+	while (itr != _chains.end()){
 		set<Chain*>::iterator s_itr = (*itr).second.begin();
 		set<Chain*>::iterator s_end = (*itr).second.end();
 
@@ -34,8 +35,11 @@ Converter::~Converter() {
 			++s_itr;
 		}
 
+		(*itr).second.clear();
+
 		++itr;
 	}
+	_chains.clear();
 }
 
 pair<short, pair<int, int> > Converter::convertRegion(short chrom, int start, int end) const {

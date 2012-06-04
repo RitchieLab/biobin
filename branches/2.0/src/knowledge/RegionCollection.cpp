@@ -34,6 +34,7 @@ RegionCollection::~RegionCollection(){
 	}
 
 	delete _dataset;
+	delete _info;
 }
 
 Region& RegionCollection::operator[](const uint idx){

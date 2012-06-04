@@ -110,13 +110,6 @@ protected:
 	///< Turn on/off HTML report generation
 	bool htmlReports;
 
-	///< Converter structure for map files (using liftover chains)
-	Knowledge::Liftover::Converter* buildConverter;
-private:
-
-
-
-
 };
 
 
