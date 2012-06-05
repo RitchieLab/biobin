@@ -33,6 +33,18 @@ Application::~Application(){
 
 	delete _info;
 	delete regions;
+
+	vector<Knowledge::Locus*>::iterator l_itr = dataset.begin();
+	while(l_itr != dataset.end()){
+		delete *l_itr;
+		++l_itr;
+	}
+
+	map<uint, Knowledge::GroupCollection*>::iterator g_itr = groups.begin();
+	while(g_itr != groups.end()){
+		delete (*g_itr).second;
+		++g_itr;
+	}
 }
 
 Knowledge::RegionCollection* Application::GetRegions() {

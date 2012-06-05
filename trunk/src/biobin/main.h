@@ -38,7 +38,7 @@ public:
 	 * configuration has been processed, so we can use the vcf file name here.
 	 */
 	Main() : app(c_vcf_file){}
-	~Main(){}
+	~Main();
 
 	/*!
 	 * \brief Runs the commands in order.

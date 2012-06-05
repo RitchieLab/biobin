@@ -36,6 +36,14 @@ string Main::c_genome_build = "37";
 vector<string> Main::c_custom_groups;
 set<uint> Main::c_source_ids;
 
+Main::~Main(){
+	multimap<int, Task::Task*>::iterator t_itr = _task_list.begin();
+	while(t_itr != _task_list.end()){
+		delete (*t_itr).second;
+		++t_itr;
+	}
+}
+
 void Main::initTasks(){
 	BioBin::Task::Task *t = new BioBin::Task::GenerateFiles(&app);
 	_task_list.insert(std::make_pair(t->getType(), t));

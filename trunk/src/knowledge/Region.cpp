@@ -70,7 +70,9 @@ bool Region::operator<(const Region& other) const{
 	// order by chromosome, then start, then end position
 	return (_chrom == other._chrom ?
 				(_true_start == other._true_start ?
-					_true_end < other._true_end :
+					(_true_end == other._true_end ?
+							_id < other._id :
+							_true_end < other._true_end) :
 					_true_start < other._true_start) :
 				_chrom < other._chrom);
 }
