@@ -196,13 +196,10 @@ void BinManager::collapseBins(Knowledge::Information* info){
 
 			Bin* exon_bin = new Bin(**b_itr);
 			exon_bin->addExtraData("_exon");
-			new_bins.insert(exon_bin);
 			Bin* intron_bin = new Bin(**b_itr);
 			intron_bin->addExtraData("_intron");
-			new_bins.insert(intron_bin);
 			Bin* reg_bin = new Bin(**b_itr);
 			reg_bin->addExtraData("_reg");
-			new_bins.insert(reg_bin);
 
 			v_itr = (*b_itr)->variantBegin();
 			v_end = (*b_itr)->variantEnd();
@@ -239,7 +236,25 @@ void BinManager::collapseBins(Knowledge::Information* info){
 				++v_itr;
 			}
 
-			(*b_itr)->addExtraData("_unk");
+			bool unk = false;
+			if(exon_bin->getSize() > 0){
+				new_bins.insert(exon_bin);
+				unk = true;
+			}
+
+			if(intron_bin->getSize() > 0){
+				new_bins.insert(intron_bin);
+				unk = true;
+			}
+
+			if(reg_bin->getSize() > 0){
+				new_bins.insert(reg_bin);
+				unk = true;
+			}
+
+			if(unk){
+				(*b_itr)->addExtraData("_unk");
+			}
 		}
 		++b_itr;
 	}

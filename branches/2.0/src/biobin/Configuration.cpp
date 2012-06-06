@@ -225,9 +225,6 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	// Parsing binning strategies
 	//===========================================
 	BinManager::ExpandByExons = vm["bin-expand-exons"].as<Bool>();
-	if(BinManager::ExpandByExons){
-		std::cerr<<"WARNING: expansion into exons is not currently supported.\n";
-	}
 	BinManager::ExpandByFunction = vm["bin-expand-functions"].as<Bool>();
 	if(BinManager::ExpandByFunction){
 		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
