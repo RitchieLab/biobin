@@ -54,6 +54,21 @@ public:
 	Bin(const PopulationManager& pop_mgr, short chrom, int bin);
 
 	/*!
+	 * \brief Construct a copy of a given bin.
+	 * This constructs a copy of a bin, but IT DOES NOT COPY THE VARIANTS!!
+	 * This is intended for use when constructing sub-bins based on a current
+	 * bin (i.e., breaking out into sub-gene or functional information).  This
+	 * is intentionally explicit in order to prevent implicitly generated copies
+	 * from being created.
+	 *
+	 * Essentially, this is a convenience function, and you sould never be
+	 * copying Bins.
+	 *
+	 * \param other The other bin to base this on.
+	 */
+	explicit Bin(const Bin& other);
+
+	/*!
 	 * \brief Return the size of the bin.
 	 *
 	 * \return The size (number of contributions) of this bin.
@@ -87,13 +102,37 @@ public:
 	/**
 	 * Strict ordering is given by Groups, then Regions, then Intergenic, which
 	 * are then sorted (by ID, chrom/position, chrom/position)
+	 *
+	 * Note: if the group / region / intergenic position are identical, then
+	 * the operator looks at the _name member.
 	 */
 	bool operator<(const Bin& other) const;
 
 	const_locus_iterator variantBegin() const {return _variants.begin();}
 	const_locus_iterator variantEnd() const {return _variants.end();}
 
+	/*!
+	 * \brief removes a Locus* from the bin.
+	 * This function exactly mirrors the erase functionality of the STL set,
+	 * which means that the itr will be non-functional after the erase.
+	 *
+	 * \param itr The iterator pointing to the element to erase
+	 */
+	void erase(const_locus_iterator itr) {_variants.erase(itr); _cached = false;}
+
+	/*!
+	 * \brief Adds extra data to the bin.
+	 * This function adds extra data to the bin.  The "extra data" is really
+	 * just a string that we tack on to the end of the identifier.  Note that
+	 * we'll need to change the name here, too
+	 */
+	void addExtraData(const string& addl_data) { _extra_data.push_back(addl_data); _name += addl_data;}
+
+
 private:
+	// No assignment, please!
+	Bin& operator=(const Bin& other);
+
 	union{
 		Knowledge::Group* group;
 		Knowledge::Region* region;
@@ -108,6 +147,7 @@ private:
 	mutable bool _cached;
 
 	string _name;
+	vector<string> _extra_data;
 
 	set<Knowledge::Locus*> _variants;
 

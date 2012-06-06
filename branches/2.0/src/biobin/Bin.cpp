@@ -36,18 +36,27 @@ Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
 	_member.bin_no = bin;
 }
 
+Bin::Bin(const Bin& other) : _member(other._member),
+		_is_group(other._is_group), _is_intergenic(other._is_intergenic),
+		_chrom(other._chrom), _cached(false), _name(other._name),
+		_extra_data(other._extra_data), _pop_mgr(other._pop_mgr) {}
+
 bool Bin::operator<(const Bin& other) const{
 	bool ret_val = false;
 	if(_is_group){
 		if(other._is_group){
-			ret_val = _member.group < other._member.group;
+			ret_val = _member.group == other._member.group ?
+					_name < other._name :
+					_member.group < other._member.group;
 		}else{
 			ret_val = true;
 		}
 	}else if (_is_intergenic){
 		if(other._is_intergenic){
 			ret_val = (_chrom == other._chrom ?
-					_member.bin_no < other._member.bin_no :
+					(_member.bin_no == other._member.bin_no ?
+							_name < other._name :
+							_member.bin_no < other._member.bin_no) :
 					_chrom < other._chrom);
 		}else{
 			ret_val = false;
@@ -59,7 +68,9 @@ bool Bin::operator<(const Bin& other) const{
 		}else if (other._is_intergenic){
 			ret_val = true;
 		}else{
-			ret_val = _member.region < other._member.region;
+			ret_val = (_member.region == other._member.region) ?
+					_name < other._name :
+					_member.region < other._member.region;
 		}
 	}
 

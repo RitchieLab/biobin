@@ -156,8 +156,6 @@ void BinManager::collapseBins(){
 			Group::const_region_iterator r_itr = curr_group->regionBegin();
 			Group::const_region_iterator r_end = curr_group->regionEnd();
 
-
-
 			Bin* curr_bin;
 			v_end = (*b_itr)->variantEnd();
 			while(r_itr != r_end){
