@@ -27,6 +27,10 @@ using std::string;
 using std::pair;
 using std::set;
 
+namespace Knowledge{
+class Information;
+}
+
 namespace BioBin {
 
 class PopulationManager;
@@ -42,7 +46,8 @@ public:
 	
 	void InitBins(const map<uint, Knowledge::GroupCollection*> &groups,
 			const Knowledge::RegionCollection& regions,
-			const vector<Knowledge::Locus*>& loci);
+			const vector<Knowledge::Locus*>& loci,
+			Knowledge::Information* info);
 
 	int numRareVariants() const { return _rare_variants.size();}
 	int numVariants() const {return _total_variants;}
@@ -72,7 +77,7 @@ private:
 	BinManager& operator=(const BinManager&);
 
 	// Collapses all of the bins according to the preferences we set.
-	void collapseBins();
+	void collapseBins(Knowledge::Information* info);
 	// Erases (and increments) a single bin
 	void eraseBin(set<Bin*>::iterator&);
 

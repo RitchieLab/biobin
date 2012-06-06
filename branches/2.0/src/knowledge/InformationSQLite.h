@@ -10,12 +10,14 @@
 
 #include <string>
 #include <stdlib.h>
+#include <map>
 
 #include <sqlite3.h>
 
 #include "Information.h"
 
 using std::string;
+using std::map;
 
 namespace Knowledge{
 
@@ -51,7 +53,11 @@ public:
 			map<int, string>& group_types_out);
 	virtual int getZoneSize();
 
+	virtual int getSNPRole(const Locus& loc, const Region& reg);
+
 private:
+	void prepRoleStmt();
+
 	/*!
 	 *  SQLite callback to parse a single column, which is returned via the
 	 * first argument, which must be a pointer to a string.
@@ -69,8 +75,17 @@ private:
 	 */
 	static int parseSingleIntQuery(void*, int, char**, char**);
 
+	static int parseMultiIntQuery(void*, int, char**, char**);
+
+
 	sqlite3* _db;
 	bool _self_open;
+
+	// A mapping of db integer roles to SNP roles
+	map<int, Information::snp_role> _role_map;
+
+	// The prepared statement for getting SNP roles
+	sqlite3_stmt* _role_stmt;
 
 };
 

@@ -91,6 +91,7 @@ public:
 	}
 
 	Knowledge::Group* getGroup() const { return _is_group ? _member.group : NULL;}
+	Knowledge::Region* getRegion() const {return (!_is_group && !_is_intergenic) ? _member.region : NULL; }
 
 	const string& getName() const{ return _name;}
 	bool isGroup() const {return _is_group;}

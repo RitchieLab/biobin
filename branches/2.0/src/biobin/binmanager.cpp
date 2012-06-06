@@ -11,6 +11,7 @@
 
 #include "knowledge/RegionCollection.h"
 #include "knowledge/Region.h"
+#include "knowledge/Information.h"
 
 using Knowledge::RegionCollection;
 using Knowledge::Region;
@@ -45,7 +46,8 @@ BinManager::~BinManager() {
 void BinManager::InitBins(
 		const map<uint, Knowledge::GroupCollection*> &groups,
 		const Knowledge::RegionCollection& regions,
-		const vector<Knowledge::Locus*>& loci) {
+		const vector<Knowledge::Locus*>& loci,
+		Knowledge::Information* info) {
 
 	vector<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
 	vector<Knowledge::Locus*>::const_iterator l_end = loci.end();
@@ -122,7 +124,7 @@ void BinManager::InitBins(
 	// At this point, we have all of the top level bins constructed and
 	// stored in the variable _bin_list.  We should now collapse the
 	// bins according to the preferences given
-	collapseBins();
+	collapseBins(info);
 }
 
 void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
@@ -142,7 +144,7 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 
 }
 
-void BinManager::collapseBins(){
+void BinManager::collapseBins(Knowledge::Information* info){
 
 	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
@@ -183,6 +185,67 @@ void BinManager::collapseBins(){
 	}
 
 	// TODO: Expand by functionality and sub-gene information here
+
+	//expand by role
+	b_itr = _bin_list.begin();
+	set<Bin*> new_bins;
+
+	// once we hit intergenic bins, we can't break it down by role any more!
+	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
+		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
+
+			Bin* exon_bin = new Bin(**b_itr);
+			exon_bin->addExtraData("_exon");
+			new_bins.insert(exon_bin);
+			Bin* intron_bin = new Bin(**b_itr);
+			intron_bin->addExtraData("_intron");
+			new_bins.insert(intron_bin);
+			Bin* reg_bin = new Bin(**b_itr);
+			reg_bin->addExtraData("_reg");
+			new_bins.insert(reg_bin);
+
+			v_itr = (*b_itr)->variantBegin();
+			v_end = (*b_itr)->variantEnd();
+			while (v_itr != v_end){
+				int role = 0;
+				if((*b_itr)->isGroup()){
+					Group* curr_group = (*b_itr)->getGroup();
+					Group::const_region_iterator r_itr = curr_group->regionBegin();
+					Group::const_region_iterator r_end = curr_group->regionEnd();
+					while(r_itr != r_end){
+						role |= info->getSNPRole(**v_itr, **r_itr);
+						++r_itr;
+					}
+				}else{
+					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
+				}
+
+				if (role & Knowledge::Information::EXON){
+					exon_bin->addLocus(*v_itr);
+				}
+
+				if (role & Knowledge::Information::INTRON){
+					intron_bin->addLocus(*v_itr);
+				}
+
+				if (role & Knowledge::Information::REGULATORY){
+					reg_bin->addLocus(*v_itr);
+				}
+
+				if (role){
+					(*b_itr)->erase(v_itr);
+				}
+
+				++v_itr;
+			}
+
+			(*b_itr)->addExtraData("_unk");
+		}
+		++b_itr;
+	}
+
+	_bin_list.insert(new_bins.begin(), new_bins.end());
+
 
 	//OK, now we go through and clean up all of the bins that are too small!
 	b_itr = _bin_list.begin();

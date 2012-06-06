@@ -22,6 +22,9 @@ using std::set;
 
 namespace Knowledge{
 
+class Locus;
+class Region;
+
 /*!
  * \brief Defines a class that gets general information about the database.
  * This class is an interface to get specific information about the database.
@@ -30,6 +33,16 @@ namespace Knowledge{
  */
 class Information{
 public:
+
+	/*!
+	 * An enumeration that can be used as a bitmask to determine the role of a
+	 * SNP.
+	 */
+	enum snp_role{
+		INTRON = 1,
+		EXON = 2,
+		REGULATORY = 4
+	};
 
 	/*!
 	 * Destroys the Information object
@@ -64,6 +77,16 @@ public:
 	 */
 	virtual int getZoneSize() = 0;
 
+	/*!
+	 * \breif Returns a SNP's role.
+	 * This function returns a SNPs role in a gene.
+	 *
+	 * \param loc The Locus object in question
+	 * \param reg The associated Region to get the role for.
+	 *
+	 * \return An integer that represents a bitmask of the snp_roles
+	 */
+	virtual int getSNPRole(const Locus& loc, const Region& reg) = 0;
 };
 
 }
