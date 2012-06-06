@@ -24,14 +24,14 @@ void BinApplication::InitBins() {
 	
 	binData.InitBins(groups, *regions, dataset, _info);
 
-	std::cerr<<"   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+	std::cerr<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
 				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"
 				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
 				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
 
-	std::cerr<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n";
+	std::cerr<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n\n";
 
-	if (binData.numBins() < 500) {
+	if (binData.numBins() > 0 && binData.numBins() < 500) {
 		std::cerr<<"\n\nBin Name\tSNP Count\n";
 		BinManager::const_iterator itr = binData.begin();
 		BinManager::const_iterator end = binData.end();

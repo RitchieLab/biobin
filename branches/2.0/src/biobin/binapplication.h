@@ -84,8 +84,6 @@ private:
 template <class SNP_cont>
 void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
 
-	std::cerr<<"Loading VCF Data\n";
-
 	// First things first, let's load our individuals
 	const vector<bool>& controls = _pop_mgr.loadIndividuals(_data);
 

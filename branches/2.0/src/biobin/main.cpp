@@ -102,7 +102,9 @@ void Main::RunTasks(int level){
 void Main::LoadSNPs() {
 	vector<string> lostSnps;
 	app.InitVcfDataset(c_genome_build, lostSnps);
-	std::cerr<<lostSnps.size()<<" SNPs were not able to be found in the variations database.\n";
+	if (lostSnps.size() > 0){
+		std::cerr << "WARNING: Could not translate " << lostSnps.size() << " variants.\n";
+	}
 }
 
 }
