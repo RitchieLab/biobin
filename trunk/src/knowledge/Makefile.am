@@ -18,6 +18,7 @@ libknowledge_la_SOURCES=\
 	GroupCollectionSQLite.h \
 	GroupCollectionSQLite.cpp \
 	Information.h \
+	Information.cpp \
 	InformationSQLite.h \
 	InformationSQLite.cpp \
 	Configuration.h \

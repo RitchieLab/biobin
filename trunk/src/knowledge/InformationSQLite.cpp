@@ -113,7 +113,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	role_itr = role_ids.begin();
 	while(role_itr != role_ids.end()){
-		_role_map[*role_itr] = INTRON;
+		_role_map.insert(std::make_pair(*role_itr, INTRON));
 		++role_itr;
 	}
 	role_ids.clear();
@@ -125,7 +125,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	role_itr = role_ids.begin();
 	while(role_itr != role_ids.end()){
-		_role_map[*role_itr] = EXON;
+		_role_map.insert(std::make_pair(*role_itr, EXON));
 		++role_itr;
 	}
 	role_ids.clear();
@@ -137,7 +137,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	role_itr = role_ids.begin();
 	while(role_itr != role_ids.end()){
-		_role_map[*role_itr] = REGULATORY;
+		_role_map.insert(std::make_pair(*role_itr,REGULATORY));
 		++role_itr;
 	}
 	role_ids.clear();

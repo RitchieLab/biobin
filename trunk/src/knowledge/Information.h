@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <boost/iterator/iterator_facade.hpp>
 
 using std::ostream;
 using std::string;
@@ -20,7 +21,7 @@ using std::vector;
 using std::map;
 using std::set;
 
-namespace Knowledge{
+namespace Knowledge {
 
 class Locus;
 class Region;
@@ -31,23 +32,98 @@ class Region;
  * The information returned by this class is meta-information about the
  * database, like the genomic build and the list of populations available.
  */
-class Information{
+class Information {
 public:
 
 	/*!
 	 * An enumeration that can be used as a bitmask to determine the role of a
 	 * SNP.
 	 */
-	enum snp_role{
-		INTRON = 1,
-		EXON = 2,
-		REGULATORY = 4
+	class snp_role {
+	public:
+		class const_iterator: public boost::iterator_facade<const_iterator,
+				snp_role&, boost::forward_traversal_tag> {
+
+		public:
+			const_iterator(set<snp_role*>::const_iterator itr) :
+					_itr(itr) {
+			}
+
+		private:
+			void increment() {
+				++_itr;
+			}
+			bool equal(const const_iterator& other) const {
+				return _itr == other._itr;
+			}
+			snp_role & dereference() const {
+				return **_itr;
+			}
+
+			set<snp_role*>::const_iterator _itr;
+		};
+
+	private:
+		explicit snp_role(const string& val) :
+				_data(val) {
+			if (s_val_map.find(_data) == s_val_map.end()) {
+				s_val_map.insert(
+						std::make_pair(_data, 1 << (++s_num_vals - 1)));
+				s_enums.insert(this);
+			}
+
+		}
+
+		struct Ptr_Less: public std::binary_function<const snp_role*,
+				const snp_role*, bool> {
+			bool operator()(const snp_role* x, const snp_role* y) {
+				return (y != 0 && x != 0) ? static_cast<int>(*x) < static_cast<int>(*y) : y < x;
+			}
+		};
+
+	public:
+
+		friend class Information;
+
+		operator int() const {
+			return s_val_map[_data];
+		}
+
+		operator string() const {
+			return _data;
+		}
+
+		static const_iterator begin() {
+			return const_iterator(s_enums.begin());
+		}
+
+		static const_iterator end() {
+			return const_iterator(s_enums.end());
+		}
+
+	private:
+
+		string _data;
+		static int s_num_vals;
+		static map<string, int> s_val_map;
+		static set<snp_role*, Ptr_Less> s_enums;
 	};
+
+	static const snp_role INTRON;
+	static const snp_role EXON;
+	static const snp_role REGULATORY;
+	/*
+	 enum snp_role{
+	 INTRON = 1,
+	 EXON = 2,
+	 REGULATORY = 4
+	 };*/
 
 	/*!
 	 * Destroys the Information object
 	 */
-	virtual ~Information(){}
+	virtual ~Information() {
+	}
 
 	/*!
 	 * \brief Converts a population string into a Population ID.
@@ -67,7 +143,7 @@ public:
 	 * return source information for all available sources
 	 * \param[out] type_names_out A mapping of ID->source name
 	 */
-	virtual void getGroupTypes(const set<uint>& group_ids,
+	virtual void getGroupTypes(const set<unsigned int>& group_ids,
 			map<int, string>& type_names_out) = 0;
 
 	/*!
@@ -90,6 +166,5 @@ public:
 };
 
 }
-
 
 #endif /* INFORMATION_H_ */
