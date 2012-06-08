@@ -41,11 +41,17 @@ public:
 	 */
 	class snp_role {
 	public:
+		struct Ptr_Less: public std::binary_function<const snp_role*, const snp_role*, bool> {
+			bool operator()(const snp_role* x, const snp_role* y) {
+				return (y != 0 && x != 0) ? static_cast<int>(*x) < static_cast<int>(*y) : y < x;
+			}
+		};
+
 		class const_iterator: public boost::iterator_facade<const_iterator,
-				snp_role&, boost::forward_traversal_tag> {
+				const snp_role&, boost::forward_traversal_tag> {
 
 		public:
-			const_iterator(set<snp_role*>::const_iterator itr) : _itr(itr) {}
+			const_iterator(set<const snp_role*, Ptr_Less>::const_iterator itr) : _itr(itr) {}
 
 		private:
 			friend class boost::iterator_core_access;
@@ -54,9 +60,9 @@ public:
 			bool equal(const const_iterator& other) const {
 				return _itr == other._itr;
 			}
-			snp_role & dereference() const {return **_itr;}
+			const snp_role & dereference() const {return **_itr;}
 
-			set<snp_role*>::const_iterator _itr;
+			set<const snp_role*, Ptr_Less>::const_iterator _itr;
 		};
 
 	private:
@@ -67,11 +73,7 @@ public:
 			}
 		}
 
-		struct Ptr_Less: public std::binary_function<const snp_role*, const snp_role*, bool> {
-			bool operator()(const snp_role* x, const snp_role* y) {
-				return (y != 0 && x != 0) ? static_cast<int>(*x) < static_cast<int>(*y) : y < x;
-			}
-		};
+
 
 	public:
 
@@ -88,7 +90,7 @@ public:
 		string _data;
 		static int s_num_vals;
 		static map<string, int> s_val_map;
-		static set<snp_role*, Ptr_Less> s_enums;
+		static set<const snp_role*, Ptr_Less> s_enums;
 	};
 
 	static const snp_role INTRON;

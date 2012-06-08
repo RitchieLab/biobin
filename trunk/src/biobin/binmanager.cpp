@@ -198,7 +198,7 @@ void BinManager::collapseBins(Information* info){
 			Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
 			Information::snp_role::const_iterator role_end = Information::snp_role::end();
 
-			typedef vector<pair<Information::snp_role*, Bin*> > role_bin_type;
+			typedef vector<pair<const Information::snp_role*, Bin*> > role_bin_type;
 			role_bin_type role_bin_list;
 
 			while(role_itr != role_end){
