@@ -94,7 +94,8 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 	sqlite3_bind_int(_role_stmt, 2, loc.getPos());
 	sqlite3_bind_int(_role_stmt, 3, reg.getID());
 	while(sqlite3_step(_role_stmt)==SQLITE_ROW){
-		db_role = _role_map.find(sqlite3_column_int(_role_stmt, 0));
+		int role = sqlite3_column_int(_role_stmt, 0);
+		db_role = _role_map.find(role);
 		if (db_role != _role_map.end()){
 			ret_val |= (*db_role).second;
 		}
@@ -186,7 +187,7 @@ int InformationSQLite::parseSingleIntQuery(void* obj, int n_cols,
 }
 
 int InformationSQLite::parseMultiIntQuery(void* obj, int n_cols, char** col_vals, char** col_names){
-	if (n_cols != 2){
+	if (n_cols != 1){
 		return 2;
 	}
 	vector<int>* int_obj = static_cast<vector<int>*>(obj);
