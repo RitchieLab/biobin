@@ -100,6 +100,7 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 			ret_val |= (*db_role).second;
 		}
 	}
+	sqlite3_reset(_role_stmt);
 
 	return ret_val;
 }
