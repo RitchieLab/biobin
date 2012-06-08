@@ -16,6 +16,7 @@
 using Knowledge::RegionCollection;
 using Knowledge::Region;
 using Knowledge::Group;
+using Knowledge::Information;
 using std::make_pair;
 
 namespace BioBin {
@@ -144,7 +145,7 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 
 }
 
-void BinManager::collapseBins(Knowledge::Information* info){
+void BinManager::collapseBins(Information* info){
 
 	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
@@ -194,12 +195,18 @@ void BinManager::collapseBins(Knowledge::Information* info){
 	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
 		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
 
-			Bin* exon_bin = new Bin(**b_itr);
-			exon_bin->addExtraData("_exon");
-			Bin* intron_bin = new Bin(**b_itr);
-			intron_bin->addExtraData("_intron");
-			Bin* reg_bin = new Bin(**b_itr);
-			reg_bin->addExtraData("_reg");
+			Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
+			Information::snp_role::const_iterator role_end = Information::snp_role::end();
+
+			typedef vector<pair<Information::snp_role*, Bin*> > role_bin_type;
+			role_bin_type role_bin_list;
+
+			while(role_itr != role_end){
+				Bin* new_bin = new Bin(**b_itr);
+				new_bin->addExtraData("_" + static_cast<string>(*role_itr));
+				role_bin_list.push_back(make_pair(&(*role_itr), new_bin));
+				++role_itr;
+			}
 
 			v_itr = (*b_itr)->variantBegin();
 			v_end = (*b_itr)->variantEnd();
@@ -217,16 +224,12 @@ void BinManager::collapseBins(Knowledge::Information* info){
 					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
 				}
 
-				if (role & Knowledge::Information::EXON){
-					exon_bin->addLocus(*v_itr);
-				}
-
-				if (role & Knowledge::Information::INTRON){
-					intron_bin->addLocus(*v_itr);
-				}
-
-				if (role & Knowledge::Information::REGULATORY){
-					reg_bin->addLocus(*v_itr);
+				role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
+				while(role_bin_itr != role_bin_list.end()){
+					if (role & *((*role_bin_itr).first) ){
+						((*role_bin_itr).second)->addLocus(*v_itr);
+					}
+					++role_bin_itr;
 				}
 
 				if (role){
@@ -237,19 +240,13 @@ void BinManager::collapseBins(Knowledge::Information* info){
 			}
 
 			bool unk = false;
-			if(exon_bin->getSize() > 0){
-				new_bins.insert(exon_bin);
-				unk = true;
-			}
-
-			if(intron_bin->getSize() > 0){
-				new_bins.insert(intron_bin);
-				unk = true;
-			}
-
-			if(reg_bin->getSize() > 0){
-				new_bins.insert(reg_bin);
-				unk = true;
+			role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
+			while(role_bin_itr != role_bin_list.end()){
+				if((*role_bin_itr).second->getSize() > 0){
+					new_bins.insert((*role_bin_itr).second);
+					unk = true;
+				}
+				++role_bin_itr;
 			}
 
 			if(unk){

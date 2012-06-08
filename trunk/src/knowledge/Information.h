@@ -45,37 +45,29 @@ public:
 				snp_role&, boost::forward_traversal_tag> {
 
 		public:
-			const_iterator(set<snp_role*>::const_iterator itr) :
-					_itr(itr) {
-			}
+			const_iterator(set<snp_role*>::const_iterator itr) : _itr(itr) {}
 
 		private:
-			void increment() {
-				++_itr;
-			}
+			friend class boost::iterator_core_access;
+
+			void increment() {++_itr;}
 			bool equal(const const_iterator& other) const {
 				return _itr == other._itr;
 			}
-			snp_role & dereference() const {
-				return **_itr;
-			}
+			snp_role & dereference() const {return **_itr;}
 
 			set<snp_role*>::const_iterator _itr;
 		};
 
 	private:
-		explicit snp_role(const string& val) :
-				_data(val) {
+		explicit snp_role(const string& val) :	_data(val) {
 			if (s_val_map.find(_data) == s_val_map.end()) {
-				s_val_map.insert(
-						std::make_pair(_data, 1 << (++s_num_vals - 1)));
+				s_val_map.insert(std::make_pair(_data, 1 << (++s_num_vals - 1)));
 				s_enums.insert(this);
 			}
-
 		}
 
-		struct Ptr_Less: public std::binary_function<const snp_role*,
-				const snp_role*, bool> {
+		struct Ptr_Less: public std::binary_function<const snp_role*, const snp_role*, bool> {
 			bool operator()(const snp_role* x, const snp_role* y) {
 				return (y != 0 && x != 0) ? static_cast<int>(*x) < static_cast<int>(*y) : y < x;
 			}
@@ -85,21 +77,11 @@ public:
 
 		friend class Information;
 
-		operator int() const {
-			return s_val_map[_data];
-		}
+		operator int() const { return s_val_map[_data];}
+		operator string() const {return _data;}
 
-		operator string() const {
-			return _data;
-		}
-
-		static const_iterator begin() {
-			return const_iterator(s_enums.begin());
-		}
-
-		static const_iterator end() {
-			return const_iterator(s_enums.end());
-		}
+		static const_iterator begin() { return const_iterator(s_enums.begin());}
+		static const_iterator end() { return const_iterator(s_enums.end()); }
 
 	private:
 
@@ -112,12 +94,6 @@ public:
 	static const snp_role INTRON;
 	static const snp_role EXON;
 	static const snp_role REGULATORY;
-	/*
-	 enum snp_role{
-	 INTRON = 1,
-	 EXON = 2,
-	 REGULATORY = 4
-	 };*/
 
 	/*!
 	 * Destroys the Information object
