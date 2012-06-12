@@ -125,8 +125,8 @@ void RegionCollectionSQLite::prepareStmts(){
 	_popID = _info->getPopulationID(pop_str);
 	_def_id = _info->getPopulationID("n/a");
 
-	sqlite3_bind_int(_region_bound_stmt, 1, _popID);
-	sqlite3_bind_int(_region_bound_stmt, 2, _def_id);
+	sqlite3_bind_int(_region_bound_stmt, 2, _popID);
+	sqlite3_bind_int(_region_bound_stmt, 3, _def_id);
 
 }
 
@@ -154,15 +154,14 @@ Knowledge::Region* RegionCollectionSQLite::addRegion(sqlite3_stmt* row){
 		string name = (const char*) sqlite3_column_text(row, 1);
 		Region* new_reg = new Region(name, id);
 
-		sqlite3_bind_int(_region_name_stmt, 0, id);
+		sqlite3_bind_int(_region_name_stmt, 1, id);
+
 		while(sqlite3_step(_region_name_stmt) == SQLITE_ROW){
 			new_reg->addAlias((const char *) sqlite3_column_text(_region_name_stmt, 0));
 		}
 		sqlite3_reset(_region_name_stmt);
 
-		insertRegion(*new_reg);
-
-		sqlite3_bind_int(_region_bound_stmt, 0, id);
+		sqlite3_bind_int(_region_bound_stmt, 1, id);
 		while(sqlite3_step(_region_bound_stmt) == SQLITE_ROW){
 			int pop_id_result = sqlite3_column_int(_region_bound_stmt, 0);
 			short chr = static_cast<short>(sqlite3_column_int(_region_bound_stmt, 1));
@@ -171,13 +170,15 @@ Knowledge::Region* RegionCollectionSQLite::addRegion(sqlite3_stmt* row){
 
 			//insertRegionBound(*new_reg, chr, start, end);
 
-			if(pop_id_result == _popID){
-				new_reg->addPopulationBoundary(chr, start, end);
-			}else if(pop_id_result == _def_id){
+			if(pop_id_result == _def_id){
 				new_reg->addDefaultBoundary(chr, start, end);
+			}else if(pop_id_result == _popID){
+				new_reg->addPopulationBoundary(chr, start, end);
 			}
 		}
 		sqlite3_reset(_region_bound_stmt);
+
+		insertRegion(*new_reg);
 
 		return new_reg;
 	}

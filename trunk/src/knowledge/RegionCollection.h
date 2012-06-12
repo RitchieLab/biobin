@@ -111,7 +111,7 @@ public:
 	template<class T_cont>
 	RegionCollection(const T_cont& loci) :
 			_dataset(new LocusContainer<T_cont>(loci)),
-			region_not_found("Not Found", -1, -1, 0, 0) {}
+			region_not_found("Not Found", -1) {}
 	/*!
 	 * Destroy the RegionCollection object.  This will in turn also delete any
 	 * Regions that were created with the AddRegion methods.
