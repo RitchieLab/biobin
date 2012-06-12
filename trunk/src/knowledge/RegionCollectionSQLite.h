@@ -73,8 +73,17 @@ private:
 	//! sqlite connection
 	sqlite3 *db;
 
+	sqlite3_stmt* _region_name_stmt;
+	sqlite3_stmt* _region_bound_stmt;
+
+	int _popID;
+	int _def_id;
+
 	//! Adds a region based on the row (or returns the already added region)
 	Knowledge::Region* addRegion(sqlite3_stmt* row);
+
+	//! Prepares some statments to be used in finding the row information
+	void prepareStmts();
 
 	/*!
 	 * Callback to parse a list of region IDs and add them to the undordered_list
@@ -87,6 +96,8 @@ RegionCollectionSQLite::RegionCollectionSQLite(const string& fn,
 		const T_cont& loci) : RegionCollection(loci), self_open(true) {
 	sqlite3_open(fn.c_str(), &db);
 	_info = new InformationSQLite(db);
+
+	prepareStmts();
 }
 
 template<class T_cont>
@@ -94,6 +105,8 @@ RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn,
 		const T_cont& loci) : RegionCollection(loci),
 		self_open(false), db(db_conn) {
 	_info = new InformationSQLite(db);
+
+	prepareStmts();
 }
 
 }

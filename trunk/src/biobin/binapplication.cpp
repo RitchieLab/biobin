@@ -32,7 +32,7 @@ void BinApplication::InitBins() {
 	std::cerr<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n\n";
 
 	if (binData.numBins() > 0 && binData.numBins() < 500) {
-		std::cerr<<"\n\nBin Name\tSNP Count\n";
+		std::cerr<<"\n\nBin Name\tVariant Count\n";
 		BinManager::const_iterator itr = binData.begin();
 		BinManager::const_iterator end = binData.end();
 		while(itr != end){
@@ -74,9 +74,9 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 				<< static_cast<int>((*itr)->isRare()) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
-				regions->positionBegin((*itr)->getChrom(), (*itr)->getPos());
+				regions->locusBegin(*itr);
 		Knowledge::RegionCollection::const_region_iterator r_end =
-				regions->positionEnd((*itr)->getChrom(), (*itr)->getPos());
+				regions->locusEnd(*itr);
 		if (r_itr != r_end){
 			locusFile << (*r_itr)->getName();
 			while(++r_itr != r_end){

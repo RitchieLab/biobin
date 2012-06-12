@@ -63,9 +63,9 @@ void BinManager::InitBins(
 
 			// First, find all of the regions that contain this locus
 			RegionCollection::const_region_iterator r_itr =
-					regions.positionBegin(l.getChrom(), l.getPos());
+					regions.locusBegin(&l);
 			RegionCollection::const_region_iterator r_end =
-					regions.positionEnd(l.getChrom(), l.getPos());
+					regions.locusEnd(&l);
 
 			Bin* curr_bin;
 			if ((r_itr == r_end || (!UsePathways && !ExpandByGenes)) && IncludeIntergenic){
@@ -228,12 +228,14 @@ void BinManager::collapseBins(Information* info){
 				while(role_bin_itr != role_bin_list.end()){
 					if (role & *((*role_bin_itr).first) ){
 						((*role_bin_itr).second)->addLocus(*v_itr);
+						_locus_bins[*v_itr].insert((*role_bin_itr).second);
 					}
 					++role_bin_itr;
 				}
 
 				if (role){
 					(*b_itr)->erase(v_itr);
+					_locus_bins[*v_itr].erase(*b_itr);
 				}
 
 				++v_itr;

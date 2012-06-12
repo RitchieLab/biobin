@@ -69,6 +69,22 @@ RegionCollection::const_region_iterator RegionCollection::aliasEnd(const string&
 	return empty_region_set.end();
 }
 
+RegionCollection::const_region_iterator RegionCollection::locusBegin(const Locus* loc) const{
+	unordered_map<const Locus*, set<Region*> >::const_iterator itr = _locus_map.find(loc);
+	if(itr != _locus_map.end()){
+		return (*itr).second.begin();
+	}
+	return empty_region_set.begin();
+}
+
+RegionCollection::const_region_iterator RegionCollection::locusEnd(const Locus* loc) const{
+	unordered_map<const Locus*, set<Region*> >::const_iterator itr = _locus_map.find(loc);
+	if(itr != _locus_map.end()){
+		return (*itr).second.end();
+	}
+	return empty_region_set.end();
+}
+/*
 RegionCollection::const_region_iterator RegionCollection::positionBegin(short chrom, uint pos) const{
 	unordered_map<short,interval_map<uint, set<Region*> > >::const_iterator idx_itr =
 			_region_bounds.find(chrom);
@@ -94,6 +110,27 @@ RegionCollection::const_region_iterator RegionCollection::positionEnd(short chro
 	}
 	return empty_region_set.end();
 }
+*/
+
+void RegionCollection::insertRegion(Region& region){
+	if(_region_map.find(region.getID()) == _region_map.end()){
+		_region_map.insert(std::make_pair(region.getID(), &region));
+	}
+	Region::const_alias_iterator alias_itr = region.aliasBegin();
+
+	_alias_map[region.getName()].insert(&region);
+	while(alias_itr != region.aliasEnd()){
+		_alias_map[*alias_itr++].insert(&region);
+	}
+}
+
+/*
+void RegionCollection::insertRegionBound(Region& region, short chr, uint start, uint end){
+	set<Region*> new_set;
+	new_set.insert(&region);
+	_region_bounds[chr].add(std::make_pair(interval<uint>::closed(start, end), new_set));
+}
+*/
 
 Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
 
@@ -106,6 +143,7 @@ Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, shor
 		_region_map.insert(std::make_pair(id, &new_region));
 		new_region.addAliases(aliases);
 
+		/*
 		set<Region*> new_set;
 		new_set.insert(&new_region);
 
@@ -113,6 +151,7 @@ Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, shor
 		_region_bounds[chrom].add(
 				std::make_pair(interval<uint>::closed(effStart, effStop),
 						new_set));
+		*/
 
 		// Add all aliases, including the canonical name
 		_alias_map[name].insert(&new_region);

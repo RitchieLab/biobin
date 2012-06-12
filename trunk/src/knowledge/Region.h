@@ -11,12 +11,14 @@
 #include <string>
 #include <set>
 #include <map>
+#include <vector>
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 using std::string;
 using std::set;
 using std::map;
+using std::vector;
 using boost::unordered_map;
 
 
@@ -165,6 +167,36 @@ public:
 	 */
 	typedef set<string>::const_iterator const_alias_iterator;
 
+private:
+
+	class Boundary{
+
+	private:
+		Boundary(short chr, uint start, uint stop):
+			_chr(chr), _start(start), _stop(stop) {}
+
+	public:
+		friend class Region;
+
+		bool operator<(const Boundary& other) const {
+			return _chr == other._chr ?
+					(_start == other._start ?
+							_stop < other._stop : _start < other._start) :
+					_chr < other._chr;
+		}
+
+		short getChrom() const { return _chr; }
+
+	private:
+		short _chr;
+		uint _start;
+		uint _stop;
+	};
+
+public:
+
+	Region(const string& name, uint id);
+
 	/*!
 	 * \brief Construct a region using ony start/stop values.
 	 * Constructs a region in which the effective boundaries are the same as
@@ -210,6 +242,14 @@ public:
 	 * \param locus the Locus object to associate with this region
 	 */
 	void addLocus(const Locus* locus);
+
+	void addPopulationBoundary(short chr, uint start, uint stop){
+		_pop_bounds.push_back(Boundary(chr, start, stop));
+	}
+
+	void addDefaultBoundary(short chr, uint start, uint stop){
+		_def_bounds.push_back(Boundary(chr, start, stop));
+	}
 
 	/*!
 	 * \brief A mass association of many Locus objects.
@@ -272,6 +312,8 @@ public:
 	 */
 	void addAliases(const string& aliases, const string& sep=",");
 
+	void addAlias(const string& alias) { _aliases.insert(alias); }
+
 	/*!
 	 * Return the number of Loci associated with this region
 	 *
@@ -284,7 +326,7 @@ public:
 	 *
 	 * \return The chromosome index corresponding to this region
 	 */
-	short getChrom() const {return _chrom;}
+	short getChrom() const {return _def_bounds.size() == 0 ? -1 : _def_bounds[0].getChrom();}
 
 	/*!
 	 * Get the ID of this region (used by the database and for indexing)
@@ -292,34 +334,6 @@ public:
 	 * \return The unique ID of this region
 	 */
 	uint getID() const {return _id;}
-
-	/*!
-	 * Get the true start of the region
-	 *
-	 * \return The canonical start of the region.
-	 */
-	uint getTrueStart() const {return _true_start;}
-
-	/*!
-	 * Get the true stop of the region
-	 *
-	 * \return The canonical end to the region.
-	 */
-	uint getTrueEnd() const {return _true_end;}
-
-	/*!
-	 * Get the effective (population) start of the region
-	 *
-	 * \return The effective start of the region.
-	 */
-	uint getEffStart() const {return _eff_start;}
-
-	/*!
-	 * Get the effective (population) ending of the region
-	 *
-	 * \return The effective end of the region.
-	 */
-	uint getEffEnd() const {return _eff_end;}
 
 	/*!
 	 * Return the canonical name of the region
@@ -425,12 +439,10 @@ private:
 	map<uint, set<Group*> > _group_map;
 
 	string _name;
-	short _chrom;
 	uint _id;
-	uint _true_start;
-	uint _true_end;
-	uint _eff_start;
-	uint _eff_end;
+
+	vector<Boundary> _pop_bounds;
+	vector<Boundary> _def_bounds;
 
 };
 

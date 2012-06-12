@@ -19,6 +19,9 @@ namespace Knowledge{
 
 
 RegionCollectionSQLite::~RegionCollectionSQLite(){
+	sqlite3_finalize(_region_name_stmt);
+	sqlite3_finalize(_region_bound_stmt);
+
 	if (self_open){
 		sqlite3_close(db);
 	}
@@ -59,24 +62,15 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		where_clause += id_stream.str();
 	}
 
-	int popID = _info->getPopulationID(pop_str);
-	int def_id = _info->getPopulationID("n/a");
+	string command = "SELECT region.region_id, region.label "
+			"FROM region_zone "
+			"INNER JOIN region_bound USING (region_id, chr, population_id) "
+			"INNER JOIN region USING (region_id) ";
 
-	string command = "SELECT region.region_id, region_bound.chr, region.label, "
-			"region_bound.posMin, region_bound.posMax, rb_default.posMin, "
-			"rb_default.posMax, group_concat(region_name.name) "
-			"FROM region_bound "
-			"INNER JOIN region_zone USING(region_id, chr, population_id) "
-			"INNER JOIN region USING (region_id) "
-			"LEFT JOIN region_bound AS rb_default "
-				"ON region_bound.region_id=rb_default.region_id "
-					"AND rb_default.population_id=:def_pop_id "
-			"LEFT JOIN region_name ON region.region_id=region_name.region_id ";
-
-	where_clause += "region_bound.chr=:chrom AND region_bound.population_id=:pop_id "
+	where_clause += "region_zone.chr=:chrom AND region_zone.population_id IN (:pop_id, :def_pop_id) "
 			"AND zone=:pos_zone AND region_bound.posMin<:pos AND region_bound.posMax>:pos ";
 
-	string stmt = command + where_clause + "GROUP BY region.region_id";
+	string stmt = command + where_clause;
 
 	sqlite3_stmt* region_stmt;
 
@@ -88,8 +82,8 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	int pos_zone_idx = sqlite3_bind_parameter_index(region_stmt, ":pos_zone");
 	int pos_idx = sqlite3_bind_parameter_index(region_stmt, ":pos");
 
-	sqlite3_bind_int(region_stmt, pop_idx, popID);
-	sqlite3_bind_int(region_stmt, def_pop_idx, def_id);
+	sqlite3_bind_int(region_stmt, pop_idx, _popID);
+	sqlite3_bind_int(region_stmt, def_pop_idx, _def_id);
 
 	// OK, now iterate over the dataset we have
 	Container::const_iterator itr = _dataset->begin();
@@ -103,6 +97,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){
 			Knowledge::Region* reg = addRegion(region_stmt);
 			reg->addLocus(*itr);
+			_locus_map[*itr].insert(reg);
 		}
 		sqlite3_reset(region_stmt);
 		++itr;
@@ -111,6 +106,27 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	sqlite3_finalize(region_stmt);
 
 	return _region_map.size();
+
+}
+
+void RegionCollectionSQLite::prepareStmts(){
+
+	string region_alias_sql = "SELECT name "
+			"FROM region_name WHERE region_id=?";
+
+	sqlite3_prepare_v2(db, region_alias_sql.c_str(), -1, &_region_name_stmt, NULL);
+
+	string region_bound_sql = "SELECT population_id, chr, posMin, posMax "
+			"FROM region_bound "
+			"WHERE region_id=? AND population_id IN (?, ?)";
+
+	sqlite3_prepare_v2(db, region_bound_sql.c_str(), -1, &_region_bound_stmt, NULL);
+
+	_popID = _info->getPopulationID(pop_str);
+	_def_id = _info->getPopulationID("n/a");
+
+	sqlite3_bind_int(_region_bound_stmt, 1, _popID);
+	sqlite3_bind_int(_region_bound_stmt, 2, _def_id);
 
 }
 
@@ -133,17 +149,37 @@ int RegionCollectionSQLite::parseRegionIDQuery(void* obj, int ncols, char** colV
 Knowledge::Region* RegionCollectionSQLite::addRegion(sqlite3_stmt* row){
 	uint id = static_cast<uint>(sqlite3_column_int(row, 0));
 	if(_region_map.find(id) != _region_map.end()){
-		return (*_region_map.find(id)).second;
+		return (* _region_map.find(id)).second;
 	} else {
-		short chrom = static_cast<short>(sqlite3_column_int(row, 1));
-		string name = (const char*) sqlite3_column_text(row, 2);
-		uint eff_start = static_cast<uint>(sqlite3_column_int(row,3));
-		uint eff_end = static_cast<uint>(sqlite3_column_int(row,4));
-		uint def_start = static_cast<uint>(sqlite3_column_int(row,5));
-		uint def_end = static_cast<uint>(sqlite3_column_int(row,6));
-		string aliases = (const char*) sqlite3_column_text(row,7);
+		string name = (const char*) sqlite3_column_text(row, 1);
+		Region* new_reg = new Region(name, id);
 
-		return AddRegion(name, id, chrom, eff_start, eff_end, def_start, def_end, aliases);
+		sqlite3_bind_int(_region_name_stmt, 0, id);
+		while(sqlite3_step(_region_name_stmt) == SQLITE_ROW){
+			new_reg->addAlias((const char *) sqlite3_column_text(_region_name_stmt, 0));
+		}
+		sqlite3_reset(_region_name_stmt);
+
+		insertRegion(*new_reg);
+
+		sqlite3_bind_int(_region_bound_stmt, 0, id);
+		while(sqlite3_step(_region_bound_stmt) == SQLITE_ROW){
+			int pop_id_result = sqlite3_column_int(_region_bound_stmt, 0);
+			short chr = static_cast<short>(sqlite3_column_int(_region_bound_stmt, 1));
+			uint start = static_cast<uint>(sqlite3_column_int(_region_bound_stmt, 2));
+			uint end = static_cast<uint>(sqlite3_column_int(_region_bound_stmt, 3));
+
+			//insertRegionBound(*new_reg, chr, start, end);
+
+			if(pop_id_result == _popID){
+				new_reg->addPopulationBoundary(chr, start, end);
+			}else if(pop_id_result == _def_id){
+				new_reg->addDefaultBoundary(chr, start, end);
+			}
+		}
+		sqlite3_reset(_region_bound_stmt);
+
+		return new_reg;
 	}
 }
 

@@ -9,15 +9,15 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <boost/icl/interval_map.hpp>
+//#include <boost/icl/interval_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 #include "Region.h"
 
 using boost::unordered_map;
 using boost::unordered_set;
-using boost::icl::interval_map;
-using boost::icl::interval;
+//using boost::icl::interval_map;
+//using boost::icl::interval;
 using std::string;
 using std::vector;
 using std::set;
@@ -26,6 +26,8 @@ using std::set;
 namespace Knowledge{
 
 class Information;
+
+class Locus;
 
 /*!
  * \brief A class to manage a group of Regions.
@@ -115,6 +117,13 @@ public:
 	 * Regions that were created with the AddRegion methods.
 	 */
 	virtual ~RegionCollection();
+
+	/*!
+	 * Inserts the given region into the id and alias maps
+	 */
+	void insertRegion(Region& region);
+
+	//void insertRegionBound(Region& region, short chr, uint start, uint end);
 
 	/*!
 	 * \brief Adds a Region to the collection.
@@ -235,7 +244,7 @@ public:
 	 *
 	 * \return An iterator to the beginning of the collection of Regions
 	 */
-	const_region_iterator positionBegin(short chrom, uint pos) const;
+	//const_region_iterator positionBegin(short chrom, uint pos) const;
 	/*!
 	 * \brief Returns an iterator to the end of a set of Regions at a position,
 	 * Because Regions may overlap, this function returns the special end
@@ -246,7 +255,10 @@ public:
 	 *
 	 * \return An iterator to the end of the collection of Regions
 	 */
-	const_region_iterator positionEnd(short chrom, uint pos) const;
+	//const_region_iterator positionEnd(short chrom, uint pos) const;
+
+	const_region_iterator locusBegin(const Locus* loc) const;
+	const_region_iterator locusEnd(const Locus* loc) const;
 
 	/*!
 	 * \brief Determine if a given alias is valid.
@@ -349,7 +361,10 @@ protected:
 	 *
 	 * TODO: Do I need this any more???
 	 */
-	unordered_map<short,interval_map<uint, set<Region*> > > _region_bounds;
+	//unordered_map<short,interval_map<uint, set<Region*> > > _region_bounds;
+
+	// Instead of mapping by position, let's map by locus!
+	unordered_map<const Locus*, set<Region*> > _locus_map;
 
 private:
 	/**
