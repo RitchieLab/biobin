@@ -162,7 +162,7 @@ namespace std{
 template<>
 struct less<BioBin::Bin*>{
 	bool operator() (const BioBin::Bin* x, const BioBin::Bin* y) const{
-		return (*x) < (*y);
+		return (y != 0 && x != 0) ? (*x) < (*y) : x < y;
 	}
 };
 

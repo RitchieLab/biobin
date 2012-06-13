@@ -327,7 +327,7 @@ template<>
 struct less<Knowledge::Locus*> {
 
 	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y) const{
-		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
+		return (y != 0 && x != 0) ? (*x) < (*y) : x < y;
 	}
 };
 
