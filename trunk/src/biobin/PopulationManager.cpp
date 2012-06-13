@@ -11,7 +11,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
 
+using boost::program_options::validation_error;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 using boost::trim;
@@ -37,6 +39,8 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 
 	// By default, everyone is a control who is not found in a phenotype file
 	_is_control = vector<bool>(size, true);
+	_control_bitset = dynamic_bitset<>(size);
+	_control_bitset.set();
 
 	// OK, now iterate through the phenotype files and load them up
 	vector<string>::const_iterator itr = c_phenotype_files.begin();
@@ -60,7 +64,10 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 		if (pheno_itr == pheno_not_found || (*pheno_itr).second == c_phenotype_control){
 			++control;
 		}else{
-			_is_control[(*p_itr).second] = false;
+			int pos = (*p_itr).second;
+			_is_control[pos] = false;
+			_control_bitset.reset(2*pos);
+			_control_bitset.reset(2*pos + 1);
 		}
 		++p_itr;
 	}
@@ -70,6 +77,7 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 		std::cerr << "WARNING: Number of controls is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
 		_is_control = vector<bool>(size, true);
+		_control_bitset.set();
 	}else if(1-(control / (float) total) < c_min_control_frac){
 		std::cerr << "WARNING: Number of cases is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
@@ -134,8 +142,8 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 
 void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
-	map<Locus*, vector<short> >::const_iterator l_itr = _genotype_map.begin();
-	map<Locus*, vector<short> >::const_iterator l_end = _genotype_map.end();
+	unordered_map<const Locus*, dynamic_bitset<> >::const_iterator l_itr = _genotype_bitset.begin();
+	unordered_map<const Locus*, dynamic_bitset<> >::const_iterator l_end = _genotype_bitset.end();
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	map<string, int>::const_iterator m_end = _positions.end();
@@ -154,8 +162,8 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 	int pos;
 	float status;
 	while (m_itr != m_end){
-		l_itr = _genotype_map.begin();
-		l_end = _genotype_map.end();
+		l_itr = _genotype_bitset.begin();
+		l_end = _genotype_bitset.end();
 
 		pos = (*m_itr).second;
 
@@ -169,7 +177,7 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
 		while(l_itr != l_end){
 			// TODO: format the genotype if we want to!
-			os << sep << (*l_itr).second[pos];
+			os << sep << (*l_itr).second[2*pos] << "/" << (*l_itr).second[2*pos + 1];
 			++l_itr;
 		}
 
@@ -184,20 +192,20 @@ int PopulationManager::genotypeContribution(const Locus& loc) const{
 	return (itr != _genotype_sum.end()) ? (*itr).second : 0;
 }
 
-int PopulationManager::getIndivContrib(const Locus& loc, short genotype) const {
-	pair<uint, uint> decoded_genotype = loc.decodeGenotype(genotype);
-	unsigned int major_pos = loc.getMajorPos();
+int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
+	unordered_map<const Knowledge::Locus*, dynamic_bitset<> >::const_iterator it = _genotype_bitset.find(&loc);
+
+	if(it == _genotype_bitset.end()){
+		return 0;
+	}
 
 	switch(c_model){
 	case ADDITIVE:
-		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) +
-				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
+		return (*it).second[2*pos] + (*it).second[2*pos + 1];
 	case DOMINANT:
-		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) ||
-				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
+		return (*it).second[2*pos] | (*it).second[2*pos + 1];
 	case RECESSIVE:
-		return (decoded_genotype.first != (uint)-1 && decoded_genotype.first != major_pos) &&
-				(decoded_genotype.second != (uint)-1 && decoded_genotype.second != major_pos);
+		return (*it).second[2*pos] & (*it).second[2*pos + 1];
 	default:
 		return 0;
 	}
@@ -233,6 +241,29 @@ array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
 }
 
 namespace std{
+std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseModel& model_out)
+{
+    std::string token;
+    in >> token;
+    if(token.size() > 0){
+    	char s = token[0];
+    	if(s == 'a' || s == 'A'){
+    		model_out = BioBin::PopulationManager::ADDITIVE;
+    	}else if(s == 'd' || s == 'D'){
+    		model_out = BioBin::PopulationManager::DOMINANT;
+    	}else if(s == 'r' || s == 'R'){
+    		model_out = BioBin::PopulationManager::RECESSIVE;
+    	}else{
+    		throw validation_error(validation_error::invalid_option_value);
+    	}
+    }else{
+    	throw validation_error(validation_error::invalid_option_value);
+    }
+//    else throw boost::program_options::validation_error("Invalid unit");
+    return in;
+}
+
+
 ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m){
 	o << (const char*) m;
 	return o;

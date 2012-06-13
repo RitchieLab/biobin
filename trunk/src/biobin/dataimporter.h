@@ -42,7 +42,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/array.hpp>
+#include <boost/dynamic_bitset.hpp>
 
+using boost::dynamic_bitset;
 using std::string;
 using std::vector;
 using std::map;
@@ -87,7 +89,7 @@ public:
 	uint individualCount() {return vcf.N_indv;}
 	const vector<string>& getIndividualIDs() {return vcf.indv;}
 	
-	void parseSNP(Knowledge::Locus& loc, vector<short>& genotypes_out);
+	void parseSNP(Knowledge::Locus& loc, dynamic_bitset<>& bitset_out);
 
 	void remapLocus(Knowledge::Locus* orig_loc, Knowledge::Locus* new_loc);
 

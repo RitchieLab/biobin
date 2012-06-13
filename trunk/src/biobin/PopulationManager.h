@@ -14,6 +14,7 @@
 #include <iostream>
 #include <boost/unordered_map.hpp>
 #include <boost/array.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "knowledge/Locus.h"
 #include "Bin.h"
@@ -25,6 +26,7 @@ using std::map;
 using std::ostream;
 using boost::array;
 using boost::unordered_map;
+using boost::dynamic_bitset;
 
 using Knowledge::Locus;
 
@@ -100,15 +102,22 @@ private:
 
 	void parsePhenotypeFile(const string& filename);
 
-	int getIndivContrib(const Locus& loc, short genotype) const;
+	//int getIndivContrib(const Locus& loc, short genotype) const;
+	int getIndivContrib(const Locus& loc, int position) const;
 
 	array<uint, 2>& getBinCapacity(Bin& bin) const;
 
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
+
 	// _is_control can be passed to the VCF parser
 	vector<bool> _is_control;
-	map<Knowledge::Locus*, vector<short> > _genotype_map;
+	dynamic_bitset<> _control_bitset;
+
+	unordered_map<const Knowledge::Locus*, dynamic_bitset<> > _genotype_bitset;
+
+
+	//unordered_map<Knowledge::Locus*, vector<short> > _genotype_map;
 	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
 	unordered_map<Knowledge::Locus*, array<uint, 2> > _locus_count;
@@ -120,6 +129,7 @@ void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& i
 
 	// Get the number of people genotyped for each SNP
 	importer.getNumNonMissing(dataset, _is_control, _locus_count);
+	int n_pers = _is_control.size();
 
 	typename Locus_cont::const_iterator itr = dataset.begin();
 	typename Locus_cont::const_iterator end = dataset.end();
@@ -130,9 +140,15 @@ void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& i
 	int total_contrib;
 
 	while(itr != end){
-		importer.parseSNP(**itr,_genotype_map[*itr]);
+		_genotype_bitset.insert(std::make_pair(*itr, dynamic_bitset<>(2*n_pers)));
+		importer.parseSNP(**itr,_genotype_bitset[*itr]);
 
 		_genotype_sum[*itr] = total_contrib = 0;
+		for (int i=0; i<n_pers; ++i){
+			total_contrib += getIndivContrib(**itr, i);
+		}
+
+		/*
 		g_itr = _genotype_map[*itr].begin();
 		g_end = _genotype_map[*itr].end();
 
@@ -141,7 +157,9 @@ void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& i
 			total_contrib += getIndivContrib(**itr, *g_itr);
 			++g_itr;
 		}
+		*/
 		_genotype_sum[*itr] = total_contrib;
+
 		++itr;
 	}
 }
@@ -229,13 +247,9 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	map<string, float>::const_iterator pheno_status;
 	map<string, float>::const_iterator pheno_end = _phenotypes.end();
 
-	map<Locus*, vector<short> >::const_iterator l_pos;
-	map<Locus*, vector<short> >::const_iterator l_not_found = _genotype_map.end();
-
 	int pos;
 	float status;
 	int bin_count;
-	pair <uint, uint> decoded_genotype;
 
 	while (m_itr != m_end){
 		b_itr = bins.begin();
@@ -257,11 +271,7 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 			l_end = (*b_itr)->variantEnd();
 			bin_count = 0;
 			while(l_itr != l_end){
-				l_pos = _genotype_map.find((*l_itr));
-				if (l_pos != l_not_found){
-					//decoded_genotype = (*l_itr)->decodeGenotype((*l_pos).second[pos]);
-					bin_count += getIndivContrib(**l_itr, (*l_pos).second[pos]);
-				}
+				bin_count += getIndivContrib(**l_itr, pos);
 				++l_itr;
 			}
 			os << sep << bin_count;
@@ -295,9 +305,6 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 	map<string, int>::const_iterator m_end = _positions.end();
 	int case_cont_contrib[2];
 
-	map<Locus*, vector<short> >::const_iterator l_pos;
-	map<Locus*, vector<short> >::const_iterator l_not_found = _genotype_map.end();
-
 	os << "Bin" << sep << "Control Freq." << sep << "Case Freq.\n";
 
 	while(b_itr != b_end){
@@ -310,11 +317,8 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		while(v_itr != v_end){
 			m_itr = _positions.begin();
 			while(m_itr != m_end){
-				l_pos = _genotype_map.find((*v_itr));
-				if (l_pos != l_not_found){
-					case_cont_contrib[!_is_control[(*m_itr).second]] +=
-							getIndivContrib(**v_itr, (*l_pos).second[(*m_itr).second]);
-				}
+				case_cont_contrib[!_is_control[(*m_itr).second]] +=
+						getIndivContrib(**v_itr, (*m_itr).second);
 				++m_itr;
 			}
 			++v_itr;
@@ -337,6 +341,7 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 }
 
 namespace std{
+istream& operator>>(istream& in, BioBin::PopulationManager::DiseaseModel& model_out);
 ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m);
 }
 

@@ -180,6 +180,7 @@ void Configuration::printConfig(std::ostream& os){
 
 		++itr;
 	}
+
 }
 
 void Configuration::parseOptions(const po::variables_map& vm){
@@ -248,29 +249,8 @@ void Configuration::parseOptions(const po::variables_map& vm){
 }
 
 
-std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseModel& model_out)
-{
-    std::string token;
-    in >> token;
-    if(token.size() > 0){
-    	char s = token[0];
-    	if(s == 'a' || s == 'A'){
-    		model_out = BioBin::PopulationManager::ADDITIVE;
-    	}else if(s == 'd' || s == 'D'){
-    		model_out = BioBin::PopulationManager::DOMINANT;
-    	}else if(s == 'r' || s == 'R'){
-    		model_out = BioBin::PopulationManager::RECESSIVE;
-    	}else{
-    		throw validation_error(validation_error::invalid_option_value);
-    	}
-    }else{
-    	throw validation_error(validation_error::invalid_option_value);
-    }
-//    else throw boost::program_options::validation_error("Invalid unit");
-    return in;
-}
-
 namespace std{
+
 std::istream& operator>>(std::istream& in, BioBin::Configuration::Bool& d_out)
 {
     std::string token;
