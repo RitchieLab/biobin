@@ -39,7 +39,7 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 
 	// By default, everyone is a control who is not found in a phenotype file
 	_is_control = vector<bool>(size, true);
-	_control_bitset = dynamic_bitset<>(size);
+	_control_bitset = dynamic_bitset<>(size*2);
 	_control_bitset.set();
 
 	// OK, now iterate through the phenotype files and load them up
