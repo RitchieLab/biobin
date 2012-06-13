@@ -130,7 +130,7 @@ void BinManager::InitBins(
 
 void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 		const string& sep) const{
-	map<Knowledge::Locus*, set<Bin*> >::const_iterator m_itr = _locus_bins.find(l);
+	unordered_map<Knowledge::Locus*, set<Bin*> >::const_iterator m_itr = _locus_bins.find(l);
 
 	if(m_itr != _locus_bins.end()){
 		set<Bin*>::const_iterator s_itr = (*m_itr).second.begin();

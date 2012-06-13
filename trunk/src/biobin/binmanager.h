@@ -13,6 +13,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <boost/unordered_map.hpp>
 
 #include "knowledge/GroupCollection.h"
 #include "knowledge/RegionCollection.h"
@@ -26,6 +27,8 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::set;
+
+using boost::unordered_map;
 
 namespace Knowledge{
 class Information;
@@ -93,7 +96,7 @@ private:
 	// List of intergenic bins
 	map<pair<short, int>, Bin*> _intergenic_bins;
 	// List of bins by locus
-	map<Knowledge::Locus*, set<Bin*> > _locus_bins;
+	unordered_map<Knowledge::Locus*, set<Bin*> > _locus_bins;
 
 	// List of all rare variants
 	set<Knowledge::Locus*> _rare_variants;
