@@ -59,7 +59,7 @@ void BinManager::InitBins(
 		Knowledge::Locus& l = **l_itr;
 		if (l.isRare()) {
 
-			_rare_variants.insert(&l);
+			_rare_variants.insert(_rare_variants.rbegin(), &l);
 
 			// First, find all of the regions that contain this locus
 			RegionCollection::const_region_iterator r_itr =
