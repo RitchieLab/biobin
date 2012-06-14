@@ -78,6 +78,13 @@ public:
 	template <class T_iter, class T_map, class T_cont>
 	void convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out, T_cont& unmapped_out) const;
 
+
+	/*!
+	 * Converts a single locus and returns a new locus object, or 0 if unable
+	 * to convert.
+	 */
+	Locus* convertLocus(const Locus& old_loc) const;
+
 protected:
 	// A mapping of chromosome -> chains, ordered by score
 	map<short, set<Chain*> > _chains;
@@ -96,19 +103,13 @@ template <class T_iter, class T_map, class T_cont>
 void Converter::convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out, T_cont& unmapped_out) const{
 
 	while (itr != end){
-		pair<short, pair<int, int> > new_region =
-				convertRegion((*itr)->getChrom(), (*itr)->getPos(), (*itr)->getPos()+1);
+		Locus* new_loc = convertLocus(**itr);
 
-		if (new_region == FAILED_REGION){
+		if(new_loc == 0){
 			unmapped_out.insert(unmapped_out.end(), *itr);
 		}else{
-			Locus* converted =
-					new Locus(new_region.first, new_region.second.first,
-							(*itr)->isRare(), (*itr)->getID());
-			converted->addAlleles((*itr)->beginAlleles(), (*itr)->endAlleles());
-			locus_map_out[*itr] = converted;
+			locus_map_out[*itr] = new_loc;
 		}
-
 		++itr;
 	}
 }

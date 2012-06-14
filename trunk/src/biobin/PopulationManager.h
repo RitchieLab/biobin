@@ -17,8 +17,11 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "knowledge/Locus.h"
+#include "knowledge/liftover/Converter.h"
 #include "Bin.h"
-#include "dataimporter.h"
+#include "binmanager.h"
+//#include "dataimporter.h"
+#include "vcftools/vcf_file.h"
 
 using std::vector;
 using std::string;
@@ -66,14 +69,17 @@ public:
 	};
 
 	// nothing needed for default constructor
-	PopulationManager(){}
+	//PopulationManager(){}
 
-	// Loading functions
-	const vector<bool>& loadIndividuals(DataImporter& importer);
-	//template <class str_cont>
-	//void loadPhenotypes(const str_cont& phenotype_filenames);
-	template <class Locus_cont>
-	void loadGenotypes(const Locus_cont& dataset, DataImporter& importer);
+	explicit PopulationManager(const string& vcf_file);
+
+
+
+	//template <class Locus_cont>
+	//void loadGenotypes(const Locus_cont& dataset, DataImporter& importer);
+
+	template <class T_cont>
+	void loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv);
 
 	// Usage functions
 	int genotypeContribution(const Locus& locus) const;
@@ -92,6 +98,11 @@ public:
 	static float c_phenotype_control;
 	static vector<string> c_phenotype_files;
 
+	static bool CompressedVCF;					///< gzipped file Y/N
+	static bool KeepCommonLoci;
+	// determine rarity of a variant by either case or control status
+	static bool RareCaseControl;
+
 	static float c_min_control_frac;
 
 	static DiseaseModel c_model;
@@ -104,10 +115,14 @@ private:
 	PopulationManager(const PopulationManager&);
 	PopulationManager& operator=(const PopulationManager&);
 
+	// Loading functions
+	void loadIndividuals();
 	void parsePhenotypeFile(const string& filename);
 
-	//int getIndivContrib(const Locus& loc, short genotype) const;
 	int getIndivContrib(const Locus& loc, int position) const;
+	int getTotalContrib(const Locus& loc) const;
+
+	float getMAF(const vector<int>& allele_count, uint nmcc) const;
 
 	array<uint, 2>& getBinCapacity(Bin& bin) const;
 
@@ -120,54 +135,15 @@ private:
 
 	unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
 
-
-	//unordered_map<Knowledge::Locus*, vector<short> > _genotype_map;
-	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
+	// A map to keep track of where in the file a locus resides
+	unordered_map<Knowledge::Locus*, int> _locus_position;
 
 	unordered_map<const Knowledge::Locus*, array<uint, 2> > _locus_count;
 	mutable unordered_map<Bin*, array<uint, 2> > _bin_capacity;
+
+
+	mutable VCF::vcf_file vcf;
 };
-
-template <class Locus_cont>
-void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
-
-	// Get the number of people genotyped for each SNP
-	//importer.getNumNonMissing(dataset, _is_control, _locus_count);
-	int n_pers = _is_control.size();
-
-	typename Locus_cont::const_iterator itr = dataset.begin();
-	typename Locus_cont::const_iterator end = dataset.end();
-
-	vector<short>::const_iterator g_itr;
-	vector<short>::const_iterator g_end;
-	pair<uint, uint> decoded_genotype;
-	int total_contrib;
-
-	while(itr != end){
-		_genotype_bitset.insert(std::make_pair(*itr, make_pair(dynamic_bitset<>(n_pers),dynamic_bitset<>(n_pers))));
-		//_locus_count.insert(make_pair(*itr, array<uint, 2>(0)));
-		importer.parseSNP(**itr,_control_bitset,_genotype_bitset[*itr], _locus_count[*itr]);
-
-		_genotype_sum[*itr] = total_contrib = 0;
-		for (int i=0; i<n_pers; ++i){
-			total_contrib += getIndivContrib(**itr, i);
-		}
-
-		/*
-		g_itr = _genotype_map[*itr].begin();
-		g_end = _genotype_map[*itr].end();
-
-		while(g_itr != g_end){
-			decoded_genotype = (*itr)->decodeGenotype(*g_itr);
-			total_contrib += getIndivContrib(**itr, *g_itr);
-			++g_itr;
-		}
-		*/
-		_genotype_sum[*itr] = total_contrib;
-
-		++itr;
-	}
-}
 
 template <class Bin_cont>
 void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const string& sep) const{
@@ -341,6 +317,116 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		++b_itr;
 	}
 
+}
+
+template<class T_cont>
+void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv=0){
+	/*vector<bool> cases = controls;
+	for(vector<bool>::iterator itr = cases.begin(); itr!= cases.end(); itr++){
+		(*itr).flip();
+	}*/
+
+	loadIndividuals();
+
+	set<string> unknownChromosomes;
+	//T_cont::const_iterator pos = loci_out.end();
+
+	uint totalSiteCount	= vcf.N_entries;
+
+	//TODO: preallocate the map for some speed here
+	//_locus_position.reserve(totalSiteCount);
+
+	string line;
+	VCF::vcf_entry entry(vcf.N_indv);
+
+	vector<pair<int, int> > genotype_pairs;
+	genotype_pairs.resize(totalSiteCount);
+
+	for (uint i=0; i<totalSiteCount; i++) {
+		vcf.get_vcf_entry(i, line);
+		entry.reset(line);
+		entry.parse_basic_entry(true);
+		uint alleleCount = entry.get_N_alleles();
+
+		entry.parse_genotype_entries(true, false, false, false);
+		pair<int,int> genotype;
+		array<uint, 2> nm;
+		nm[0] = 0;
+		nm[1] = 0;
+		bitset_pair gen_bits(make_pair(dynamic_bitset<>(totalSiteCount),dynamic_bitset<>(totalSiteCount)));
+		array<vector<int>, 2> alleleCounts;
+		alleleCounts[0].resize(alleleCount);
+		alleleCounts[1].resize(alleleCount);
+
+
+
+		for (uint j=0; j<vcf.N_indv; j++) {
+			entry.get_indv_GENOTYPE_ids(j, genotype);
+
+			if(genotype.first != -1){
+				++alleleCounts[!_control_bitset[j]][genotype.first];
+			}
+			if(genotype.second != -1){
+				++alleleCounts[!_control_bitset[j]][genotype.second];
+			}
+
+			nm[!_control_bitset[j]] += (genotype.first != -1);
+			nm[!_control_bitset[j]] += (genotype.second != -1);
+
+			// I need to save this to determine if it is in fact "minor"
+			genotype_pairs[j] = genotype;
+
+		}
+
+		// To deal with the default parameter, we really just want to use
+		// vcf.include_indivs, but NOOOO C++ has to be a pain
+/*		if(controls.size() == 0){
+			entry.get_allele_counts(alleleCounts, nmcc, vcf.include_indv, vcf.include_genotype[i]);
+		}else{
+			entry.get_allele_counts(alleleCounts, nmcc, controls, vcf.include_genotype[i]);
+			entry.get_allele_counts(alleleCounts_case, nmcc_case, cases, vcf.include_genotype[i]);
+		}
+		*/
+
+		bool is_rare = (getMAF(alleleCounts[0], nm[0]) < BinManager::mafCutoff) ||
+				(RareCaseControl && nm[1] > 0 && getMAF(alleleCounts[1], nm[1]) < BinManager::mafCutoff);
+
+		if(KeepCommonLoci || is_rare ){
+			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
+
+			if(conv){
+				Locus* new_loc = conv->convertLocus(*loc);
+				if (! new_loc){
+					// Add to the
+					delete loc;
+					loc = 0;
+				}else{
+					delete loc;
+					loc = new_loc;
+				}
+			}
+
+			if(loc){
+				loci_out.insert(loci_out.end(), loc);
+				_locus_position.insert(make_pair(loc, i));
+
+				loc->addAllele(entry.get_REF(), nm[0] != 0 ? (alleleCounts[0][0] / static_cast<float>(nm[0])) : 0);
+				for (uint n = 1; n<alleleCount; n++)	{
+					loc->addAllele(entry.get_ALT_allele(n-1),
+							nm[0] != 0 ? alleleCounts[0][n] / static_cast<float>(nm[0]) : -1);
+				}
+
+				_locus_count.insert(make_pair(loc, nm));
+
+				for (uint j=0; j<vcf.N_indv; ++j) {
+					//MOVE THIS!!
+					gen_bits.first[j] = genotype_pairs[j].first != -1 && static_cast<uint>(genotype_pairs[j].first) != loc->getMajorPos();
+					gen_bits.second[j] = genotype_pairs[j].second != -1 && static_cast<uint>(genotype_pairs[j].second) != loc->getMajorPos();
+				}
+				_genotype_bitset.insert(make_pair(loc, gen_bits));
+			}
+		}
+	}
 }
 
 }

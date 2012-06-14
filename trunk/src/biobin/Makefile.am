@@ -9,8 +9,6 @@ biobin_SOURCES= \
    binapplication.cpp \
    binmanager.h \
    binmanager.cpp \
-   dataimporter.h \
-   dataimporter.cpp \
    main.h \
    main.cpp \
    task.h \

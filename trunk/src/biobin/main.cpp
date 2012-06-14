@@ -9,7 +9,6 @@
 
 #include "task.h"
 #include "taskfilegeneration.h"
-#include "dataimporter.h"
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>

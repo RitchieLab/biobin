@@ -17,8 +17,8 @@
 
 namespace BioBin {
 
-BinApplication::BinApplication(const string& vcf_file) :
-		binData(_pop_mgr), _data(vcf_file) {}
+BinApplication::BinApplication(const string& vcf_file) : _pop_mgr(vcf_file),
+		binData(_pop_mgr){}
 
 void BinApplication::InitBins() {
 	

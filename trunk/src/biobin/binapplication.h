@@ -27,8 +27,6 @@
 #include "binmanager.h"
 #include "PopulationManager.h"
 
-#include "dataimporter.h"
-
 #include <utility>
 #include <string>
 #include <vector>
@@ -76,8 +74,6 @@ private:
 
 	BinManager binData;
 
-	DataImporter _data;
-
 };
 
 
@@ -85,7 +81,7 @@ template <class SNP_cont>
 void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
 
 	// First things first, let's load our individuals
-	const vector<bool>& controls = _pop_mgr.loadIndividuals(_data);
+	//const vector<bool>& controls = _pop_mgr.loadIndividuals(_data);
 
 	//locusRemap.clear();
 	//locusRemap.reserve(locusArray.size());
@@ -93,6 +89,12 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	int chainCount = cnv.Load();
 
 	if (chainCount > 0) {
+		_pop_mgr.loadLoci(dataset,&cnv);
+	}else{
+		_pop_mgr.loadLoci(dataset);
+	}
+	/*
+
 		vector<Knowledge::Locus*> toDelete;
 		vector <Knowledge::Locus*> locusArray;
 		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
@@ -152,6 +154,7 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	}
 
 	_pop_mgr.loadGenotypes(dataset, _data);
+	*/
 
 }
 

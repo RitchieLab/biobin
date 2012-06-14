@@ -63,6 +63,21 @@ pair<short, pair<int, int> > Converter::convertRegion(short chrom, int start, in
 	return ret_val;
 
 }
+Locus* Converter::convertLocus(const Locus& old_loc) const {
+	pair<short, pair<int, int> > new_region = convertRegion(old_loc.getChrom(),
+			old_loc.getPos(), old_loc.getPos() + 1);
+
+	if (new_region == FAILED_REGION) {
+		return 0;
+	} else {
+		Locus* converted = new Locus(new_region.first, new_region.second.first,
+				old_loc.isRare(), old_loc.getID());
+		converted->addAlleles(old_loc.beginAlleles(), old_loc.endAlleles());
+
+		return converted;
+
+	}
+}
 
 } // namespace Lifover
 } // namespace Knowledge

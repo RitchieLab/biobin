@@ -196,9 +196,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 			Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
 		}
 	}
-	DataImporter::CompressedVCF = vm["compressed-vcf"].as<Bool>();
-	DataImporter::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
-	DataImporter::RareCaseControl = vm["rare-case-control"].as<Bool>();
+	PopulationManager::CompressedVCF = vm["compressed-vcf"].as<Bool>();
+	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
+	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
 
 
 	if(vm.count("add-groups")){

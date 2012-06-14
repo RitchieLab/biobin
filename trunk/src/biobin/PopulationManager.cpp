@@ -29,11 +29,18 @@ float PopulationManager::c_min_control_frac = 0.125;
 PopulationManager::DiseaseModel PopulationManager::c_model =
 		PopulationManager::ADDITIVE;
 
-const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
-	const vector<string>& indivs = importer.getIndividualIDs();
+bool PopulationManager::CompressedVCF = false;
+bool PopulationManager::KeepCommonLoci = true;
+bool PopulationManager::RareCaseControl = true;
+
+PopulationManager::PopulationManager(const string& vcf_fn) : vcf(vcf_fn, CompressedVCF){}
+
+void PopulationManager::loadIndividuals(){
+	const vector<string>& indivs = vcf.indv;
+	//importer.getIndividualIDs();
 
 	int size = indivs.size();
-	for (int i=0; i<(size); ++i){
+	for (int i=0; i<(size); i++){
 		_positions[indivs[i]] = i;
 	}
 
@@ -87,11 +94,10 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 	if (1 / static_cast<float>(2 *control) > BinManager::mafCutoff){
 		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in controls are rare.\n";
 	}
-	if (DataImporter::RareCaseControl && control != total && 1 / static_cast<float>(2*(total - control)) > BinManager::mafCutoff){
+	if (RareCaseControl && control != total && 1 / static_cast<float>(2*(total - control)) > BinManager::mafCutoff){
 		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in cases are rare.\n";
 	}
 
-	return _is_control;
 }
 
 
@@ -135,9 +141,6 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 		}
 	}
 }
-
-
-
 
 void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
@@ -204,8 +207,9 @@ float PopulationManager::getCaseAF(const Locus& loc) const{
 }
 
 int PopulationManager::genotypeContribution(const Locus& loc) const{
-	unordered_map<const Knowledge::Locus*, int>::const_iterator itr = _genotype_sum.find(&loc);
-	return (itr != _genotype_sum.end()) ? (*itr).second : 0;
+
+	return getTotalContrib(loc);
+
 }
 
 int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
@@ -225,6 +229,27 @@ int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
 	default:
 		return 0;
 	}
+}
+
+int PopulationManager::getTotalContrib(const Locus& loc) const{
+	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
+
+	if(it == _genotype_bitset.end()){
+		return 0;
+	}
+
+	switch(c_model){
+	case ADDITIVE:
+		return (*it).second.first.count() + (*it).second.second.count();
+	case DOMINANT:
+		return ((*it).second.first | (*it).second.second).count();
+	case RECESSIVE:
+		return ((*it).second.first & (*it).second.second).count();
+	default:
+		return 0;
+	}
+
+
 }
 
 array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
@@ -251,6 +276,22 @@ array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
 	}
 
 	return _bin_capacity[&bin];
+}
+
+float PopulationManager::getMAF(const vector<int>& allele_count, uint nmcc) const{
+	if(nmcc == 0){
+		return -1;
+	}else{
+		vector<int> ordered_allele_count(allele_count.begin(), allele_count.end());
+		sort(ordered_allele_count.begin(), ordered_allele_count.end());
+		float ret_val = 0;
+		if (ordered_allele_count.size() > 1){
+			ret_val = (*(++ordered_allele_count.rbegin())) / ((float) nmcc);
+		}
+		return ret_val;
+//		return ordered_allele_count.size() > 1 ?
+//				(*(++ordered_allele_count.rbegin())) / ((float) nmcc) : 0;
+	}
 }
 
 
