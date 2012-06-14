@@ -94,6 +94,8 @@ public:
 
 	static DiseaseModel c_model;
 
+	typedef pair<dynamic_bitset<>, dynamic_bitset<> > bitset_pair;
+
 private:
 
 	// NO copying or assignment!
@@ -114,7 +116,7 @@ private:
 	vector<bool> _is_control;
 	dynamic_bitset<> _control_bitset;
 
-	unordered_map<const Knowledge::Locus*, dynamic_bitset<> > _genotype_bitset;
+	unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
 
 
 	//unordered_map<Knowledge::Locus*, vector<short> > _genotype_map;
@@ -128,7 +130,7 @@ template <class Locus_cont>
 void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& importer){
 
 	// Get the number of people genotyped for each SNP
-	importer.getNumNonMissing(dataset, _is_control, _locus_count);
+	//importer.getNumNonMissing(dataset, _is_control, _locus_count);
 	int n_pers = _is_control.size();
 
 	typename Locus_cont::const_iterator itr = dataset.begin();
@@ -140,8 +142,9 @@ void PopulationManager::loadGenotypes(const Locus_cont& dataset, DataImporter& i
 	int total_contrib;
 
 	while(itr != end){
-		_genotype_bitset.insert(std::make_pair(*itr, dynamic_bitset<>(2*n_pers)));
-		importer.parseSNP(**itr,_genotype_bitset[*itr]);
+		_genotype_bitset.insert(std::make_pair(*itr, make_pair(dynamic_bitset<>(n_pers),dynamic_bitset<>(n_pers))));
+		//_locus_count.insert(make_pair(*itr, array<uint, 2>(0)));
+		importer.parseSNP(**itr,_control_bitset,_genotype_bitset[*itr], _locus_count[*itr]);
 
 		_genotype_sum[*itr] = total_contrib = 0;
 		for (int i=0; i<n_pers; ++i){

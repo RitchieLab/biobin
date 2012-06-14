@@ -62,6 +62,8 @@ public:
 	DataImporter(const string& filename) : vcf(filename, CompressedVCF) {}
 	virtual ~DataImporter(){}
 	
+	typedef pair<dynamic_bitset<>, dynamic_bitset<> > bitset_pair;
+
 	//bool open(const string& filename);
 	
 	/**
@@ -89,7 +91,7 @@ public:
 	uint individualCount() {return vcf.N_indv;}
 	const vector<string>& getIndividualIDs() {return vcf.indv;}
 	
-	void parseSNP(Knowledge::Locus& loc, dynamic_bitset<>& bitset_out);
+	void parseSNP(Knowledge::Locus& loc, const dynamic_bitset<>& controls, bitset_pair& bitset_out, array<uint,2>& nonmissing_out);
 
 	void remapLocus(Knowledge::Locus* orig_loc, Knowledge::Locus* new_loc);
 

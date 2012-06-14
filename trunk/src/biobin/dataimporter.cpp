@@ -31,7 +31,7 @@ bool DataImporter::RareCaseControl = false;
 /**
  * TODO ... Um...does snpIndex and line number really mean the same thing...gotta check
  */
-void DataImporter::parseSNP(Knowledge::Locus& loc, dynamic_bitset<>& bitset_out) {
+void DataImporter::parseSNP(Knowledge::Locus& loc, const dynamic_bitset<>& controls, bitset_pair& bitset_out, array<uint, 2>& nonmissing_out) {
 	std::string line;
 	unordered_map<Knowledge::Locus*, int>::const_iterator pos = _locus_position.find(&loc);
 	if(pos != _locus_position.end()){
@@ -52,17 +52,11 @@ void DataImporter::parseSNP(Knowledge::Locus& loc, dynamic_bitset<>& bitset_out)
 		for (uint i=0; i<vcf.N_indv; i++) {
 			entry.get_indv_GENOTYPE_ids(i, genotype);
 
-			/*
-			genotype_map_out.push_back(0);
-			if (genotype.first == -1 || genotype.second == -1){
-				genotype_map_out[i] = -1;
-			} else {
-				genotype_map_out[i] = loc.encodeGenotype(genotype.first, genotype.second);
-			}
-			*/
+			nonmissing_out[!controls[i]] += (genotype.first != -1);
+			nonmissing_out[!controls[i]] += (genotype.second != -1);
 
-			bitset_out[2*i] = genotype.first != -1 && static_cast<uint>(genotype.first) != loc.getMajorPos();
-			bitset_out[2*i + 1] = genotype.second != -1 && static_cast<uint>(genotype.second) != loc.getMajorPos();
+			bitset_out.first[i] = genotype.first != -1 && static_cast<uint>(genotype.first) != loc.getMajorPos();
+			bitset_out.second[i] = genotype.second != -1 && static_cast<uint>(genotype.second) != loc.getMajorPos();
 		}
 	}
 

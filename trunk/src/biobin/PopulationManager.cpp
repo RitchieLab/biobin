@@ -39,7 +39,7 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 
 	// By default, everyone is a control who is not found in a phenotype file
 	_is_control = vector<bool>(size, true);
-	_control_bitset = dynamic_bitset<>(size*2);
+	_control_bitset = dynamic_bitset<>(size);
 	_control_bitset.set();
 
 	// OK, now iterate through the phenotype files and load them up
@@ -66,8 +66,7 @@ const vector<bool>& PopulationManager::loadIndividuals(DataImporter& importer){
 		}else{
 			int pos = (*p_itr).second;
 			_is_control[pos] = false;
-			_control_bitset.reset(2*pos);
-			_control_bitset.reset(2*pos + 1);
+			_control_bitset.reset(pos);
 		}
 		++p_itr;
 	}
@@ -142,8 +141,8 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 
 void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
-	unordered_map<const Locus*, dynamic_bitset<> >::const_iterator l_itr = _genotype_bitset.begin();
-	unordered_map<const Locus*, dynamic_bitset<> >::const_iterator l_end = _genotype_bitset.end();
+	unordered_map<const Locus*, bitset_pair >::const_iterator l_itr = _genotype_bitset.begin();
+	unordered_map<const Locus*, bitset_pair >::const_iterator l_end = _genotype_bitset.end();
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	map<string, int>::const_iterator m_end = _positions.end();
@@ -177,7 +176,7 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
 		while(l_itr != l_end){
 			// TODO: format the genotype if we want to!
-			os << sep << (*l_itr).second[2*pos] << "/" << (*l_itr).second[2*pos + 1];
+			os << sep << (*l_itr).second.first[pos] << "/" << (*l_itr).second.second[pos];
 			++l_itr;
 		}
 
@@ -193,7 +192,7 @@ int PopulationManager::genotypeContribution(const Locus& loc) const{
 }
 
 int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
-	unordered_map<const Knowledge::Locus*, dynamic_bitset<> >::const_iterator it = _genotype_bitset.find(&loc);
+	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
 
 	if(it == _genotype_bitset.end()){
 		return 0;
@@ -201,11 +200,11 @@ int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
 
 	switch(c_model){
 	case ADDITIVE:
-		return (*it).second[2*pos] + (*it).second[2*pos + 1];
+		return (*it).second.first[pos] + (*it).second.second[pos];
 	case DOMINANT:
-		return (*it).second[2*pos] | (*it).second[2*pos + 1];
+		return (*it).second.first[pos] | (*it).second.second[pos];
 	case RECESSIVE:
-		return (*it).second[2*pos] & (*it).second[2*pos + 1];
+		return (*it).second.first[pos] & (*it).second.second[pos];
 	default:
 		return 0;
 	}
