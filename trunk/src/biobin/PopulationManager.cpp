@@ -142,53 +142,6 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 	}
 }
 
-void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
-
-	unordered_map<const Locus*, bitset_pair >::const_iterator l_itr = _genotype_bitset.begin();
-	unordered_map<const Locus*, bitset_pair >::const_iterator l_end = _genotype_bitset.end();
-
-	map<string, int>::const_iterator m_itr = _positions.begin();
-	map<string, int>::const_iterator m_end = _positions.end();
-
-	map<string, float>::const_iterator pheno_status;
-	map<string, float>::const_iterator pheno_end = _phenotypes.end();
-	// Print the first line// TODO: format the genotype if we want to!
-	os << "ID" << sep << "Status";
-
-	while(l_itr != l_end){
-		os << sep << (*l_itr).first->getID();
-		++l_itr;
-	}
-	os << "\n";
-
-	int pos;
-	float status;
-	while (m_itr != m_end){
-		l_itr = _genotype_bitset.begin();
-		l_end = _genotype_bitset.end();
-
-		pos = (*m_itr).second;
-
-		pheno_status = _phenotypes.find((*m_itr).first);
-		status = -1;
-		if (pheno_status != pheno_end){
-			status = (*pheno_status).second;
-		}
-
-		os << (*m_itr).first << sep << status;
-
-		while(l_itr != l_end){
-			// TODO: format the genotype if we want to!
-			os << sep << (*l_itr).second.first[pos] << "/" << (*l_itr).second.second[pos];
-			++l_itr;
-		}
-
-		os << "\n";
-		++m_itr;
-	}
-
-}
-
 float PopulationManager::getCaseAF(const Locus& loc) const{
 	float ret_val = -1;
 

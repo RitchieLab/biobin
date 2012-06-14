@@ -93,7 +93,8 @@ public:
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	template <class Bin_cont>
 	void printBinFreq(ostream& os, const Bin_cont& bins, const string& sep=",") const;
-	void printGenotypes(ostream& os, const string& sep=",") const;
+	template <class Locus_cont>
+	void printGenotypes(ostream& os, const Locus_cont& loci, const string& sep=",") const;
 
 	float getCaseAF(const Locus& loc) const;
 
@@ -321,6 +322,59 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 
 }
 
+template <class Locus_cont>
+void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, const string& sep) const{
+
+	typename Locus_cont::const_iterator l_itr = loci.begin();
+
+	map<string, int>::const_iterator m_itr = _positions.begin();
+	map<string, int>::const_iterator m_end = _positions.end();
+
+	map<string, float>::const_iterator pheno_status;
+	map<string, float>::const_iterator pheno_end = _phenotypes.end();
+
+	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr;
+	// Print the first line// TODO: format the genotype if we want to!
+	os << "ID" << sep << "Status";
+
+	while(l_itr != loci.end()){
+		os << sep << (*l_itr)->getID();
+		++l_itr;
+	}
+	os << "\n";
+
+	int pos;
+	float status;
+	while (m_itr != m_end){
+		l_itr = loci.begin();
+
+		pos = (*m_itr).second;
+
+		pheno_status = _phenotypes.find((*m_itr).first);
+		status = -1;
+		if (pheno_status != pheno_end){
+			status = (*pheno_status).second;
+		}
+
+		os << (*m_itr).first << sep << status;
+
+		while(l_itr != loci.end()){
+			g_itr = _genotype_bitset.find(*l_itr);
+			if(g_itr != _genotype_bitset.end()){
+				// TODO: format the genotype if we want to!
+				os << sep << (*g_itr).second.first[pos] << "/" << (*g_itr).second.second[pos];
+			}else{
+				os << sep << "?/?";
+			}
+			++l_itr;
+		}
+
+		os << "\n";
+		++m_itr;
+	}
+
+}
+
 template<class T_cont>
 void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv=0){
 	/*vector<bool> cases = controls;
@@ -339,17 +393,19 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 	VCF::vcf_entry entry(vcf.N_indv);
 
+	// Predefine everything so that the loop below can be as tight as possible
 	vector<pair<int, int> > genotype_pairs;
 	genotype_pairs.resize(size);
 	bitset_pair gen_bits(make_pair(dynamic_bitset<>(size),dynamic_bitset<>(size)));
 	pair<int,int> genotype;
 	array<uint, 2> nm;
 	uint alleleCount = 0;
-
+	string line;
 	array<vector<int>, 2> alleleCounts;
+	pair<unordered_map<const Locus*, bitset_pair>::iterator, bool> gen_pair;
+	unordered_map<const Locus*, bitset_pair>::iterator gen_itr;
 
 	for (uint i=0; i<totalSiteCount; i++) {
-		string line;
 		vcf.get_vcf_entry(i, line);
 		entry.reset(line);
 		entry.parse_basic_entry(true);
@@ -417,12 +473,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				}
 
 				_locus_count.insert(make_pair(loc, nm));
-				pair<unordered_map<const Locus*, bitset_pair>::iterator, bool> gen_pair =
-						_genotype_bitset.insert(
-								make_pair(loc,
-										make_pair(dynamic_bitset<>(size),
-												dynamic_bitset<>(size))));
-				unordered_map<const Locus*, bitset_pair>::iterator gen_itr = gen_pair.first;
+				gen_pair = _genotype_bitset.insert(
+						make_pair(loc,
+								make_pair(dynamic_bitset<>(size),
+										dynamic_bitset<>(size))));
+				gen_itr = gen_pair.first;
 
 				for (uint j=0; j<vcf.N_indv; ++j) {
 

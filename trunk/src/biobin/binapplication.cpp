@@ -50,7 +50,7 @@ void BinApplication::writeBinData(const string& filename, const string& sep) con
 
 void BinApplication::writeGenotypeData(const string& filename, const string& sep) const{
 	std::ofstream file(filename.c_str());
-	_pop_mgr.printGenotypes(file, sep);
+	_pop_mgr.printGenotypes(file, dataset, sep);
 	file.close();
 }
 
