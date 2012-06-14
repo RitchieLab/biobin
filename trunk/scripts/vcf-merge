@@ -30,6 +30,7 @@ sub error
         "   -r, --regions <list|file>               Do only the given regions (comma-separated list or one region per line in a file).\n",
         "   -s, --silent                            Try to be a bit more silent, no warnings about duplicate lines.\n",
         "   -f, --missing-reference					Substitute 0/0 for missing data in one file instead of missing, but only when agreed upon reference.\n",
+        "   -D, --delete-missing                    Delete variants that are missing from any of the merged files.\n",
         "\n";
 }
 
@@ -46,6 +47,7 @@ sub parse_params
         if ( $arg eq '-r' || $arg eq '--regions' ) { $$opts{regions_list}=shift(@ARGV); next; }
         if ( $arg eq '-?' || $arg eq '-h' || $arg eq '--help' ) { error(); }
         if ( $arg eq '-f' || $arg eq '--missing-reference' ) { $$opts{ref_missing}=1; next; }
+        if ( $arg eq '-D' || $arg eq '--delete-missing' ) {$$opts{del_missing}=1; next; }
         if ( -e $arg ) { push @{$$opts{files}},$arg; next; }
         error("Unknown parameter or non-existent file \"$arg\". Run -? for help.\n");
     }
@@ -295,6 +297,7 @@ sub merge_vcf_files
 
         while (1)
         {
+			my $print_line = 1;
             my $pos = get_min_position(\@vcfs);
             if ( !defined $pos ) { last; }
 
@@ -349,7 +352,9 @@ sub merge_vcf_files
                     for (my $i=0; $i<@{$$vcf{__col_names}}; $i++)
                     {
 						my $name = $$vcf{__col_names}->[$i];
-                        if ($$opts{ref_missing}){
+						if ($$opts{del_missing}){
+							$print_line = 0;
+						}elsif ($$opts{ref_missing}){
 							# If the reference alleles differ, consider it as missing
 							if ( defined $new_ref ) { 
 								$out{gtypes}{$name}{GT} = $$vcf_out{defaults}{GT};
@@ -510,7 +515,9 @@ sub merge_vcf_files
                     $out{INFO}{AC} = join(',',@acs);
                 }
             }
-            print $vcf_out->format_line(\%out);
+            if($print_line){
+				print $vcf_out->format_line(\%out);
+			}
         }
     }
 }
