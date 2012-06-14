@@ -75,13 +75,13 @@ public:
 	template <class T_cont>
 	void getLoci(T_cont& loci_out, const vector<bool>& controls=vector<bool>());
 
-	template <class T_cont>
-	void getCaseAF(const T_cont& loci, const vector<bool>& controls,
-			unordered_map<Knowledge::Locus*, float>& maf_out) const;
+	//template <class T_cont>
+	//void getCaseAF(const T_cont& loci, const vector<bool>& controls,
+	//		unordered_map<Knowledge::Locus*, float>& maf_out) const;
 
-	template <class T_cont>
-	void getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
-			unordered_map<Knowledge::Locus*, array<uint,2> >& num_out);
+	//template <class T_cont>
+	//void getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
+	//		unordered_map<Knowledge::Locus*, array<uint,2> >& num_out);
 
 	static bool CompressedVCF;					///< gzipped file Y/N
 	static bool KeepCommonLoci;
@@ -185,6 +185,7 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 
 }
 
+/*
 template <class T_cont>
 void DataImporter::getCaseAF(const T_cont& loci, const vector<bool>& controls,
 		unordered_map<Knowledge::Locus*, float>& maf_out) const{
@@ -310,6 +311,7 @@ void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&contr
 				<< " for details.\n";
 	}
 }
+*/
 
 }
 

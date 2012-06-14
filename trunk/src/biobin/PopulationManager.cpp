@@ -186,6 +186,23 @@ void PopulationManager::printGenotypes(ostream& os, const string& sep) const{
 
 }
 
+float PopulationManager::getCaseAF(const Locus& loc) const{
+	float ret_val = -1;
+
+	unordered_map<const Locus*, array<uint, 2> >::const_iterator count_itr = _locus_count.find(&loc);
+	if (count_itr != _locus_count.end() && (*count_itr).second[1] != 0){
+		unordered_map<const Locus*, bitset_pair>::const_iterator bitset_itr = _genotype_bitset.find(&loc);
+		if(bitset_itr != _genotype_bitset.end()){
+			ret_val =
+					(((*bitset_itr).second.first & (~_control_bitset)).count()
+							+ ((*bitset_itr).second.second & (~_control_bitset)).count())
+							/ static_cast<float>((*count_itr).second[1]);
+		}
+	}
+
+	return ret_val;
+}
+
 int PopulationManager::genotypeContribution(const Locus& loc) const{
 	unordered_map<const Knowledge::Locus*, int>::const_iterator itr = _genotype_sum.find(&loc);
 	return (itr != _genotype_sum.end()) ? (*itr).second : 0;
@@ -219,9 +236,9 @@ array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
 		array<uint, 2> capacity;
 		capacity[0] = 0;
 		capacity[1] = 0;
-		unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator l_end =
+		unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator l_end =
 				_locus_count.end();
-		unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator l_itr;
+		unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator l_itr;
 		while(b_itr != b_end){
 			l_itr = _locus_count.find(*b_itr);
 			if(l_itr != l_end){

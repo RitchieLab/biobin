@@ -64,13 +64,13 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
 
-	_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
+	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
 	while(itr != end){
 		(*itr)->print(locusFile, sep);
 		locusFile << sep;
 		(*itr)->printAlleles(locusFile, "|");
-		locusFile << sep << case_maf[*itr] << sep
+		locusFile << sep << _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
@@ -97,7 +97,7 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
 
-	_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
+	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
 	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
@@ -106,7 +106,7 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 			<< "Rare" << sep << "Bins\n";
 	while(itr != end){
 		freqFile << (*itr)->getID() << sep << 1 - (*itr)->majorAlleleFreq() << sep
-				<< case_maf[*itr] << sep
+				<< _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;
 
 		binData.printBins(freqFile, *itr, "|");

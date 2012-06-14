@@ -87,6 +87,8 @@ public:
 	void printBinFreq(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	void printGenotypes(ostream& os, const string& sep=",") const;
 
+	float getCaseAF(const Locus& loc) const;
+
 	static float c_phenotype_control;
 	static vector<string> c_phenotype_files;
 
@@ -122,7 +124,7 @@ private:
 	//unordered_map<Knowledge::Locus*, vector<short> > _genotype_map;
 	unordered_map<const Knowledge::Locus*, int> _genotype_sum;
 
-	unordered_map<Knowledge::Locus*, array<uint, 2> > _locus_count;
+	unordered_map<const Knowledge::Locus*, array<uint, 2> > _locus_count;
 	mutable unordered_map<Bin*, array<uint, 2> > _bin_capacity;
 };
 
@@ -205,8 +207,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
 
-	unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator loc_itr;
-	unordered_map<Knowledge::Locus*, array<uint, 2> >::const_iterator loc_not_found =
+	unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator loc_itr;
+	unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator loc_not_found =
 			_locus_count.end();
 
 	int locus_count = 0;
