@@ -29,7 +29,7 @@ sub error
         "   -h, -?, --help                          This help message.\n",
         "   -r, --regions <list|file>               Do only the given regions (comma-separated list or one region per line in a file).\n",
         "   -s, --silent                            Try to be a bit more silent, no warnings about duplicate lines.\n",
-        "   -f, --missing-reference					Substitute 0/0 for missing data in one file instead of missing, but only when agreed upon reference.\n",
+        "   -f, --missing-reference                 Substitute 0/0 for missing data in one file instead of missing, but only when agreed upon reference.\n",
         "   -D, --delete-missing                    Delete variants that are missing from any of the merged files.\n",
         "\n";
 }
