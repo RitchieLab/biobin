@@ -23,14 +23,6 @@ bool DataImporter::CompressedVCF = false;
 bool DataImporter::KeepCommonLoci = true;
 bool DataImporter::RareCaseControl = false;
 
-/*bool DataImporter::open(const string& filename) {
-	vcf = VCF::vcf_file(filename);
-	return true;
-}*/
-
-/**
- * TODO ... Um...does snpIndex and line number really mean the same thing...gotta check
- */
 void DataImporter::parseSNP(Knowledge::Locus& loc, const dynamic_bitset<>& controls, bitset_pair& bitset_out, array<uint, 2>& nonmissing_out) {
 	std::string line;
 	unordered_map<Knowledge::Locus*, int>::const_iterator pos = _locus_position.find(&loc);

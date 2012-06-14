@@ -75,21 +75,13 @@ public:
 	template <class T_cont>
 	void getLoci(T_cont& loci_out, const vector<bool>& controls=vector<bool>());
 
-	//template <class T_cont>
-	//void getCaseAF(const T_cont& loci, const vector<bool>& controls,
-	//		unordered_map<Knowledge::Locus*, float>& maf_out) const;
-
-	//template <class T_cont>
-	//void getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
-	//		unordered_map<Knowledge::Locus*, array<uint,2> >& num_out);
-
 	static bool CompressedVCF;					///< gzipped file Y/N
 	static bool KeepCommonLoci;
 	// determine rarity of a variant by either case or control status
 	static bool RareCaseControl;
 
 	uint individualCount() {return vcf.N_indv;}
-	const vector<string>& getIndividualIDs() {return vcf.indv;}
+	//const vector<string>& getIndividualIDs() {return vcf.indv;}
 	
 	void parseSNP(Knowledge::Locus& loc, const dynamic_bitset<>& controls, bitset_pair& bitset_out, array<uint,2>& nonmissing_out);
 
@@ -157,9 +149,6 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 		if(KeepCommonLoci || is_rare ){
 			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
 
-			//if (chr == 0) // TODO Determine how to handle these that we don't recognize. We need to avoid pulling them when we pull genotypes
-			//	unknownChromosomes.insert(entry->get_CHROM());
-
 			loc->addAllele(entry.get_REF(), nmcc != 0 ? (alleleCounts[0] / ((double) nmcc) ) : 0);
 
 			// If we are completely missing information (probably just for the controls),
@@ -184,134 +173,6 @@ void DataImporter::getLoci(T_cont& loci_out, const vector<bool>& controls) {
 	}
 
 }
-
-/*
-template <class T_cont>
-void DataImporter::getCaseAF(const T_cont& loci, const vector<bool>& controls,
-		unordered_map<Knowledge::Locus*, float>& maf_out) const{
-	int num_cases = 0;
-	vector<bool> cases = controls;
-
-	for (unsigned int i=0; i < controls.size(); i++){
-		cases[i].flip();
-		num_cases += cases[i];
-	}
-	if(num_cases == 0){
-		std::cerr << "WARNING: No cases found!  "
-				"No data to calculate case allele frequency" << std::endl;
-	}
-
-	typename T_cont::const_iterator l_itr = loci.begin();
-	typename T_cont::const_iterator l_end = loci.end();
-
-	vector<int> alleleCounts;
-	string line;
-	double nonMissingChrCount = 0.0;
-	uint nmcc = 0;					///< Just to avoid redundant conversions
-	VCF::vcf_entry entry(vcf.N_indv);
-	float missing_val = -1;
-
-	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_itr;
-	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_end =
-			_locus_position.end();
-
-	while(l_itr != l_end){
-
-		locus_pos_itr = _locus_position.find(*l_itr);
-		if(locus_pos_itr == locus_pos_end){
-			std::cerr << "WARNING: Could not find " << (*l_itr)->getID() <<
-					" when calculating case AF" << std::endl;
-
-			maf_out[*l_itr] = missing_val;
-		} else {
-
-			vcf.get_vcf_entry((*locus_pos_itr).second, line);
-			entry.reset(line);
-			entry.parse_basic_entry(true);
-			entry.parse_genotype_entries(true);
-
-			entry.get_allele_counts(alleleCounts, nmcc, cases,
-					vcf.include_genotype[(*locus_pos_itr).second]);
-			nonMissingChrCount = nmcc;
-
-			if(nmcc > 0){
-				maf_out[*l_itr] =  1 - (alleleCounts[(*l_itr)->getMajorPos()] / nonMissingChrCount);
-			}else{
-				maf_out[*l_itr] = missing_val;
-			}
-		}
-		++l_itr;
-	}
-}
-
-template <class T_cont>
-void DataImporter::getNumNonMissing(const T_cont& loci, const vector<bool>&controls,
-		unordered_map<Knowledge::Locus*, array<uint, 2> >& num_out){
-
-	vector<bool> cases = controls;
-
-	uint n_controls = 0;
-	for (unsigned int i=0; i < controls.size(); i++){
-		if (controls[i]){
-			++n_controls;
-		}
-		cases[i].flip();
-	}
-
-	typename T_cont::const_iterator l_itr = loci.begin();
-	typename T_cont::const_iterator l_end = loci.end();
-
-	vector<int> alleleCounts;
-	string line;
-	uint nmcc_case = 0;					///< Just to avoid redundant conversions
-	uint nmcc_cont  = 0;
-	VCF::vcf_entry entry(vcf.N_indv);
-
-	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_itr;
-	unordered_map<Knowledge::Locus*, int>::const_iterator locus_pos_end =
-			_locus_position.end();
-
-	array<uint,2> case_cont_array;
-
-	int num_not_found = 0;
-
-	while(l_itr != l_end){
-
-		locus_pos_itr = _locus_position.find(*l_itr);
-		if(locus_pos_itr == locus_pos_end){
-			std::cerr << "WARNING: Could not find " << (*l_itr)->getID() <<
-					" when calculating case AF" << std::endl;
-
-			//should create array of zeros
-			num_out[*l_itr];
-		} else {
-
-			vcf.get_vcf_entry((*locus_pos_itr).second, line);
-			entry.reset(line);
-			entry.parse_basic_entry(true);
-			entry.parse_genotype_entries(true);
-
-			entry.get_allele_counts(alleleCounts, nmcc_case, cases,
-					vcf.include_genotype[(*locus_pos_itr).second]);
-			entry.get_allele_counts(alleleCounts, nmcc_cont, controls,
-					vcf.include_genotype[(*locus_pos_itr).second]);
-
-			case_cont_array[0] = nmcc_cont;
-			case_cont_array[1] = nmcc_case;
-			if(case_cont_array[0] == 0 || case_cont_array[1] == 0){
-				++num_not_found;
-			}
-			num_out[*l_itr] = case_cont_array;
-		}
-		++l_itr;
-	}
-	if(num_not_found && n_controls < controls.size()){
-		std::cerr << "WARNING: Data completely missing for cases or controls "
-				<< "for " << num_not_found << " loci.  See the locus.csv report"
-				<< " for details.\n";
-	}
-}
-*/
 
 }
 
