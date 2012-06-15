@@ -52,7 +52,7 @@ public:
 			const vector<Knowledge::Locus*>& loci,
 			Knowledge::Information* info);
 
-	int numRareVariants() const { return _rare_variants.size();}
+	int numRareVariants() const { return _rare_variants;}
 	int numVariants() const {return _total_variants;}
 	int numBins() const {return _bin_list.size();}
 	//int numTotalVariants() const {return _total_variants;}
@@ -98,10 +98,8 @@ private:
 	// List of bins by locus
 	unordered_map<Knowledge::Locus*, set<Bin*> > _locus_bins;
 
-	// List of all rare variants
-	set<Knowledge::Locus*> _rare_variants;
-
-
+	// # of all variants, rare and common
+	int _rare_variants;
 	int _total_variants;
 
 	const PopulationManager& _pop_mgr;

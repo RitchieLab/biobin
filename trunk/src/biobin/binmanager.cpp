@@ -55,15 +55,14 @@ void BinManager::InitBins(
 
 	_total_variants = loci.size();
 	// Insert a null pointer so the set is not empty.  We'll delete this later...
-	_rare_variants.insert(0);
+	_rare_variants = 0;
 
 	while(l_itr != l_end){
 		Knowledge::Locus& l = **l_itr;
 
 
 		if (l.isRare()) {
-
-			_rare_variants.insert(--_rare_variants.end(), &l);
+			++_rare_variants;
 
 			// First, find all of the regions that contain this locus
 			RegionCollection::const_region_iterator r_itr =
@@ -125,9 +124,6 @@ void BinManager::InitBins(
 		}
 		++l_itr;
 	}
-
-	// Delete that -1 that we put in before
-	_rare_variants.erase(_rare_variants.begin());
 
 	// At this point, we have all of the top level bins constructed and
 	// stored in the variable _bin_list.  We should now collapse the

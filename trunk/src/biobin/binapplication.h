@@ -47,7 +47,7 @@ namespace BioBin {
 	
 class BinApplication : public Application {
 public:
-	BinApplication(const string& vcf_file);
+	BinApplication(const string& db_fn, const string& vcf_file);
 	virtual ~BinApplication() {}
 
 	template <class SNP_cont>

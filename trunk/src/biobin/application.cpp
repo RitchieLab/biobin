@@ -10,8 +10,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include <sqlite3.h>
-
 #include "knowledge/liftover/ConverterSQLite.h"
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
@@ -21,10 +19,20 @@ namespace BioBin {
 
 bool Application::errorExit = false;
 std::string Application::reportPrefix = "biobin";
+new_handler Application::currentHandler;
 
-Application::Application() : dbFilename(""), varVersion(0), geneExtensionLength(0), htmlReports(false) {}
+Application::Application(const string& db_fn) :
+		dbFilename(db_fn), varVersion(0), geneExtensionLength(0) {
+
+	Init(db_fn, true);
+
+	if(!currentHandler){
+		currentHandler = set_new_handler(releaseDBCache);
+	}
+}
 
 Application::~Application(){
+
 	sqlite3_close(_db);
 
 	if (!errorExit){
@@ -39,14 +47,14 @@ Application::~Application(){
 		delete *d_itr;
 		++d_itr;
 	}
-	dataset.clear();
+	//dataset.clear();
 
 	map<uint, Knowledge::GroupCollection*>::iterator g_itr = groups.begin();
 	while(g_itr != groups.end()){
 		delete (*g_itr).second;
 		++g_itr;
 	}
-	groups.clear();
+	//groups.clear();
 
 
 }
@@ -64,10 +72,6 @@ void Application::SetReportPrefix(const string& pref) {
 		reportPrefix = "biobin";
 	else
 		reportPrefix = pref;
-}
-
-void Application::UseHtmlReports(bool doUse) {
-	htmlReports = doUse;
 }
 
 vector<uint> Application::ManagerIDs() {
@@ -133,6 +137,18 @@ void Application::Init(const string& filename, bool reportVersion) {
 	_info = new Knowledge::InformationSQLite(_db);
 	regions = new Knowledge::RegionCollectionSQLite(_db, dataset);
 
+}
+
+void Application::releaseDBCache(){
+	// If we are here, we are damn near out of memory, so try to get SQLite
+	// to release some memory (10MB if possible)!
+	int mem_released = sqlite3_release_memory(10000);
+
+	// If we didn't release any memory, abandon hope!
+	if(!mem_released){
+		set_new_handler(currentHandler);
+		currentHandler = 0;
+	}
 }
 
 

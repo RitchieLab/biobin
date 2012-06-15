@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <new>
 
 #include <sqlite3.h>
 
@@ -29,16 +30,17 @@
 using std::string;
 using std::vector;
 using std::map;
+using std::new_handler;
+using std::set_new_handler;
 
 namespace BioBin {
 
 class Application {
+
 public:
 	
-	Application();
+	Application(const string& db_fn);
 	virtual ~Application();
-
-	void Init(const string& dbFilename, bool reportVersions);
 
 	string GetReportLog();
 	string AddReport(const string& suffix, const string& extension, const string& description);
@@ -70,7 +72,6 @@ public:
 
 	void SetGeneExtension(uint geneBoundaryExt);
 	void SetReportPrefix(const string& pref);
-	void UseHtmlReports(bool useHtml);
 
 	// Returns a vector of the category (source) IDs
 	vector<uint> ManagerIDs();
@@ -78,6 +79,9 @@ public:
 
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
 	static std::string reportPrefix;
+
+private:
+	void Init(const string& dbFilename, bool reportVersions);
 
 protected:
 	uint GetPopID(const string& pop);
@@ -107,9 +111,16 @@ protected:
 
 	///< Length of extension on either side of a gene (not to be mixed with LD extension)
 	uint geneExtensionLength;
-	///< Turn on/off HTML report generation
-	bool htmlReports;
 
+//Everything from here on down has to do with installing a new handler that
+// will try to get sqlite to give up some of its cache
+public:
+	// A function to release as much db cache as possible
+	static void releaseDBCache();
+
+private:
+
+	static new_handler currentHandler;
 };
 
 

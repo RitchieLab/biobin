@@ -37,7 +37,7 @@ public:
 	 * Creates an instance of the Main class.  Note: at this point, all
 	 * configuration has been processed, so we can use the vcf file name here.
 	 */
-	Main() : app(c_vcf_file){}
+	Main() : app(c_knowledge_file, c_vcf_file){}
 	~Main();
 
 	/*!

@@ -53,7 +53,7 @@ void Main::RunCommands() {
 
 	VCF::LOG.open("vcf-responses.log");
 
-	app.Init(c_knowledge_file, true);
+	//app.Init(c_knowledge_file, true);
 
 	//Tasks that run before SNPs load (not sure what those would be)
 	RunTasks(0);
