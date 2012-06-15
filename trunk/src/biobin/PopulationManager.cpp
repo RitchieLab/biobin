@@ -205,30 +205,30 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 
 }
 
-array<unsigned int, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
-	unordered_map<Bin*, array<unsigned int, 2> >::const_iterator bin_itr =
-			_bin_capacity.find(&bin);
-	if(bin_itr == _bin_capacity.end()){
-		Bin::const_locus_iterator b_itr = bin.variantBegin();
-		Bin::const_locus_iterator b_end = bin.variantEnd();
-		array<unsigned int, 2> capacity;
-		capacity[0] = 0;
-		capacity[1] = 0;
-		unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_end =
-				_locus_count.end();
-		unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr;
-		while(b_itr != b_end){
-			l_itr = _locus_count.find(*b_itr);
-			if(l_itr != l_end){
-				capacity[0]+=(*l_itr).second[0] / (1 + c_model != ADDITIVE);
-				capacity[1]+=(*l_itr).second[1] / (1 + c_model != ADDITIVE);
-			}
-			++b_itr;
+array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
+
+	Bin::const_locus_iterator b_itr = bin.variantBegin();
+	Bin::const_locus_iterator b_end = bin.variantEnd();
+	array<unsigned int, 2> capacity;
+	capacity[0] = 0;
+	capacity[1] = 0;
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_end =
+			_locus_count.end();
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr;
+	while (b_itr != b_end) {
+
+		l_itr = _locus_count.find(*b_itr);
+		if (l_itr != l_end) {
+			capacity[0] += (*l_itr).second[0];
+			capacity[1] += (*l_itr).second[1];
 		}
-		_bin_capacity[&bin] = capacity;
+		++b_itr;
 	}
 
-	return _bin_capacity[&bin];
+	capacity[0] /= (bin.getVariantSize() * (1 + c_model != ADDITIVE));
+	capacity[1] /= (bin.getVariantSize() * (1 + c_model != ADDITIVE));
+
+	return capacity;
 }
 
 float PopulationManager::getMAF(const vector<int>& allele_count, uint nmcc) const{

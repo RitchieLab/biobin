@@ -127,7 +127,7 @@ private:
 
 	float getMAF(const vector<int>& allele_count, uint nmcc) const;
 
-	array<unsigned int, 2>& getBinCapacity(Bin& bin) const;
+	array<unsigned int, 2> getBinCapacity(Bin& bin) const;
 
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
@@ -142,8 +142,6 @@ private:
 	unordered_map<Knowledge::Locus*, int> _locus_position;
 
 	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> > _locus_count;
-	mutable unordered_map<Bin*, array<unsigned int, 2> > _bin_capacity;
-
 
 	mutable VCF::vcf_file vcf;
 };
