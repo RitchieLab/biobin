@@ -224,7 +224,7 @@ void vcf_file::scan_file(const string &chr, const string &exclude_chr)
 	include_entry.clear();
 	include_entry.resize(N_entries, true);
 	include_genotype.clear();
-	include_genotype.resize(N_entries, vector<bool>(N_indv, true));
+	include_genotype.resize(N_indv, true);
 
 	printLOG("Done\n");
 }
@@ -259,7 +259,7 @@ void vcf_file::print(const string &output_file_prefix, const set<string> &INFO_t
 			e.parse_basic_entry(true, true, true);
 			e.parse_full_entry(true);
 			e.parse_genotype_entries(true,true,true,true);
-			e.print(out, INFO_to_keep, keep_all_INFO, include_indv, include_genotype[s]);
+			e.print(out, INFO_to_keep, keep_all_INFO, include_indv, include_genotype);
 		}
 
 	out.close();
@@ -291,7 +291,7 @@ unsigned int vcf_file::N_genotypes_included(unsigned int entry_num) const
 {
 	unsigned int count = 0, ui;
 	for (ui=0; ui<N_indv; ui++)
-		if ((include_indv[ui] == true) && (include_genotype[entry_num][ui] == true))
+		if ((include_indv[ui] == true) && (include_genotype[ui] == true))
 		{
 			count++;
 		}

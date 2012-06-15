@@ -52,8 +52,11 @@ public:
 	void get_vcf_entry(unsigned int entry_num, string &out);
 
 	vector<bool> include_indv;
-	deque<bool> include_entry;
-	deque<vector<bool> > include_genotype;
+	vector<bool> include_entry;
+
+	//This is a change - we are NOT including the genotype on a variant-by-variant basis!
+	vector<bool> include_genotype;
+	//vector<vector<bool> > include_genotype;
 
 	void apply_filters(const parameters &params);
 
@@ -79,9 +82,9 @@ public:
 	void filter_individuals_by_mean_depth(double min_mean_depth, double max_mean_depth);
 	void filter_individuals_by_phase();
 
-	void filter_genotypes_by_quality(double min_genotype_quality);
-	void filter_genotypes_by_depth(int min_depth, int max_depth);
-	void filter_genotypes_by_filter_flag(const set<string> &filter_flags_to_remove, bool remove_all = false);
+	//void filter_genotypes_by_quality(double min_genotype_quality);
+	//void filter_genotypes_by_depth(int min_depth, int max_depth);
+	//void filter_genotypes_by_filter_flag(const set<string> &filter_flags_to_remove, bool remove_all = false);
 
 	void output_frequency(const string &output_file_prefix, bool output_counts=false, bool suppress_allele_output=false);
 	void output_individuals_by_mean_depth(const string &output_file_prefix);

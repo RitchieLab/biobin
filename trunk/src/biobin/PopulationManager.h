@@ -389,7 +389,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 	uint totalSiteCount	= vcf.N_entries;
 
-	VCF::vcf_entry entry(vcf.N_indv);
 
 	// Predefine everything so that the loop below can be as tight as possible
 	vector<pair<int, int> > genotype_pairs;
@@ -405,7 +404,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 	for (uint i=0; i<totalSiteCount; i++) {
 		vcf.get_vcf_entry(i, line);
-		entry.reset(line);
+		VCF::vcf_entry entry(vcf.N_indv, line);
 		entry.parse_basic_entry(true);
 
 		entry.parse_genotype_entries(true, false, false, false);

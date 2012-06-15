@@ -60,7 +60,7 @@ void vcf_file::output_frequency(const string &output_file_prefix, bool output_co
 		e.parse_genotype_entries(true);
 		N_alleles = e.get_N_alleles();
 
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
 
 		out << e.get_CHROM() << "\t" << e.get_POS() << "\t" << N_alleles << "\t" << N_non_missing_chr;
 		if (output_counts)
@@ -156,7 +156,7 @@ void vcf_file::output_het(const string &output_file_prefix)
 
 		e.parse_genotype_entries(true);
 		// Frequency of non-reference allele
-		e.get_allele_counts(allele_counts, N_non_missing_chr[s], include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr[s], include_indv, include_genotype);
 
 		if (N_non_missing_chr[s] > 0)
 			freq[s] = allele_counts[1] / double(N_non_missing_chr[s]);
@@ -190,7 +190,7 @@ void vcf_file::output_het(const string &output_file_prefix)
 				continue;
 
 			e.parse_genotype_entry(ui, true);
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.get_indv_GENOTYPE_ids(ui, alleles);
 				if ((alleles.first != -1) && (alleles.second != -1))
@@ -280,9 +280,9 @@ void vcf_file::output_hwe(const string &output_file_prefix)
 
 		e.parse_genotype_entries(true);
 
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
 		freq = allele_counts[0] / (double)N_non_missing_chr;
-		e.get_genotype_counts(include_indv, include_genotype[s], b11, b12, b22);
+		e.get_genotype_counts(include_indv, include_genotype, b11, b12, b22);
 		tot = b11 + b12 + b22;
 		exp_11 = freq * freq * tot;
 		exp_12 = 2.0 * freq * (1.0-freq) * tot;
@@ -332,7 +332,7 @@ void vcf_file::output_individuals_by_mean_depth(const string &output_file_prefix
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, false, false, true);
 				depth = e.get_indv_DEPTH(ui);
@@ -489,7 +489,7 @@ void vcf_file::output_missingness(const string &output_file_prefix)
 		{
 			if (include_indv[ui] == false)
 				continue;
-			if (include_genotype[s][ui] == false)
+			if (include_genotype[ui] == false)
 			{
 				site_N_geno_filtered++;
 				indv_N_geno_filtered[ui]++;
@@ -604,7 +604,7 @@ void vcf_file::output_haplotype_r2(const string &output_file_prefix, int snp_win
 			chr_count = 0;
 			for (ui=0; ui<N_indv; ui++)
 			{
-				if ((include_indv[ui] == false) || (include_genotype[s][ui] == false) || (include_genotype[s2][ui] == false))
+				if ((include_indv[ui] == false) || (include_genotype[ui] == false) || (include_genotype[ui] == false))
 					continue;
 
 				e.parse_genotype_entry(ui, true);
@@ -736,7 +736,7 @@ void vcf_file::output_genotype_r2(const string &output_file_prefix, int snp_wind
 			indv_count = 0;
 			for (ui=0; ui<N_indv; ui++)
 			{
-				if ((include_indv[ui] == false) || (include_genotype[s][ui] == false) || (include_genotype[s2][ui] == false))
+				if ((include_indv[ui] == false) || (include_genotype[ui] == false) || (include_genotype[ui] == false))
 					continue;
 
 				e.parse_genotype_entry(ui, true);
@@ -852,7 +852,7 @@ void vcf_file::output_interchromosomal_genotype_r2(const string &output_file_pre
 			indv_count = 0;
 			for (ui=0; ui<N_indv; ui++)
 			{
-				if ((include_indv[ui] == false) || (include_genotype[s][ui] == false) || (include_genotype[s2][ui] == false))
+				if ((include_indv[ui] == false) || (include_genotype[ui] == false) || (include_genotype[ui] == false))
 					continue;
 
 				e.parse_genotype_entry(ui, true);
@@ -947,7 +947,7 @@ void vcf_file::output_singletons(const string &output_file_prefix)
 		e.parse_basic_entry(true);
 		e.parse_genotype_entries(true);
 
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
 		N_alleles = e.get_N_alleles();
 
 		for (a=0; a<(signed)N_alleles; a++)
@@ -1030,7 +1030,7 @@ void vcf_file::output_genotype_depth(const string &output_file_prefix)
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, false, false, true);
 				out << "\t" << e.get_indv_DEPTH(ui);
@@ -1342,7 +1342,7 @@ void vcf_file::output_site_depth(const string &output_file_prefix, bool output_m
 		{
 			if (include_indv[ui] == false)
 				continue;
-			if (include_genotype[s][ui] == false)
+			if (include_genotype[ui] == false)
 				continue;
 
 			e.parse_genotype_entry(ui, false, false, true);
@@ -1446,14 +1446,14 @@ void vcf_file::output_fst(const string &output_file_prefix, vcf_file &vcf_fst)
 		e2.parse_genotype_entries(true);
 
 		// Calculate allele frequencies
-		e1.get_allele_counts(allele_counts1, n_i1, include_indv, include_genotype[s1]);
-		e2.get_allele_counts(allele_counts2, n_i2, vcf_fst.include_indv, vcf_fst.include_genotype[s2]);
+		e1.get_allele_counts(allele_counts1, n_i1, include_indv, include_genotype);
+		e2.get_allele_counts(allele_counts2, n_i2, vcf_fst.include_indv, vcf_fst.include_genotype);
 
 		if ((n_i1 == 0) || (n_i2 == 0))
 			continue;
 
-		n_1 = e1.get_N_chr(include_indv, include_genotype[s1]);
-		n_2 = e2.get_N_chr(vcf_fst.include_indv, vcf_fst.include_genotype[s2]);
+		n_1 = e1.get_N_chr(include_indv, include_genotype);
+		n_2 = e2.get_N_chr(vcf_fst.include_indv, vcf_fst.include_genotype);
 
 		if (last_n_1 != -1)
 		{
@@ -1536,7 +1536,7 @@ void vcf_file::output_per_site_nucleotide_diversity(const string &output_file_pr
 		{
 			if (include_indv[ui] == false)
 				continue;
-			if (include_genotype[s][ui] == false)
+			if (include_genotype[ui] == false)
 				continue;
 
 			e.get_indv_GENOTYPE_ids(ui, genotype1);
@@ -1552,7 +1552,7 @@ void vcf_file::output_per_site_nucleotide_diversity(const string &output_file_pr
 			{
 				if (include_indv[uj] == false)
 					continue;
-				if (include_genotype[s][uj] == false)
+				if (include_genotype[uj] == false)
 					continue;
 
 				e.get_indv_GENOTYPE_ids(uj, genotype2);
@@ -1707,7 +1707,7 @@ void vcf_file::output_windowed_nucleotide_diversity(const string &output_file_pr
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.get_indv_GENOTYPE_ids(ui, genotype1);
 				haplotypes[(2*ui)].push_back(genotype1.first);
@@ -1846,7 +1846,7 @@ void vcf_file::output_LROH(const string &output_file_prefix)
 
 		for (unsigned int s=0; s<N_entries; s++)
 		{
-			if ((include_entry[s] == false) || (include_genotype[s][ui] == false))
+			if ((include_entry[s] == false) || (include_genotype[ui] == false))
 				continue;
 
 			get_vcf_entry(s, vcf_line);
@@ -1871,7 +1871,7 @@ void vcf_file::output_LROH(const string &output_file_prefix)
 			unsigned int N_hets = 0;
 			for (unsigned int uj=0; uj<N_indv; uj++)
 			{
-				if ((include_indv[uj] == false) || (include_genotype[s][ui] == false))
+				if ((include_indv[uj] == false) || (include_genotype[ui] == false))
 					continue;
 
 				e.parse_genotype_entry(uj, true);
@@ -2065,7 +2065,7 @@ void vcf_file::output_indv_relatedness(const string &output_file_prefix)
 
 		e.parse_genotype_entries(true);
 
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
 		freq = allele_counts[1] / (double)N_non_missing_chr;	// Alt allele frequency
 
 		if ((freq <= numeric_limits<double>::epsilon()) || (freq >= (1.0-numeric_limits<double>::epsilon())))
@@ -2084,13 +2084,13 @@ void vcf_file::output_indv_relatedness(const string &output_file_prefix)
 		double div = 1.0/(2.0*freq*(1.0-freq));
 		for (unsigned int ui=0; ui<N_indv; ui++)
 		{
-			if ((include_indv[ui] == false) || (include_genotype[s][ui] == false) || (x[ui] < 0))
+			if ((include_indv[ui] == false) || (include_genotype[ui] == false) || (x[ui] < 0))
 				continue;
 			Ajk[ui][ui] += (x[ui]*x[ui] - (1 + 2.0*freq)*x[ui] + 2.0*freq*freq) * div;
 			N_sites[ui][ui]++;
 			for (unsigned int uj=(ui+1); uj<N_indv; uj++)
 			{
-				if ((include_indv[uj] == false) || (include_genotype[s][uj] == false) || (x[uj] < 0))
+				if ((include_indv[uj] == false) || (include_genotype[uj] == false) || (x[uj] < 0))
 					continue;
 				Ajk[ui][uj] += (x[ui] - 2.0*freq) * (x[uj] - 2.0*freq) * div;
 				N_sites[ui][uj]++;

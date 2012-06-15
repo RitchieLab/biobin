@@ -160,7 +160,7 @@ void vcf_file::output_as_plink(const string &output_file_prefix)
 
 				genotype = make_pair(-1,-1);
 				phase = '/';
-				if (include_genotype[s][ui] == true)
+				if (include_genotype[ui] == true)
 				{
 					e.parse_genotype_entry(ui, true);
 					e.get_indv_GENOTYPE_ids(ui, genotype);
@@ -281,7 +281,7 @@ void vcf_file::output_as_plink_tped(const string &output_file_prefix)
 
 			genotype = make_pair(-1,-1);
 			phase = '/';
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, true);
 				e.get_indv_GENOTYPE_ids(ui, genotype);
@@ -472,7 +472,7 @@ void vcf_file::output_as_012_matrix(const string &output_file_prefix)
 
 				genotype = make_pair(-1,-1);
 				phase = '/';
-				if (include_genotype[s][ui] == true)
+				if (include_genotype[ui] == true)
 				{
 					e.parse_genotype_entry(ui, true);
 					e.get_indv_GENOTYPE_ids(ui, genotype);
@@ -591,7 +591,7 @@ void vcf_file::output_as_IMPUTE(const string &output_file_prefix)
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == false)
+			if (include_genotype[ui] == false)
 			{
 				missing = true;
 				break;
@@ -769,7 +769,7 @@ void vcf_file::output_as_LDhat_phased(const string &output_file_prefix, const st
 				else
 					geno = alleles.second;
 
-				if ((geno != -1) && (include_genotype[s][ui]==true))
+				if ((geno != -1) && (include_genotype[ui]==true))
 					(*tmp_file) << geno;
 				else
 					(*tmp_file) << "?";
@@ -857,7 +857,7 @@ void vcf_file::output_as_LDhat_unphased(const string &output_file_prefix, const 
 
 			tmp_file = tmp_files[ui];
 
-			if (include_genotype[s][ui] == false)
+			if (include_genotype[ui] == false)
 				(*tmp_file) << "?";
 			else
 			{
@@ -1064,7 +1064,7 @@ void vcf_file::output_BEAGLE_genotype_likelihoods(const string &output_file_pref
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.read_indv_generic_entry(ui, "GL", GL_entry);
 				ss.clear();

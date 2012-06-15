@@ -33,14 +33,14 @@ void vcf_file::apply_filters(const parameters &params)
 		filter_individuals_by_phase();
 		filter_sites_by_phase();
 	}
-	filter_genotypes_by_quality(params.min_genotype_quality);
-	filter_genotypes_by_depth(params.min_genotype_depth, params.max_genotype_depth);
-	filter_genotypes_by_filter_flag(params.geno_filter_flags_to_exclude, params.remove_all_filtered_genotypes);
+	//filter_genotypes_by_quality(params.min_genotype_quality);
+	//filter_genotypes_by_depth(params.min_genotype_depth, params.max_genotype_depth);
+	//filter_genotypes_by_filter_flag(params.geno_filter_flags_to_exclude, params.remove_all_filtered_genotypes);
 	filter_individuals_by_call_rate(params.min_indv_call_rate);
 	filter_sites_by_frequency_and_call_rate(params.maf, params.max_maf, params.non_ref_af, params.max_non_ref_af, params.min_site_call_rate);
 	filter_sites_by_HWE_pvalue(params.min_HWE_pvalue);
 }
-
+/*
 void vcf_file::filter_genotypes_by_quality(double min_genotype_quality)
 {
 	// Filter genotypes by quality
@@ -61,7 +61,7 @@ void vcf_file::filter_genotypes_by_quality(double min_genotype_quality)
 		get_vcf_entry(s, vcf_line);
 		e.reset(vcf_line);
 		e.parse_genotype_entries(false, true);
-		e.filter_genotypes_by_quality(include_genotype[s], min_genotype_quality);
+		e.filter_genotypes_by_quality(include_genotype, min_genotype_quality);
 	}
 }
 
@@ -84,7 +84,7 @@ void vcf_file::filter_genotypes_by_depth(int min_depth, int max_depth)
 		get_vcf_entry(s, vcf_line);
 		e.reset(vcf_line);
 		e.parse_genotype_entries(false, false, true);
-		e.filter_genotypes_by_depth(include_genotype[s], min_depth, max_depth);
+		e.filter_genotypes_by_depth(include_genotype, min_depth, max_depth);
 	}
 }
 
@@ -111,9 +111,10 @@ void vcf_file::filter_genotypes_by_filter_flag(const set<string> &filter_flags_t
 		get_vcf_entry(s, vcf_line);
 		e.reset(vcf_line);
 		e.parse_genotype_entries(false, false, false, true);
-		e.filter_genotypes_by_filter_status(include_genotype[s], filter_flags_to_remove, remove_all);
+		e.filter_genotypes_by_filter_status(include_genotype, filter_flags_to_remove, remove_all);
 	}
 }
+*/
 
 
 void vcf_file::filter_individuals(const set<string> &indv_to_keep, const set<string> &indv_to_exclude, const string &indv_to_keep_filename, const string &indv_to_exclude_filename, bool keep_then_exclude)
@@ -231,7 +232,7 @@ void vcf_file::filter_individuals_by_call_rate(double min_call_rate)
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, true);
 				e.get_indv_GENOTYPE_ids(ui, genotype);
@@ -284,7 +285,7 @@ void vcf_file::filter_individuals_by_mean_depth(double min_mean_depth, double ma
 		{
 			if (include_indv[ui] == false)
 				continue;
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, false, false, true);
 				depth = e.get_indv_DEPTH(ui);
@@ -516,7 +517,7 @@ void vcf_file::filter_sites_by_mean_depth(double min_mean_depth, double max_mean
 			if (include_indv[ui] == false)
 				continue;
 
-			if (include_genotype[s][ui] == true)
+			if (include_genotype[ui] == true)
 			{
 				e.parse_genotype_entry(ui, false, false, true);
 				depth = e.get_indv_DEPTH(ui);
@@ -870,7 +871,7 @@ void vcf_file::filter_sites_by_frequency_and_call_rate(double maf, double max_ma
 		N_alleles = e.get_N_alleles();
 
 		vector<int> allele_counts;
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
 
 		vector<double> freq(N_alleles, 0.0);
 		unsigned int Alleles_between_limits = 0;
@@ -887,7 +888,7 @@ void vcf_file::filter_sites_by_frequency_and_call_rate(double maf, double max_ma
 			include_entry[s] = false;
 
 		//unsigned int N_geno_included = e.get_N_chr();
-		double call_rate = N_non_missing_chr / double(e.get_N_chr(include_indv, include_genotype[s]));
+		double call_rate = N_non_missing_chr / double(e.get_N_chr(include_indv, include_genotype));
 
 		if (call_rate < min_site_call_rate)
 			include_entry[s] = false;
@@ -926,8 +927,8 @@ void vcf_file::filter_sites_by_HWE_pvalue(double min_HWE_pvalue)
 		e.parse_basic_entry(true);
 		e.parse_genotype_entries(true);
 
-		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype[s]);
-		e.get_genotype_counts(include_indv, include_genotype[s], b11, b12, b22);
+		e.get_allele_counts(allele_counts, N_non_missing_chr, include_indv, include_genotype);
+		e.get_genotype_counts(include_indv, include_genotype, b11, b12, b22);
 		/*
 		double freq = allele_counts[0] / (double)N_non_missing_chr;
 		double tot = b11 + b12 + b22;
