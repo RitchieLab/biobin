@@ -145,7 +145,7 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 float PopulationManager::getCaseAF(const Locus& loc) const{
 	float ret_val = -1;
 
-	unordered_map<const Locus*, array<uint, 2> >::const_iterator count_itr = _locus_count.find(&loc);
+	unordered_map<const Locus*, array<unsigned short, 2> >::const_iterator count_itr = _locus_count.find(&loc);
 	if (count_itr != _locus_count.end() && (*count_itr).second[1] != 0){
 		unordered_map<const Locus*, bitset_pair>::const_iterator bitset_itr = _genotype_bitset.find(&loc);
 		if(bitset_itr != _genotype_bitset.end()){
@@ -205,18 +205,18 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 
 }
 
-array<uint, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
-	unordered_map<Bin*, array<uint, 2> >::const_iterator bin_itr =
+array<unsigned int, 2>& PopulationManager::getBinCapacity(Bin& bin) const{
+	unordered_map<Bin*, array<unsigned int, 2> >::const_iterator bin_itr =
 			_bin_capacity.find(&bin);
 	if(bin_itr == _bin_capacity.end()){
 		Bin::const_locus_iterator b_itr = bin.variantBegin();
 		Bin::const_locus_iterator b_end = bin.variantEnd();
-		array<uint, 2> capacity;
+		array<unsigned int, 2> capacity;
 		capacity[0] = 0;
 		capacity[1] = 0;
-		unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator l_end =
+		unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_end =
 				_locus_count.end();
-		unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator l_itr;
+		unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr;
 		while(b_itr != b_end){
 			l_itr = _locus_count.find(*b_itr);
 			if(l_itr != l_end){

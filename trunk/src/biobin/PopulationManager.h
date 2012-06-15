@@ -127,7 +127,7 @@ private:
 
 	float getMAF(const vector<int>& allele_count, uint nmcc) const;
 
-	array<uint, 2>& getBinCapacity(Bin& bin) const;
+	array<unsigned int, 2>& getBinCapacity(Bin& bin) const;
 
 	map<string, float> _phenotypes;
 	map<string, int> _positions;
@@ -141,8 +141,8 @@ private:
 	// A map to keep track of where in the file a locus resides
 	unordered_map<Knowledge::Locus*, int> _locus_position;
 
-	unordered_map<const Knowledge::Locus*, array<uint, 2> > _locus_count;
-	mutable unordered_map<Bin*, array<uint, 2> > _bin_capacity;
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> > _locus_count;
+	mutable unordered_map<Bin*, array<unsigned int, 2> > _bin_capacity;
 
 
 	mutable VCF::vcf_file vcf;
@@ -186,8 +186,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
 
-	unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator loc_itr;
-	unordered_map<const Knowledge::Locus*, array<uint, 2> >::const_iterator loc_not_found =
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_itr;
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_not_found =
 			_locus_count.end();
 
 	int locus_count = 0;
@@ -309,7 +309,7 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		}
 
 		os << (*b_itr)->getName() << sep;
-		int capacity = 0;
+		short capacity = 0;
 		for (int i=0; i<=1; i++){
 			capacity = getBinCapacity(**b_itr)[i];
 			os << (capacity ? case_cont_contrib[i] / ((float) capacity) : -1);
@@ -398,7 +398,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 	genotype_pairs.resize(size);
 	bitset_pair gen_bits(make_pair(dynamic_bitset<>(size),dynamic_bitset<>(size)));
 	pair<int,int> genotype;
-	array<uint, 2> nm;
+	array<unsigned short, 2> nm;
 	uint alleleCount = 0;
 	string line;
 	array<vector<int>, 2> alleleCounts;
