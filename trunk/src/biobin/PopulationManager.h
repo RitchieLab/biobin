@@ -482,8 +482,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				for (uint j=0; j<vcf.N_indv; ++j) {
 
 					//MOVE THIS!!
-					(*gen_itr).second.first[j] = genotype_pairs[j].first != -1 && static_cast<uint>(genotype_pairs[j].first) != loc->getMajorPos();
-					(*gen_itr).second.second[j] = genotype_pairs[j].second != -1 && static_cast<uint>(genotype_pairs[j].second) != loc->getMajorPos();
+					(*gen_itr).second.first[j] = genotype_pairs[j].first != -1 && static_cast<unsigned short>(genotype_pairs[j].first) != loc->getMajorPos();
+					(*gen_itr).second.second[j] = genotype_pairs[j].second != -1 && static_cast<unsigned short>(genotype_pairs[j].second) != loc->getMajorPos();
 				}
 			}
 		}

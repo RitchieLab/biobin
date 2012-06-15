@@ -71,7 +71,7 @@ public:
 	 */
 	const string& getData() const { return _data;}
 	// Returns the position of the allele (0 is reference typically)
-	uint getPos() const {return _pos;}
+	unsigned short getPos() const {return _pos;}
 
 	/*!
 	 * \brief Prints the allele.
@@ -86,7 +86,7 @@ private:
 
 	string _data;
 	float _freq;
-	uint _pos;
+	unsigned short _pos;
 };
 
 }

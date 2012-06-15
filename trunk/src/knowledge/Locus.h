@@ -175,7 +175,7 @@ public:
 	 *
 	 * \return The alternate number of the major allele.
 	 */
-	uint getMajorPos() const {return (*_alleles.begin()).getPos();}
+	unsigned short getMajorPos() const {return (*_alleles.begin()).getPos();}
 
 	/*!
 	 * \brief Determine if the given allele is a minor allele or not
