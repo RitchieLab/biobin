@@ -9,6 +9,8 @@
 
 namespace Knowledge{
 
+set<string> Allele::s_string_pool;
+
 // I want to oder them from largest to smallest alele frequency
 bool Allele::operator<(const Allele& other) const{
 	return (_freq==other._freq ? _data < other._data : _freq > other._freq);

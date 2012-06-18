@@ -9,10 +9,12 @@
 #define KNOWLEDGE_ALLELE_H
 
 #include <string>
+#include <set>
 #include <ostream>
 #include <stdlib.h>
 
 using std::string;
+using std::set;
 
 using std::ostream;
 
@@ -36,7 +38,9 @@ public:
 	 * \param freq The frequency of this allele
 	 * \param pos The position of the allele in the given input file
 	 */
-	Allele(const string& data, float freq, uint pos) : _data(data), _freq(freq), _pos(pos){}
+	Allele(const string& data, float freq, uint pos) :
+			_data(*(s_string_pool.insert(data).first)), _freq(freq), _pos(pos) {
+	}
 
 	/*!
 	 * Destructor for the allele.  Currently a noop.
@@ -84,9 +88,11 @@ public:
 
 private:
 
-	string _data;
+	const string& _data;
 	float _freq;
 	unsigned short _pos;
+
+	static set<string> s_string_pool;
 };
 
 }
