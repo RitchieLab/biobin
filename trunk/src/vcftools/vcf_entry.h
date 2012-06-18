@@ -165,6 +165,11 @@ private:
 	vector<bool> parsed_DP;
 	vector<bool> parsed_FT;
 
+	unsigned int GT_idx;
+	unsigned int GQ_idx;
+	unsigned int DP_idx;
+	unsigned int FT_idx;
+
 	string ALT_str, FILTER_str, INFO_str, FORMAT_str, QUAL_str;
 	vector<string> GENOTYPE_str;
 

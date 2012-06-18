@@ -132,10 +132,6 @@ void vcf_entry::parse_genotype_entry(unsigned int indv, bool GT, bool GQ, bool D
 	istringstream ss(GENOTYPE_str[indv]);
 	int N_required = GT + GQ + DP + FT;
 	int N_got = 0;
-	unsigned int GT_idx = FORMAT_to_idx["GT"];
-	unsigned int GQ_idx = FORMAT_to_idx["GQ"];
-	unsigned int DP_idx = FORMAT_to_idx["DP"];
-	unsigned int FT_idx = FORMAT_to_idx["FT"];
 
 	unsigned int i=0;
 	while (getline(ss, tmpstr, ':'))

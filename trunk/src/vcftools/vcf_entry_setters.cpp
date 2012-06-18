@@ -75,6 +75,7 @@ void vcf_entry::set_FORMAT(const string &in)
 {
 	FORMAT.resize(0);
 	FORMAT_to_idx.clear();
+	GT_idx = GQ_idx = DP_idx = FT_idx = -1;
 
 	if (in.size() > 0)
 	{
@@ -96,6 +97,15 @@ void vcf_entry::add_FORMAT_entry(const string &in, unsigned int pos)
 {
 	FORMAT.push_back(in);
 	FORMAT_to_idx[in] = pos;
+	if(in == "GT"){
+		GT_idx = pos;
+	}else if(in == "DP"){
+		DP_idx = pos;
+	}else if(in == "FT"){
+		FT_idx = pos;
+	}else if(in == "GQ"){
+		GQ_idx = pos;
+	}
 }
 
 // The following function reads in a genotype from a '0/1'-like string.
