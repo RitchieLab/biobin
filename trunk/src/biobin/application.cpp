@@ -42,7 +42,7 @@ Application::~Application(){
 	delete _info;
 	delete regions;
 
-	vector<Knowledge::Locus*>::iterator d_itr = dataset.begin();
+	deque<Knowledge::Locus*>::iterator d_itr = dataset.begin();
 	while(d_itr != dataset.end()){
 		delete *d_itr;
 		++d_itr;

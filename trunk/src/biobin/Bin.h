@@ -9,12 +9,14 @@
 #define BIOBIN_BIN_H
 
 #include <set>
+#include <list>
 
 #include "knowledge/Group.h"
 #include "knowledge/Region.h"
 #include "knowledge/Locus.h"
 
 using std::set;
+using std::list;
 
 namespace BioBin{
 
@@ -24,7 +26,8 @@ class Bin{
 
 public:
 	//! Typedef to hide implementation details of the Locus containment
-	typedef set<Knowledge::Locus*>::const_iterator const_locus_iterator;
+	typedef list<Knowledge::Locus*>::const_iterator const_locus_iterator;
+	typedef list<Knowledge::Locus*>::iterator locus_iterator;
 
 	/*!
 	 * \brief Construct a bin representing a Group (or Pathway)
@@ -98,7 +101,7 @@ public:
 	bool isIntergenic() const {return _is_intergenic;}
 	short getChrom() const {return _chrom;}
 
-	void addLocus(Knowledge::Locus* to_ins) {_variants.insert(to_ins);}
+	void addLocus(Knowledge::Locus* to_ins) {_variants.push_back(to_ins);}
 
 	/**
 	 * Strict ordering is given by Groups, then Regions, then Intergenic, which
@@ -111,6 +114,8 @@ public:
 
 	const_locus_iterator variantBegin() const {return _variants.begin();}
 	const_locus_iterator variantEnd() const {return _variants.end();}
+	locus_iterator variantBegin() { return _variants.begin();}
+	locus_iterator variantEnd() {return _variants.end();}
 
 	/*!
 	 * \brief removes a Locus* from the bin.
@@ -119,10 +124,10 @@ public:
 	 *
 	 * \param itr The iterator pointing to the element to erase
 	 */
-	void erase(const_locus_iterator itr) {_variants.erase(itr); _cached = false;}
+	locus_iterator erase(locus_iterator itr) {_cached = false; return _variants.erase(itr); }
 
 	/*!
-	 * \brief Adds extra data to the bin.
+	 * \brief Adds extraconversion data to the bin.
 	 * This function adds extra data to the bin.  The "extra data" is really
 	 * just a string that we tack on to the end of the identifier.  Note that
 	 * we'll need to change the name here, too
@@ -150,7 +155,7 @@ private:
 	string _name;
 	vector<string> _extra_data;
 
-	set<Knowledge::Locus*> _variants;
+	list<Knowledge::Locus*> _variants;
 
 	const PopulationManager& _pop_mgr;
 };

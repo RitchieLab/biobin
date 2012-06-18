@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <new>
+#include <deque>
 
 #include <sqlite3.h>
 
@@ -32,6 +33,7 @@ using std::vector;
 using std::map;
 using std::new_handler;
 using std::set_new_handler;
+using std::deque;
 
 namespace BioBin {
 
@@ -100,7 +102,7 @@ protected:
 	///< The knowedge meta groups
 	std::map<uint, Knowledge::GroupCollection*> groups;
 	///< the data associated with the user
-	vector<Knowledge::Locus*> dataset;
+	deque<Knowledge::Locus*> dataset;
 
 	///< The variation version (to guarantee that the variations file is correct for the database being used)
 	uint varVersion;

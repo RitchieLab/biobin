@@ -13,6 +13,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <deque>
 #include <boost/unordered_map.hpp>
 
 #include "knowledge/GroupCollection.h"
@@ -27,6 +28,7 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::set;
+using std::deque;
 
 using boost::unordered_map;
 
@@ -49,7 +51,7 @@ public:
 	
 	void InitBins(const map<uint, Knowledge::GroupCollection*> &groups,
 			const Knowledge::RegionCollection& regions,
-			const vector<Knowledge::Locus*>& loci,
+			const deque<Knowledge::Locus*>& loci,
 			Knowledge::Information* info);
 
 	int numRareVariants() const { return _rare_variants;}

@@ -59,14 +59,13 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locusFile << "Chromosome" << sep << "Location" << sep << "ID" << sep
 			<< "Alleles" << sep << "Case Allele Freq." << sep << "Rare" << sep
 			<< "gene(s)" << sep << "bin name(s)\n";
-	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
-	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
 
 	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
-	while(itr != end){
+	while(itr != dataset.end()){
 		(*itr)->print(locusFile, sep);
 		locusFile << sep;
 		(*itr)->printAlleles(locusFile, "|");
@@ -99,12 +98,11 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 
 	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
-	vector<Knowledge::Locus*>::const_iterator itr = dataset.begin();
-	vector<Knowledge::Locus*>::const_iterator end = dataset.end();
+	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 
 	freqFile << "Locus" << sep << "Control NMAF" << sep << "Case NMAF" << sep
 			<< "Rare" << sep << "Bins\n";
-	while(itr != end){
+	while(itr != dataset.end()){
 		freqFile << (*itr)->getID() << sep << 1 - (*itr)->majorAlleleFreq() << sep
 				<< _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;

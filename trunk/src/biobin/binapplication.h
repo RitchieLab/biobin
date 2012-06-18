@@ -93,68 +93,6 @@ void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnp
 	}else{
 		_pop_mgr.loadLoci(dataset);
 	}
-	/*
-
-		vector<Knowledge::Locus*> toDelete;
-		vector <Knowledge::Locus*> locusArray;
-		//map <Knowledge::Locus*, vector<short> > tmp_genotype_map;
-		_data.getLoci(locusArray, controls);
-
-		std::string conversionLog = this->AddReport("lift-over", "tsv", "SNPs that were lifted over to new build which differed dramatically or changed chromosome");
-		std::ofstream cnvLog(conversionLog.c_str());
-		cnvLog<<"Chrom(Orig),Pos(Orig),RSID(Old),Chrom(New),Pos(New),RSID(New)\n";
-
-		map<Knowledge::Locus*, Knowledge::Locus*> converted;
-		vector<Knowledge::Locus*> not_found;
-		cnv.convertLoci(locusArray.begin(), locusArray.end(), converted, not_found);
-		vector<Knowledge::Locus*>::iterator itr = locusArray.begin();
-		vector<Knowledge::Locus*>::iterator end = locusArray.end();
-		map<Knowledge::Locus*, Knowledge::Locus*>::const_iterator missing =
-				converted.end();
-		map<Knowledge::Locus*, Knowledge::Locus*>::const_iterator new_loc_itr;
-
-		std::stringstream missingSNPs;
-		while (itr != end) {
-
-			Knowledge::Locus &orig = **itr;
-			new_loc_itr = converted.find(&orig);
-
-			if (new_loc_itr != missing) {
-
-				if(!((*new_loc_itr).second)){
-					missingSNPs << *((*new_loc_itr).first) << "\n";
-				} else {
-					if ((*new_loc_itr).first->getChrom() != (*new_loc_itr).second->getChrom()) {
-						cnvLog << *((*new_loc_itr).first) << ","
-								<< *((*new_loc_itr).second) << "\n";
-					}
-
-					Locus* newLoc = (*new_loc_itr).second;
-					dataset.push_back(newLoc);
-					_data.remapLocus(&orig, newLoc);
-				}
-			}else{
-				missingSNPs << orig << "\n";
-			}
-
-			++itr;
-		}
-		if (missingSNPs.str().length() > 0) {
-			std::string filename = AddReport("missing-snps", "txt", "SNPs that were dropped during build conversion");
-			std::ofstream file(filename.c_str());
-			file<<missingSNPs.str();
-		}
-
-		for (vector<Knowledge::Locus*>::iterator del_it = locusArray.begin(); del_it != locusArray.end(); del_it++){
-			delete *del_it;
-		}
-
-	} else {
-		_data.getLoci(dataset, controls);
-	}
-
-	_pop_mgr.loadGenotypes(dataset, _data);
-	*/
 
 }
 

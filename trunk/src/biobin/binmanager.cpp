@@ -47,17 +47,16 @@ BinManager::~BinManager() {
 void BinManager::InitBins(
 		const map<uint, Knowledge::GroupCollection*> &groups,
 		const Knowledge::RegionCollection& regions,
-		const vector<Knowledge::Locus*>& loci,
+		const deque<Knowledge::Locus*>& loci,
 		Knowledge::Information* info) {
 
-	vector<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
-	vector<Knowledge::Locus*>::const_iterator l_end = loci.end();
+	deque<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
 
 	_total_variants = loci.size();
 	// Insert a null pointer so the set is not empty.  We'll delete this later...
 	_rare_variants = 0;
 
-	while(l_itr != l_end){
+	while(l_itr != loci.end()){
 		Knowledge::Locus& l = **l_itr;
 
 
@@ -152,7 +151,7 @@ void BinManager::collapseBins(Information* info){
 
 	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
-	Bin::const_locus_iterator v_itr;
+	Bin::locus_iterator v_itr;
 	Bin::const_locus_iterator v_end;
 	while(ExpandByGenes && b_itr != _bin_list.end() && (*b_itr)->isGroup()){
 		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
@@ -237,11 +236,13 @@ void BinManager::collapseBins(Information* info){
 				}
 
 				if (role){
-					(*b_itr)->erase(v_itr);
 					_locus_bins[*v_itr].erase(*b_itr);
+					v_itr = (*b_itr)->erase(v_itr);
+				}else{
+					++v_itr;
 				}
 
-				++v_itr;
+
 			}
 
 			bool unk = false;
