@@ -10,6 +10,9 @@
 #include <sstream>
 #include <boost/algorithm/string.hpp>
 
+using std::new_handler;
+using std::set_new_handler;
+
 namespace Knowledge{
 
 string __vinit[] = {"1","2","3","4","5","6","7","8","9","10",
@@ -20,6 +23,44 @@ string __vinit[] = {"1","2","3","4","5","6","7","8","9","10",
 const vector<string> Locus::_chrom_list(__vinit, __vinit + (sizeof(__vinit) / sizeof(__vinit[0])));
 
 const string Locus::invalid_chrom("");
+
+pool<> Locus::s_locus_pool(sizeof(Locus));
+
+void* Locus::operator new(size_t size) {
+	if (size != sizeof(Locus)) {
+		return ::operator new(size);
+	}
+	void * ret_val = 0;
+	while (!ret_val) {
+		ret_val = s_locus_pool.malloc();
+
+		// Do rituals for out-of-memory conditions here!
+		if (!ret_val) {
+			new_handler gh = set_new_handler(0);
+			set_new_handler(gh);
+
+			if (gh) {
+				(*gh)();
+			} else {
+				throw std::bad_alloc();
+			}
+		}
+	}
+
+	return ret_val;
+}
+
+void Locus::operator delete(void* deadObj, size_t size) {
+	if (deadObj == 0) {
+		return;
+	}
+	if (size != sizeof(Locus)) {
+		::operator delete(deadObj);
+		return;
+	}
+
+	s_locus_pool.free(deadObj);
+}
 
 Locus::Locus(short chrom, uint pos, bool rare, const string& id):
 		_chrom(chrom), _pos(pos), _id(id), _is_rare(rare){

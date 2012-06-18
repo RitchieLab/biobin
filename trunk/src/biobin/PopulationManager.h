@@ -401,10 +401,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 	array<vector<int>, 2> alleleCounts;
 	pair<unordered_map<const Locus*, bitset_pair>::iterator, bool> gen_pair;
 	unordered_map<const Locus*, bitset_pair>::iterator gen_itr;
+	VCF::vcf_entry entry(vcf.N_indv);
 
 	for (uint i=0; i<totalSiteCount; i++) {
 		vcf.get_vcf_entry(i, line);
-		VCF::vcf_entry entry(vcf.N_indv, line);
+		entry.reset(line);
 		entry.parse_basic_entry(true);
 
 		entry.parse_genotype_entries(true, false, false, false);

@@ -14,6 +14,8 @@
 #include <utility>
 #include <ostream>
 #include <stdlib.h>
+#include <boost/pool/pool.hpp>
+#include <new>
 
 #include "Allele.h"
 
@@ -22,8 +24,9 @@ using std::set;
 using std::vector;
 using std::pair;
 using std::ostream;
+using boost::pool;
 
-namespace Knowledge{
+namespace Knowledge {
 
 /*!
  * \brief A class representing a locus in the genome.
@@ -36,9 +39,12 @@ namespace Knowledge{
  * NOTE: The user of this class must ensure that no two loci will have the
  * same chromosome and position.
  */
-class Locus{
+class Locus {
 
 public:
+
+	static void* operator new(size_t size);
+	static void operator delete(void* deadObj, size_t size);
 
 	typedef set<Allele>::const_iterator const_allele_iterator;
 
@@ -53,7 +59,8 @@ public:
 	 * \param pos The position on the chromosome of this locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(const string& chrom_str, uint pos, bool rare=false, const string& id="");
+	Locus(const string& chrom_str, uint pos, bool rare = false,
+			const string& id = "");
 
 	/*!
 	 * \brief Constructs a locus object using the chromosome index.
@@ -67,7 +74,7 @@ public:
 	 * \param pos The position on the chromosome of the locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(short chrom, uint pos, bool rare=false, const string& id="");
+	Locus(short chrom, uint pos, bool rare = false, const string& id = "");
 
 	/*!
 	 * \brief Add an associated allele to this particular Locus.
@@ -100,13 +107,17 @@ public:
 	 * copying Loci, especially in a liftOver situation.
 	 * \return An iterator pointing to the beginning of the allele List
 	 */
-	const_allele_iterator beginAlleles() const { return _alleles.begin(); }
+	const_allele_iterator beginAlleles() const {
+		return _alleles.begin();
+	}
 	/*!
 	 * Returns an iterator to the end of the list of alleles.  Used when
 	 * copying Loci, especially in a liftOver situation.
 	 * \return An iterator pointing to the end of the allele List
 	 */
-	const_allele_iterator endAlleles() const { return _alleles.end(); }
+	const_allele_iterator endAlleles() const {
+		return _alleles.end();
+	}
 
 	/*!
 	 * \brief Return the major allele frequency (that which is most common).
@@ -137,35 +148,49 @@ public:
 	 * a high minor allele frequency can be considered rare because in the case
 	 * population, the minor allele frequency could be low.
 	 */
-	bool isRare() const {return _is_rare;}
+	bool isRare() const {
+		return _is_rare;
+	}
 
 	/*!
 	 * Return the ID of this Locus (passed in or auto-generated).
 	 *
 	 * \return The unique ID of the Locus.
 	 */
-	const string& getID() const {return _id;};
+	const string& getID() const {
+		return _id;
+	}
+	;
 
 	/*!
 	 * Return the string identifying the chromosome (see _chrom_list)
 	 *
 	 * \return The chromosome string of the Locus.
 	 */
-	const string& getChromStr() const {return getChromStr(_chrom);};
+	const string& getChromStr() const {
+		return getChromStr(_chrom);
+	}
+	;
 
 	/*!
 	 * Return the chromosome index of this Locus (helpful for indexing)
 	 *
 	 * \return The cromosome index of the Locus.
 	 */
-	short getChrom() const {return _chrom;};
+	short getChrom() const {
+		return _chrom;
+	}
+	;
 
 	/*!
 	 * Return the position of this Locus
 	 *
 	 * \return The base pair location of this Locus.
 	 */
-	uint getPos() const {return _pos;};
+	uint getPos() const {
+		return _pos;
+	}
+	;
 
 	/*!
 	 * \brief Returns the position of the major allele.
@@ -175,7 +200,9 @@ public:
 	 *
 	 * \return The alternate number of the major allele.
 	 */
-	unsigned short getMajorPos() const {return (*_alleles.begin()).getPos();}
+	unsigned short getMajorPos() const {
+		return (*_alleles.begin()).getPos();
+	}
 
 	/*!
 	 * \brief Determine if the given allele is a minor allele or not
@@ -246,12 +273,13 @@ public:
 	 * \brief A function to print a Locus.
 	 * This function prints a
 	 */
-	void print(ostream& o, const string& sep=",", bool printAlleles=false) const;
+	void print(ostream& o, const string& sep = ",",
+			bool printAlleles = false) const;
 
 	/*!
 	 * \brief a function to print the alleles
 	 */
-	void printAlleles(ostream& o, const string& sep="|") const;
+	void printAlleles(ostream& o, const string& sep = "|") const;
 
 	/*!
 	 * \brief Converts a chromosome index into a chromosome string
@@ -302,16 +330,20 @@ private:
 	// *(_alleles.rbegin()) is the major allele
 	set<Allele> _alleles;
 
+	//flag determining rarity
+	bool _is_rare;
+
 	// Vector of a list of chromosomes
 	static const vector<string> _chrom_list;
 
-	//flag determining rarity
-	bool _is_rare;
+	// memory pool of Locus objects (for speed, Locus objects are fairly lightweight)
+	static pool<> s_locus_pool;
+
 };
 
 template<class Allele_itr>
-void Locus::addAlleles(Allele_itr begin, const Allele_itr& end){
-	while(begin != end){
+void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
+	while (begin != end) {
 		_alleles.insert(_alleles.end(), *begin);
 		++begin;
 	}
@@ -321,20 +353,22 @@ void Locus::addAlleles(Allele_itr begin, const Allele_itr& end){
 
 ostream& operator<<(ostream& o, const Knowledge::Locus& l);
 
-namespace std{
+namespace std {
 
 template<>
 struct less<Knowledge::Locus*> {
 
-	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y) const{
+	bool operator()(const Knowledge::Locus* x,
+			const Knowledge::Locus* y) const {
 		return (y != 0 && x != 0) ? (*x) < (*y) : x < y;
 	}
 };
 
 template<>
 struct less<const Knowledge::Locus*> {
-	
-	bool operator()(const Knowledge::Locus* x, const Knowledge::Locus* y) const{
+
+	bool operator()(const Knowledge::Locus* x,
+			const Knowledge::Locus* y) const {
 		return (y != 0 && x != 0) ? (*x) < (*y) : y < x;
 	}
 };
