@@ -9,12 +9,14 @@
 #define KNOWLEDGE_REGION_H
 
 #include <string>
+#include <deque>
 #include <set>
 #include <map>
 #include <vector>
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
+using std::deque;
 using std::string;
 using std::set;
 using std::map;
@@ -165,7 +167,7 @@ public:
 	/*!
 	 * A typedef to abstract the implementation of the storage of aliases
 	 */
-	typedef set<string>::const_iterator const_alias_iterator;
+	typedef deque<string>::const_iterator const_alias_iterator;
 
 private:
 
@@ -312,7 +314,7 @@ public:
 	 */
 	void addAliases(const string& aliases, const string& sep=",");
 
-	void addAlias(const string& alias) { _aliases.insert(alias); }
+	void addAlias(const string& alias) { _aliases.push_back(alias); }
 
 	/*!
 	 * Return the number of Loci associated with this region
@@ -433,7 +435,7 @@ private:
 	unordered_map<string, const Locus*> _locus_map;
 
 	// A list of all aliases to this Region
-	set<string> _aliases;
+	deque<string> _aliases;
 
 	// A list / mapping of all groups associated w/ this region
 	map<uint, set<Group*> > _group_map;

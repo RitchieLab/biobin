@@ -12,6 +12,7 @@
 
 using std::new_handler;
 using std::set_new_handler;
+using std::sort;
 
 namespace Knowledge{
 
@@ -67,6 +68,7 @@ Locus::Locus(short chrom, uint pos, bool rare, const string& id):
 	if (id.size() == 0 || _id == "."){
 		createID();
 	}
+	_alleles.reserve(2);
 
 }
 
@@ -76,10 +78,12 @@ Locus::Locus(const string& chrom_str, uint pos, bool rare, const string& id):
 	if (_id.size() == 0 || _id == "."){
 		createID();
 	}
+	_alleles.reserve(2);
 }
 
 void Locus::addAllele(const string& allele, float freq){
-	_alleles.insert(Allele(allele, freq, _alleles.size()));
+	_alleles.push_back(Allele(allele, freq, _alleles.size()));
+	sort(_alleles.begin(), _alleles.end());
 }
 
 float Locus::majorAlleleFreq() const{
@@ -173,12 +177,11 @@ void Locus::print(ostream& o, const string& sep, bool printAlleles) const{
 }
 
 void Locus::printAlleles(ostream& o, const string& sep) const{
-	set<Allele>::const_iterator itr = _alleles.begin();
-	set<Allele>::const_iterator end = _alleles.end();
-	if (itr != end){
+	vector<Allele>::const_iterator itr = _alleles.begin();
+	if (itr != _alleles.end()){
 		o << *itr;
 	}
-	while(++itr != end){
+	while(++itr != _alleles.end()){
 		o << sep << *itr;
 	}
 }

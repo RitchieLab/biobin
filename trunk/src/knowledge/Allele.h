@@ -39,7 +39,7 @@ public:
 	 * \param pos The position of the allele in the given input file
 	 */
 	Allele(const string& data, float freq, uint pos) :
-			_data(*(s_string_pool.insert(data).first)), _freq(freq), _pos(pos) {
+			_data(&(*(s_string_pool.insert(data).first))), _freq(freq), _pos(pos) {
 	}
 
 	/*!
@@ -73,7 +73,7 @@ public:
 	 * Returns the data of the allele.
 	 * \return The data associated with this specific allele.
 	 */
-	const string& getData() const { return _data;}
+	const string& getData() const { return *_data;}
 	// Returns the position of the allele (0 is reference typically)
 	unsigned short getPos() const {return _pos;}
 
@@ -88,7 +88,7 @@ public:
 
 private:
 
-	const string& _data;
+	const string* _data;
 	float _freq;
 	unsigned short _pos;
 

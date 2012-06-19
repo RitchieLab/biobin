@@ -40,16 +40,15 @@ void Region::addGroup(uint type, Group& container){
 }
 
 string Region::getAliasString(const string& sep) const{
-	set<string>::const_iterator end = _aliases.end();
-	set<string>::const_iterator itr = _aliases.begin();
+	deque<string>::const_iterator itr = _aliases.begin();
 
 	stringstream ss;
 
-	if (itr != end){
+	if (itr != _aliases.end()){
 		ss<<*itr;
 	}
 
-	while (++itr != end){
+	while (++itr != _aliases.end()){
 		ss<<sep<<*itr;
 	}
 
@@ -65,7 +64,7 @@ void Region::addAliases(const string& aliases, const string& sep){
 	int init_pos = 0;
 	int end_pos = aliases.find(sep);
 	do {
-		_aliases.insert(aliases.substr(init_pos, end_pos-init_pos));
+		_aliases.push_back(aliases.substr(init_pos, end_pos-init_pos));
 		init_pos = end_pos + sep.size();
 		end_pos = aliases.find(sep, init_pos);
 	} while((int) end_pos != (int) string::npos);

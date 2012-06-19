@@ -46,7 +46,7 @@ public:
 	static void* operator new(size_t size);
 	static void operator delete(void* deadObj, size_t size);
 
-	typedef set<Allele>::const_iterator const_allele_iterator;
+	typedef vector<Allele>::const_iterator const_allele_iterator;
 
 	/*!
 	 * \brief Constructs a Locus object using the chromosome string.
@@ -328,7 +328,7 @@ private:
 	// NOTE: I'm using set here to maintain sorted order
 	// IN this case, the final element will be the largest, so
 	// *(_alleles.rbegin()) is the major allele
-	set<Allele> _alleles;
+	vector<Allele> _alleles;
 
 	//flag determining rarity
 	bool _is_rare;
@@ -344,7 +344,7 @@ private:
 template<class Allele_itr>
 void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
 	while (begin != end) {
-		_alleles.insert(_alleles.end(), *begin);
+		_alleles.push_back(*begin);
 		++begin;
 	}
 }
