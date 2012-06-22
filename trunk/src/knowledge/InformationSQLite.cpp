@@ -61,7 +61,7 @@ int InformationSQLite::getZoneSize(){
 	int zone_size = 100000;
 	string zone_sql = "SELECT value FROM setting "
 			"WHERE setting='region_zone_size'";
-	sqlite3_exec(_db, zone_sql.c_str(), &parseSingleIntQuery, &zone_size, NULL);
+	sqlite3_exec(_db, zone_sql.c_str(), parseSingleIntQuery, &zone_size, NULL);
 
 	return zone_size;
 }
@@ -103,6 +103,21 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 	sqlite3_reset(_role_stmt);
 
 	return ret_val;
+}
+
+void InformationSQLite::printPopulations(ostream& os){
+	string pop_sql = "SELECT population, ldcomment FROM population";
+
+	os << "Population\tComment\n";
+	sqlite3_exec(_db, pop_sql.c_str(), printQueryResult, &os, NULL);
+}
+
+void InformationSQLite::printSources(ostream& os){
+	string src_sql = "SELECT source_id, source FROM source";
+
+	os << "ID\tSource Name\n";
+	sqlite3_exec(_db, src_sql.c_str(), printQueryResult, &os, NULL);
+
 }
 
 void InformationSQLite::prepRoleStmt(){
@@ -208,6 +223,18 @@ int InformationSQLite::parseGroupTypeQuery(void* obj, int n_cols,
 	map<int, string>* map_obj = (map<int, string>*) obj;
 
 	(*map_obj)[atoi(col_vals[0])] = col_vals[1];
+
+	return 0;
+}
+
+int InformationSQLite::printQueryResult(void* obj, int n_cols, char** col_vals, char** col_names){
+
+	ostream & os = *static_cast<ostream *>(obj);
+	os << col_vals[0];
+	for (int i = 1; i < n_cols; i++){
+		os << "\t" << col_vals[i];
+	}
+	os << "\n";
 
 	return 0;
 }

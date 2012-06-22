@@ -55,6 +55,9 @@ public:
 
 	virtual int getSNPRole(const Locus& loc, const Region& reg);
 
+	virtual void printPopulations(ostream& os);
+	virtual void printSources(ostream& os);
+
 private:
 	void prepRoleStmt();
 
@@ -74,8 +77,8 @@ private:
 	 * SQLite callback to parse the zone
 	 */
 	static int parseSingleIntQuery(void*, int, char**, char**);
-
 	static int parseMultiIntQuery(void*, int, char**, char**);
+	static int printQueryResult(void*, int, char**, char**);
 
 
 	sqlite3* _db;

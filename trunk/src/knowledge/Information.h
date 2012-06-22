@@ -132,7 +132,7 @@ public:
 	virtual int getZoneSize() = 0;
 
 	/*!
-	 * \breif Returns a SNP's role.
+	 * \brief Returns a SNP's role.
 	 * This function returns a SNPs role in a gene.
 	 *
 	 * \param loc The Locus object in question
@@ -141,6 +141,22 @@ public:
 	 * \return An integer that represents a bitmask of the snp_roles
 	 */
 	virtual int getSNPRole(const Locus& loc, const Region& reg) = 0;
+
+	/*!
+	 * \brief Prints a list of the populations.
+	 * Prints a list of all of the populations available in the database
+	 *
+	 * \param os The output stream to print to.
+	 */
+	virtual void printPopulations(ostream& os) = 0;
+
+	/*!
+	 * \brief Prints a list of all of the available sources
+	 * Prints all of the avaialable sources to the given output stream.
+	 *
+	 * \param os The output stream to print to.
+	 */
+	virtual void printSources(ostream& os) = 0;
 };
 
 }

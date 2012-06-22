@@ -106,6 +106,9 @@ void Configuration::initHidden(){
 }
 
 void Configuration::initCmd(){
+	_cmd.add_options()
+		("print-populations", "Print populations available in LOKI")
+		("print-sources", "Print the sources available in LOKI");
 	_cmd_init = true;
 }
 
@@ -212,6 +215,12 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	if(vm.count("include-source-file")){
 		std::cerr<<"WARNING: include-source-file functionality has not been implemented yet.\n";
 	}
+	//==========================================
+	// Parsing printing options
+	//==========================================
+	BioBin::Application::c_print_populations = vm.count("print-populations");
+	BioBin::Application::c_print_sources = vm.count("print-sources");
+	BioBin::Application::s_run_normal = !(BioBin::Application::c_print_populations || BioBin::Application::c_print_sources);
 
 	//==========================================
 	// Parsing report strategies
@@ -233,7 +242,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BioBin::BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
 	BioBin::BinManager::ExpandByGenes = vm["bin-genes"].as<Bool>();
 	BioBin::BinManager::IncludeIntergenic = vm["bin-intergenic"].as<Bool>();
-	if(!BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
+	if(BioBin::Application::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		if(!BioBin::BinManager::IncludeIntergenic){
 			std::cerr << "ERROR: You must bin by either pathways, genes, or intergenic.\n";
 			throw validation_error(validation_error::invalid_option_value);

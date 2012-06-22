@@ -81,6 +81,9 @@ public:
 
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
 	static std::string reportPrefix;
+	static bool c_print_sources;
+	static bool c_print_populations;
+	static bool s_run_normal;
 
 private:
 	void Init(const string& dbFilename, bool reportVersions);

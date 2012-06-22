@@ -9,6 +9,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <iostream>
 
 #include "knowledge/liftover/ConverterSQLite.h"
 #include "knowledge/InformationSQLite.h"
@@ -19,12 +20,24 @@ namespace BioBin {
 
 bool Application::errorExit = false;
 std::string Application::reportPrefix = "biobin";
+bool Application::c_print_sources = false;
+bool Application::c_print_populations = false;
+bool Application::s_run_normal = true;
+
 new_handler Application::currentHandler;
 
 Application::Application(const string& db_fn) :
 		dbFilename(db_fn), varVersion(0), geneExtensionLength(0) {
 
 	Init(db_fn, true);
+
+	if(c_print_populations){
+		_info->printPopulations(std::cout);
+	}
+
+	if(c_print_sources){
+		_info->printSources(std::cout);
+	}
 
 	if(!currentHandler){
 		currentHandler = set_new_handler(releaseDBCache);

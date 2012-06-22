@@ -6,6 +6,7 @@
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
+#include "application.h"
 
 #include "task.h"
 #include "taskfilegeneration.h"
@@ -118,7 +119,6 @@ int main(int argc, char *argv[]) {
 				("version,v","Display version")
 				("sample-config,S", "Print a sample configuration to the screen");
 
-	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
 
 	po::options_description hidden("Hidden Biobin Options");
 	hidden.add_options()
@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
 
 	po::options_description config_options;
 	Knowledge::Configuration::addConfigFile(BioBin::Configuration::addConfigFile(config_options));
+
+	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
 
 	po::positional_options_description pos;
 	pos.add("config-file",-1);
@@ -196,28 +198,33 @@ int main(int argc, char *argv[]) {
 		return 3;
 	}
 
-	// TODO: check for existence of the file here!
-	if(BioBin::Main::c_vcf_file.size() == 0){
-		std::cerr<<"ERROR: No VCF file given.  You must supply a vcf file.\n";
-		exit(1);
-	}
+	if(BioBin::Application::s_run_normal){
 
-	boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
-	if (!boost::filesystem::is_regular_file(vcf_path)) {
-		std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
-		exit(1);
+		// TODO: check for existence of the file here!
+		if(BioBin::Main::c_vcf_file.size() == 0){
+			std::cerr<<"ERROR: No VCF file given.  You must supply a vcf file.\n";
+			exit(1);
+		}
+
+		boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
+		if (!boost::filesystem::is_regular_file(vcf_path)) {
+			std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
+			exit(1);
+		}
 	}
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
-	app->initTasks();
+	if(BioBin::Application::s_run_normal){
+		app->initTasks();
 
-	try {
-		app->RunCommands();
-	}
-	catch (std::exception& e) {
-		BioBin::BinApplication::errorExit = true;
-		std::cerr<<"\nError: \t"<<e.what()<<".  Unable to continue.\n";
+		try {
+			app->RunCommands();
+		}
+		catch (std::exception& e) {
+			BioBin::BinApplication::errorExit = true;
+			std::cerr<<"\nError: \t"<<e.what()<<".  Unable to continue.\n";
+		}
 	}
 
 	delete app;
