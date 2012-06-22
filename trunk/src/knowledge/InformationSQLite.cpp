@@ -60,7 +60,7 @@ int InformationSQLite::getZoneSize(){
 	// default is 100K
 	int zone_size = 100000;
 	string zone_sql = "SELECT value FROM setting "
-			"WHERE setting='biopolymer_zone_size'";
+			"WHERE setting='zone_size'";
 	sqlite3_exec(_db, zone_sql.c_str(), parseSingleIntQuery, &zone_size, NULL);
 
 	return zone_size;

@@ -131,10 +131,7 @@ void RegionCollectionSQLite::updateZones(){
 	// See loki_updater.py for the algorithm here
 
 	// Get the zone size
-	int zone_size=100000;
-	string zone_sql = "SELECT value FROM setting "
-			"WHERE setting='biopolymer_zone_size'";
-	sqlite3_exec(db, zone_sql.c_str(), &parseSingleIntQuery, &zone_size, NULL);
+	int zone_size=_info->getZoneSize();
 
 	// Reverse any regions that are backwards
 	string region_reverse_sql = "UPDATE " + _s_tmp_region_tbl + " "
