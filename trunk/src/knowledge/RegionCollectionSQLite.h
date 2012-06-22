@@ -12,6 +12,9 @@
 #include "InformationSQLite.h"
 
 #include <sqlite3.h>
+#include <string>
+
+using std::string;
 
 namespace Knowledge{
 
@@ -67,6 +70,8 @@ public:
 	virtual uint Load(const unordered_set<uint>& ids,
 			const vector<string>& aliasList);
 
+	virtual void loadFiles();
+
 private:
 	//! true if we opened the connection, false otherwise
 	bool self_open;
@@ -79,8 +84,17 @@ private:
 	int _popID;
 	int _def_id;
 
+	static string _s_tmp_region_tbl;
+	static string _s_tmp_zone_tbl;
+
 	//! Adds a region based on the row (or returns the already added region)
 	Knowledge::Region* addRegion(sqlite3_stmt* row);
+
+	//! Adds the stuff from a single region file
+	void loadFile(const string& fn);
+
+	//! Creates zones for the temp region table
+	void updateZones();
 
 	//! Prepares some statments to be used in finding the row information
 	void prepareStmts();
@@ -89,6 +103,8 @@ private:
 	 * Callback to parse a list of region IDs and add them to the undordered_list
 	 */
 	static int parseRegionIDQuery(void*, int, char**, char**);
+
+	static int parseSingleIntQuery(void*, int, char**, char**);
 };
 
 template<class T_cont>

@@ -9,15 +9,12 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-//#include <boost/icl/interval_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 #include "Region.h"
 
 using boost::unordered_map;
 using boost::unordered_set;
-//using boost::icl::interval_map;
-//using boost::icl::interval;
 using std::string;
 using std::vector;
 using std::set;
@@ -111,7 +108,8 @@ public:
 	template<class T_cont>
 	RegionCollection(const T_cont& loci) :
 			_dataset(new LocusContainer<T_cont>(loci)),
-			region_not_found("Not Found", -1) {}
+			region_not_found("Not Found", -1) {
+	}
 	/*!
 	 * Destroy the RegionCollection object.  This will in turn also delete any
 	 * Regions that were created with the AddRegion methods.
@@ -304,6 +302,8 @@ public:
 	virtual uint Load(const unordered_set<uint>& ids,
 			const vector<string>& aliasList) = 0;
 
+	virtual void loadFiles() = 0;
+
 	/*!
 	 * \brief Calls Load(...) with an empty ID list.
 	 * Calls the Load function with an empty ID list.  This should not be
@@ -341,6 +341,8 @@ public:
 	static string pop_str;
 	//! The amount of gene boundary expansion (if using no-ld, default 0)
 	static int gene_expansion;
+	//! A vector of strngs containing custom regions
+	static vector<string> c_region_files;
 
 protected:
 	//! A map from id -> Region*
@@ -352,16 +354,6 @@ protected:
 	Information* _info;
 
 	const Container* const _dataset;
-
-	// OK, this is ugly!
-	/*!
-	 * It's a map from chromosome -> map of intervals -> set of Regions
-	 * Basically, use as the following:
-	 * _region_bounds[chromosome][position] = {All Regions containing that position}
-	 *
-	 * TODO: Do I need this any more???
-	 */
-	//unordered_map<short,interval_map<uint, set<Region*> > > _region_bounds;
 
 	// Instead of mapping by position, let's map by locus!
 	unordered_map<const Locus*, set<Region*> > _locus_map;

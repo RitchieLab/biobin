@@ -23,6 +23,8 @@ string RegionCollection::pop_str = "NO-LD";
 // The amount of gene boundary expansion (if using no-ld)
 int RegionCollection::gene_expansion = 0;
 
+vector<string> RegionCollection::c_region_files;
+
 RegionCollection::~RegionCollection(){
 	// Go through the map of id->Region* and delete all of the regions
 	unordered_map<uint, Region*>::iterator itr = _region_map.begin();
@@ -84,33 +86,6 @@ RegionCollection::const_region_iterator RegionCollection::locusEnd(const Locus* 
 	}
 	return empty_region_set.end();
 }
-/*
-RegionCollection::const_region_iterator RegionCollection::positionBegin(short chrom, uint pos) const{
-	unordered_map<short,interval_map<uint, set<Region*> > >::const_iterator idx_itr =
-			_region_bounds.find(chrom);
-	if (idx_itr != _region_bounds.end()){
-		interval_map<uint, set<Region*> >::const_iterator interval_itr =
-				(*idx_itr).second.find(pos);
-		if (interval_itr != (*idx_itr).second.end()){
-			return (*interval_itr).second.begin();
-		}
-	}
-	return empty_region_set.begin();
-}
-
-RegionCollection::const_region_iterator RegionCollection::positionEnd(short chrom, uint pos) const{
-	unordered_map<short,interval_map<uint, set<Region*> > >::const_iterator idx_itr =
-			_region_bounds.find(chrom);
-	if (idx_itr != _region_bounds.end()){
-		interval_map<uint, set<Region*> >::const_iterator interval_itr =
-				(*idx_itr).second.find(pos);
-		if (interval_itr != (*idx_itr).second.end()){
-			return (*interval_itr).second.end();
-		}
-	}
-	return empty_region_set.end();
-}
-*/
 
 void RegionCollection::insertRegion(Region& region){
 	if(_region_map.find(region.getID()) == _region_map.end()){
@@ -124,14 +99,6 @@ void RegionCollection::insertRegion(Region& region){
 	}
 }
 
-/*
-void RegionCollection::insertRegionBound(Region& region, short chr, uint start, uint end){
-	set<Region*> new_set;
-	new_set.insert(&region);
-	_region_bounds[chr].add(std::make_pair(interval<uint>::closed(start, end), new_set));
-}
-*/
-
 Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases) {
 
 	if (_region_map.find(id) == _region_map.end()) {
@@ -142,16 +109,6 @@ Knowledge::Region* RegionCollection::AddRegion(const string& name, uint id, shor
 		// WARNING: inserting a region with an identical ID will result in a memory leak!
 		_region_map.insert(std::make_pair(id, &new_region));
 		new_region.addAliases(aliases);
-
-		/*
-		set<Region*> new_set;
-		new_set.insert(&new_region);
-
-		// Make it available to the interval map
-		_region_bounds[chrom].add(
-				std::make_pair(interval<uint>::closed(effStart, effStop),
-						new_set));
-		*/
 
 		// Add all aliases, including the canonical name
 		_alias_map[name].insert(&new_region);
