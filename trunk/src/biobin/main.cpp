@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
 				("version,v","Display version")
 				("sample-config,S", "Print a sample configuration to the screen");
 
+	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
 
 	po::options_description hidden("Hidden Biobin Options");
 	hidden.add_options()
@@ -129,8 +130,6 @@ int main(int argc, char *argv[]) {
 
 	po::options_description config_options;
 	Knowledge::Configuration::addConfigFile(BioBin::Configuration::addConfigFile(config_options));
-
-	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
 
 	po::positional_options_description pos;
 	pos.add("config-file",-1);
