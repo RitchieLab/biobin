@@ -113,12 +113,12 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 
 
 	// At this point we have a list of IDs to filter on, so start creating groups!
-	string group_cmd = "SELECT group_region.group_id, 'group'.label, "
+	string group_cmd = "SELECT group_biopolymer.group_id, 'group'.label, "
 			"'group'.description, group_concat(group_name.name) "
-			"FROM group_region INNER JOIN 'group' USING (group_id) "
+			"FROM group_biopolymer INNER JOIN 'group' USING (group_id) "
 			"INNER JOIN group_name USING (group_id) "
-			"WHERE group_region.region_id=:region_id AND group_region.source_id=:id "
-			"GROUP BY group_region.group_id";
+			"WHERE group_biopolymer.biopolymer_id=:region_id AND group_biopolymer.source_id=:id "
+			"GROUP BY group_biopolymer.group_id";
 
 	sqlite3_stmt* group_stmt;
 	sqlite3_prepare_v2(_db, group_cmd.c_str(), -1, &group_stmt, NULL);

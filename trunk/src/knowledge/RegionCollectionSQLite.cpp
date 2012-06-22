@@ -36,7 +36,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		stringstream alias_stream;
 		vector<string>::const_iterator a_itr = alias_list.begin();
 
-		alias_stream << "SELECT region_id FROM region_name WHERE region_name IN ('"
+		alias_stream << "SELECT biopolymer_id FROM biopolymer_name WHERE biopolymer_name IN ('"
 				<< *a_itr << "'";
 
 		while(++a_itr != alias_list.end()){
@@ -54,7 +54,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		stringstream id_stream;
 		unordered_set<uint>::const_iterator itr = id_list.begin();
 
-		id_stream << "region.region_id IN (" << *itr;
+		id_stream << "biopolymer.biopolymer_id IN (" << *itr;
 		while(++itr != id_list.end()){
 			id_stream << "," << *itr;
 		}
@@ -62,13 +62,13 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		where_clause += id_stream.str();
 	}
 
-	string command = "SELECT region.region_id, region.label "
-			"FROM region_zone "
-			"INNER JOIN region_bound USING (region_id, chr, population_id) "
-			"INNER JOIN region USING (region_id) ";
+	string command = "SELECT biopolymer.biopolymer_id, biopolymer.label "
+			"FROM biopolymer_zone "
+			"INNER JOIN biopolymer_region USING (biopolymer_id, chr) "
+			"INNER JOIN biopolymer USING (biopolymer_id) ";
 
-	where_clause += "region_zone.chr=:chrom AND region_zone.population_id IN (:pop_id, :def_pop_id) "
-			"AND zone=:pos_zone AND region_bound.posMin<:pos AND region_bound.posMax>:pos ";
+	where_clause += "biopolymer_zone.chr=:chrom AND biopolymer_region.ldprofile_id IN (:pop_id, :def_pop_id) "
+			"AND zone=:pos_zone AND biopolymer_region.posMin<:pos AND biopolymer_region.posMax>:pos ";
 
 	string stmt = command + where_clause;
 
@@ -112,13 +112,13 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 void RegionCollectionSQLite::prepareStmts(){
 
 	string region_alias_sql = "SELECT name "
-			"FROM region_name WHERE region_id=?";
+			"FROM biopolymer_name WHERE biopolymer_id=?";
 
 	sqlite3_prepare_v2(db, region_alias_sql.c_str(), -1, &_region_name_stmt, NULL);
 
-	string region_bound_sql = "SELECT population_id, chr, posMin, posMax "
-			"FROM region_bound "
-			"WHERE region_id=? AND population_id IN (?, ?)";
+	string region_bound_sql = "SELECT ldprofile_id, chr, posMin, posMax "
+			"FROM biopolymer_bound "
+			"WHERE biopolymer_id=? AND ldprofile_id IN (?, ?)";
 
 	sqlite3_prepare_v2(db, region_bound_sql.c_str(), -1, &_region_bound_stmt, NULL);
 

@@ -36,16 +36,16 @@ InformationSQLite::~InformationSQLite(){
 }
 
 int InformationSQLite::getPopulationID(const string& pop_str){
-	string queryStr = string("SELECT population_id FROM population "
-			"WHERE population='") + pop_str + string("')");
+	string queryStr = string("SELECT ldprofile_id FROM ldprofile "
+			"WHERE ldprofile='") + pop_str + string("')");
 
 	string result;
 	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
 			&result, NULL);
 
 	if (err_code != 0){
-		string queryStr = string("SELECT population_id FROM population "
-				"WHERE population='n/a'");
+		string queryStr = string("SELECT ldprofile_id FROM ldprofile "
+				"WHERE ldprofile='n/a'");
 		if(sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery, &result, NULL)){
 			//NOTE: I should never get here in a properly formatted LOKI 2.0 database!
 			return 1;
@@ -60,7 +60,7 @@ int InformationSQLite::getZoneSize(){
 	// default is 100K
 	int zone_size = 100000;
 	string zone_sql = "SELECT value FROM setting "
-			"WHERE setting='region_zone_size'";
+			"WHERE setting='biopolymer_zone_size'";
 	sqlite3_exec(_db, zone_sql.c_str(), parseSingleIntQuery, &zone_size, NULL);
 
 	return zone_size;
@@ -106,7 +106,7 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 }
 
 void InformationSQLite::printPopulations(ostream& os){
-	string pop_sql = "SELECT population, ldcomment FROM population";
+	string pop_sql = "SELECT ldprofile, comment FROM ldprofile";
 
 	os << "Population\tComment\n";
 	sqlite3_exec(_db, pop_sql.c_str(), printQueryResult, &os, NULL);
@@ -160,8 +160,8 @@ void InformationSQLite::prepRoleStmt(){
 	role_ids.clear();
 
 	// Prep the SQL statement to get the code
-	string role_sql = "SELECT role_id FROM snp INNER JOIN snp_role USING (rs) "
-			"WHERE chr=? AND pos=? AND region_id=?";
+	string role_sql = "SELECT role_id FROM snp_locus INNER JOIN snp_biopolymer_role USING (rs) "
+			"WHERE chr=? AND pos=? AND biopolymer_id=?";
 	sqlite3_prepare_v2(_db, role_sql.c_str(), -1, &_role_stmt, NULL);
 
 }
