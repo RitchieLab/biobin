@@ -263,13 +263,14 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	Container::const_iterator itr = _dataset->begin();
 	int zone_size = _info->getZoneSize();
 	while(itr != _dataset->end()){
+		int zone_no = (*itr)->getPos()/zone_size;
 		sqlite3_bind_int(region_stmt, chr_idx, (*itr)->getChrom());
 		sqlite3_bind_int(region_stmt, pos_idx, static_cast<int>((*itr)->getPos()));
-		sqlite3_bind_int(region_stmt, pos_zone_idx, (*itr)->getPos()/zone_size);
+		sqlite3_bind_int(region_stmt, pos_zone_idx, zone_no);
 
 		sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
 		sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
-		sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, (*itr)->getPos()/zone_size);
+		sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, zone_no);
 
 		// Now, execute the query!
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){
@@ -279,17 +280,19 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		}
 		sqlite3_reset(region_stmt);
 
-		while(sqlite3_step(tmp_region_stmt) == SQLITE_ROW){
-			uint pop_id_result = sqlite3_column_int(tmp_region_stmt, 0);
-			string label = (const char*) (sqlite3_column_text(tmp_region_stmt, 1));
-			short chr = static_cast<short>(sqlite3_column_int(tmp_region_stmt, 2));
-			uint start = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 3));
-			uint end = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 4));
-			Knowledge::Region* reg = AddRegion(label, pop_id_result, chr, start, end);
-			reg->addLocus(*itr);
-			_locus_map[*itr].insert(reg);
+		if(c_region_files.size() != 0){
+			while(sqlite3_step(tmp_region_stmt) == SQLITE_ROW){
+				uint pop_id_result = sqlite3_column_int(tmp_region_stmt, 0);
+				string label = (const char*) (sqlite3_column_text(tmp_region_stmt, 1));
+				short chr = static_cast<short>(sqlite3_column_int(tmp_region_stmt, 2));
+				uint start = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 3));
+				uint end = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 4));
+				Knowledge::Region* reg = AddRegion(label, pop_id_result, chr, start, end);
+				reg->addLocus(*itr);
+				_locus_map[*itr].insert(reg);
+			}
+			sqlite3_reset(tmp_region_stmt);
 		}
-		sqlite3_reset(tmp_region_stmt);
 
 		++itr;
 	}
