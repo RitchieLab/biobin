@@ -58,7 +58,7 @@ void RegionCollectionSQLite::loadFiles(){
 			"region_id INTEGER NOT NULL,"
 			"chr TINYINT NOT NULL,"
 			"zone INTEGER NOT NULL,"
-			"PRIMARY_KEY (region_id, chr, zone)"
+			"PRIMARY KEY (region_id, chr, zone)"
 		")";
 
 	sqlite3_exec(db, tmp_zone_sql.c_str(), NULL, NULL, NULL);
@@ -106,15 +106,15 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 		while (data_file.good()) {
 			getline(data_file, line);
 			split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
-			if(result.size() == 4 && result[0][0] == '#'){
+			if(result.size() == 4 && result[0][0] != '#'){
 				short chr = Locus::getChrom(result[0]);
 				int posMin = atoi(result[2].c_str());
 				int posMax = atoi(result[3].c_str());
 
 				if(chr != -1 && posMin && posMax){
-					sqlite3_bind_int(insert_stmt, 0, chr);
-					sqlite3_bind_int(insert_stmt, 2, posMin);
-					sqlite3_bind_int(insert_stmt, 3, posMax);
+					sqlite3_bind_int(insert_stmt, 2, chr);
+					sqlite3_bind_int(insert_stmt, 3, posMin);
+					sqlite3_bind_int(insert_stmt, 4, posMax);
 					sqlite3_bind_text(insert_stmt, 1, result[1].c_str(), -1, SQLITE_STATIC);
 
 					while(sqlite3_step(insert_stmt)==SQLITE_ROW) {}
@@ -169,7 +169,7 @@ void RegionCollectionSQLite::updateZones(){
 	// OK, now we're ready to do some insertin'!
 	stringstream zone_ins_str;
 	zone_ins_str << "INSERT OR IGNORE INTO " << _s_tmp_zone_tbl << " (region_id,chr,zone) "
-			<< "SELECT rb.biopolymer_id, rb.chr, z.zone "
+			<< "SELECT rb.region_id, rb.chr, z.zone "
 			<< "FROM " << _s_tmp_region_tbl << " AS rb JOIN " << tmp_zone_tbl << " AS z "
 			<< "ON z.zone >= rb.posMin / " << zone_size << " "
 			<< "AND z.zone <= rb.posMax / " << zone_size << " ";
@@ -277,6 +277,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		sqlite3_reset(region_stmt);
 
 		if(c_region_files.size() != 0){
+
 			sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
 			sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
 			sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, zone_no);
@@ -385,5 +386,6 @@ int RegionCollectionSQLite::parseSingleIntQuery(void* pop_id, int n_cols, char**
 	(*result) = atoi(col_vals[0]);
 	return 0;
 }
+
 
 } // namespace Knowledge;

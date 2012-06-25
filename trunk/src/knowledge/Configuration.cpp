@@ -39,16 +39,18 @@ bool Configuration::_hidden_init = false;
 
 void Configuration::initGeneric(){
 	_generic.add_options()
-			("include-groups",value<vector<int> >()->composing()->multitoken(),
+			("include-groups",value<vector<int> >()->composing(),
 					"A list of group IDs to include")
-			("include-group-names", value<vector<string> >()->composing()->multitoken(),
+			("include-group-names", value<vector<string> >()->composing(),
 					"A list of group names to include")
 			("include-group-file", value<vector<string> >()->composing(),
 					"A file containg a group definition")
 			("population,P", value<string>(&RegionCollection::pop_str)->default_value("n/a"),
 					"The population to base the gene boundaries on")
 			("gene-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
-					"The amount to expand the genes by (when using NO-LD)");
+					"The amount to expand the genes by (when using NO-LD)")
+			("region-file", value<vector<string> >(&RegionCollection::c_region_files)->composing(),
+					"A file containing custom regions");
 
 	_generic_init = true;
 }
