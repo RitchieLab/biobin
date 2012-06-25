@@ -268,10 +268,6 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		sqlite3_bind_int(region_stmt, pos_idx, static_cast<int>((*itr)->getPos()));
 		sqlite3_bind_int(region_stmt, pos_zone_idx, zone_no);
 
-		sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
-		sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
-		sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, zone_no);
-
 		// Now, execute the query!
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){
 			Knowledge::Region* reg = addRegion(region_stmt);
@@ -281,6 +277,10 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		sqlite3_reset(region_stmt);
 
 		if(c_region_files.size() != 0){
+			sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
+			sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
+			sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, zone_no);
+
 			while(sqlite3_step(tmp_region_stmt) == SQLITE_ROW){
 				uint pop_id_result = sqlite3_column_int(tmp_region_stmt, 0);
 				string label = (const char*) (sqlite3_column_text(tmp_region_stmt, 1));
@@ -311,7 +311,7 @@ void RegionCollectionSQLite::prepareStmts(){
 	sqlite3_prepare_v2(db, region_alias_sql.c_str(), -1, &_region_name_stmt, NULL);
 
 	string region_bound_sql = "SELECT ldprofile_id, chr, posMin, posMax "
-			"FROM biopolymer_bound "
+			"FROM biopolymer_region "
 			"WHERE biopolymer_id=? AND ldprofile_id IN (?, ?)";
 
 	sqlite3_prepare_v2(db, region_bound_sql.c_str(), -1, &_region_bound_stmt, NULL);
