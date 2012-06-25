@@ -187,6 +187,10 @@ private:
 					_chr < other._chr;
 		}
 
+		bool operator==(const Boundary& other) const {
+			return _start == other._start &&_stop == other._stop && _chr == other._chr;
+		}
+
 		short getChrom() const { return _chr; }
 
 	private:

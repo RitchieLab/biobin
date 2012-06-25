@@ -71,7 +71,7 @@ void Region::addAliases(const string& aliases, const string& sep){
 }
 
 bool Region::operator<(const Region& other) const{
-	// order by chromosome, then start, then end position, then by name
+	// order by chromosome, then start, then end position, then by id
 	return (_def_bounds == other._def_bounds) ?
 			_id < other._id : _def_bounds < other._def_bounds;
 }
