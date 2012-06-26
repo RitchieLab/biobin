@@ -46,7 +46,7 @@ void Configuration::initGeneric(){
 				"The location of the database")
 		("vcf-file,V",value<string>(&Main::c_vcf_file), "The file containing VCF information")
 		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
-		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05),
+		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05, "0.05"),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("keep-common-loci,k",value<Bool>()->default_value(true),
 				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
@@ -87,7 +87,7 @@ void Configuration::initGeneric(){
 				"Genomic build of input data")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
 				"Phenotype control value")
-		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125),
+		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125,"0.125"),
 				"Minimum fraction of population needed for control cases")
 		("rare-case-control", value<Bool>()->default_value(false),
 				"Flag indicating determining rarity of variants by both case and control populations")
