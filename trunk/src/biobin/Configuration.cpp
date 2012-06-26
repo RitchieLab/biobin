@@ -204,13 +204,6 @@ void Configuration::parseOptions(const po::variables_map& vm){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
 	}
 
-	if(vm.count("include-sources")){
-		std::cerr<<"WARNING: include-sources functionality has not been implemented yet.\n";
-	}
-
-	if(vm.count("include-source-file")){
-		std::cerr<<"WARNING: include-source-file functionality has not been implemented yet.\n";
-	}
 	//==========================================
 	// Parsing printing options
 	//==========================================
