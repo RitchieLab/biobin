@@ -16,6 +16,7 @@
 
 #include "RegionCollection.h"
 #include "GroupCollection.h"
+#include "Information.h"
 
 using std::string;
 using std::vector;
@@ -39,18 +40,23 @@ bool Configuration::_hidden_init = false;
 
 void Configuration::initGeneric(){
 	_generic.add_options()
-			("include-groups",value<vector<int> >()->composing(),
+			("include-groups",value<Container<int> >()->composing(),
 					"A list of group IDs to include")
-			("include-group-names", value<vector<string> >()->composing(),
+			("include-group-names", value<Container<string> >()->composing(),
 					"A list of group names to include")
-			("include-group-file", value<vector<string> >()->composing(),
+			("include-group-file", value<Container<string> >()->composing(),
 					"A file containg a group definition")
 			("population,P", value<string>(&RegionCollection::pop_str)->default_value("n/a"),
 					"The population to base the gene boundaries on")
 			("gene-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
 					"The amount to expand the genes by (when using NO-LD)")
-			("region-file", value<vector<string> >(&RegionCollection::c_region_files)->composing(),
-					"A file containing custom regions");
+			("region-file", value<Container<string> >()->composing(),
+					"A file containing custom regions")
+			("include-sources",value<Container<string> >()->composing(),
+					"A list of source names to include")
+			("include-source-file",value<Container<string> >()->composing(),
+					"A list of filenames containing source names to include");
+
 
 	_generic_init = true;
 }
@@ -135,16 +141,16 @@ void Configuration::printConfig(std::ostream& os){
 
 void Configuration::parseOptions(const po::variables_map& vm){
 	if (vm.count("include-group-names")){
-		GroupCollection::c_group_names = vm["include-group-names"].as<vector<string> >();
+		GroupCollection::c_group_names = vm["include-group-names"].as<Container<string> >();
 	}
 
 	if (vm.count("include-groups")){
-		vector<int> ids = vm["include-groups"].as<vector<int> >();
+		vector<int> ids = vm["include-groups"].as<Container<int> >();
 		GroupCollection::c_id_list.insert(ids.begin(), ids.end());
 	}
 
 	if (vm.count("include-group-file")){
-		vector<string> files = vm["include-group-file"].as<vector<string> >();
+		vector<string> files = vm["include-group-file"].as<Container<string> >();
 		// Iterate over each file, adding it to the group names
 		vector<string>::const_iterator f_itr = files.begin();
 		vector<string>::const_iterator f_end = files.end();
@@ -165,8 +171,40 @@ void Configuration::parseOptions(const po::variables_map& vm){
 			++f_itr;
 		}
 	}
+
+	if (vm.count("region-file")){
+		RegionCollection::c_region_files = vm["region-file"].as<Container<string> >();
+	}
+
+	if (vm.count("include-sources")){
+		Information::c_source_names = vm["include-sources"].as<Container<string> >();
+	}
+
+	if (vm.count("include-source-file")){
+		vector<string> files = vm["include-source-file"].as<Container<string> >();
+		// Iterate over each file, adding it to the group names
+		vector<string>::const_iterator f_itr = files.begin();
+		vector<string>::const_iterator f_end = files.end();
+		while(f_itr != f_end){
+			ifstream data_file((*f_itr).c_str());
+			if (!data_file.is_open()){
+				std::cerr<<"WARNING: cannot find " << (*f_itr) <<", ignoring.";
+			} else {
+				string line;
+				vector<string> result;
+				while(data_file.good()){
+					getline(data_file, line);
+					split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
+					Information::c_source_names.insert(Information::c_source_names.end(), result.begin(), result.end());
+				}
+				data_file.close();
+			}
+			++f_itr;
+		}
+	}
 }
 }
+
 
 
 

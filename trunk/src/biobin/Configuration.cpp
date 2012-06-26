@@ -50,10 +50,6 @@ void Configuration::initGeneric(){
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("keep-common-loci,k",value<Bool>()->default_value(true),
 				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
-		("include-sources",value<vector<int> >()->composing()->multitoken(),
-				"A list of source IDs to include")
-		("include-source-file",value<vector<string> >()->composing()->multitoken(),
-				"A list of filenames containing source IDs to include")
 		("add-group", value<vector<string> >()->composing(),
 				"A list of filenames containing a group collection definition")
 		("output-delimiter,d",value<string>(&Task::GenerateFiles::OutputDelimiter)->default_value(","),

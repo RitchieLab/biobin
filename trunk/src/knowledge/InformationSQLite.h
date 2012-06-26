@@ -58,6 +58,8 @@ public:
 	virtual void printPopulations(ostream& os);
 	virtual void printSources(ostream& os);
 
+	virtual const set<unsigned int>& getSourceIds();
+
 private:
 	void prepRoleStmt();
 

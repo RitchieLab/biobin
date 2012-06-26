@@ -166,6 +166,35 @@ void InformationSQLite::prepRoleStmt(){
 
 }
 
+const set<unsigned int>& InformationSQLite::getSourceIds(){
+	if(_s_source_ids.size() == 0){
+
+		vector<int> query_results;
+		string source_query = "SELECT source_id FROM source ";
+		string where_clause = "";
+
+		if(c_source_names.size() != 0){
+			stringstream where_str;
+			where_str << "WHERE source IN (";
+			for(unsigned int i=0; i<c_source_names.size(); i++){
+				if(i){
+					where_str << ",";
+				}
+				where_str << "'" << c_source_names[i] << "'";
+			}
+			where_str << ")";
+
+			where_clause = where_str.str();
+		}
+
+		string source_sql = source_query + where_clause;
+		sqlite3_exec(_db, source_sql.c_str(), parseMultiIntQuery, &query_results, NULL);
+
+		_s_source_ids.insert(query_results.begin(), query_results.end());
+	}
+	return _s_source_ids;
+}
+
 int InformationSQLite::parseSingleStringQuery(void* obj, int n_cols,
 		char** col_vals, char** col_names){
 

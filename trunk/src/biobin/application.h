@@ -66,7 +66,7 @@ public:
     * @return
     */
 	template <class T1_cont>
-	uint LoadGroupDataByName(T1_cont& userDefinedGroups, const set<uint>& group_type_ids);
+	uint LoadGroupDataByName(T1_cont& userDefinedGroups);
 
 	uint GetPopulationID(const string& pop);
 
@@ -152,10 +152,11 @@ uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& 
  * This function depends on regions having been properly loaded
  */
 template <class T1_cont>
-uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups,
-		const set<uint>& group_type_ids) {
+uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups) {
 
 	map<int, string> group_types;
+
+	const set<uint>& group_type_ids = _info->getSourceIds();
 
 	_info->getGroupTypes(group_type_ids, group_types);
 

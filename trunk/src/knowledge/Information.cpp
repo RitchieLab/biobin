@@ -7,6 +7,10 @@
 
 #include "Information.h"
 
+#include <sstream>
+
+using std::stringstream;
+
 namespace Knowledge{
 map<string, int> Information::snp_role::s_val_map;
 set<const Information::snp_role*, Information::snp_role::Ptr_Less> Information::snp_role::s_enums;
@@ -16,7 +20,29 @@ const Information::snp_role Information::EXON("exon");
 const Information::snp_role Information::INTRON("intron");
 const Information::snp_role Information::REGULATORY("reg");
 
+vector<string> Information::c_source_names;
+set<unsigned int> Information::_s_source_ids;
 
+string Information::getSourceList(){
+	string ret_val = "";
+	if(c_source_names.size() > 0){
+		const set<unsigned int>& id_set = getSourceIds();
+		if(id_set.size() > 0){
+			stringstream id_str;
+			id_str << "(";
+			set<unsigned int>::const_iterator itr = id_set.begin();
+			id_str << *itr;
+			while(++itr != id_set.end()){
+				id_str << "," << *itr;
+			}
+			id_str << ")";
+
+			ret_val = id_str.str();
+		}
+	}
+
+	return ret_val;
+}
 
 }
 

@@ -230,6 +230,11 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	where_clause += "biopolymer_zone.chr=:chrom AND biopolymer_region.ldprofile_id IN (:pop_id, :def_pop_id) "
 			"AND zone=:pos_zone AND biopolymer_region.posMin<=:pos AND biopolymer_region.posMax>=:pos ";
 
+	string src_str = _info->getSourceList();
+	if(src_str.size()){
+		where_clause += "AND biopolymer.source_id IN " + src_str;
+	}
+
 	string stmt = command + where_clause;
 
 	sqlite3_stmt* region_stmt;

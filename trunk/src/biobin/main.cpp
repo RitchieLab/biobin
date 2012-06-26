@@ -34,7 +34,6 @@ string Main::c_knowledge_file="";
 string Main::c_genome_build = "37";
 
 vector<string> Main::c_custom_groups;
-set<uint> Main::c_source_ids;
 
 Main::~Main(){
 	multimap<int, Task::Task*>::iterator m_itr = _task_list.begin();
@@ -82,7 +81,7 @@ void Main::InitRegionData() {
 }
 
 void Main::InitGroupData() {
-	app.LoadGroupDataByName(c_custom_groups, c_source_ids);
+	app.LoadGroupDataByName(c_custom_groups);
 }
 
 void Main::RunTasks(int level){

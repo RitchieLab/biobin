@@ -73,8 +73,7 @@ public:
 
 	//! A vector of custom groups to use
 	static vector<string> c_custom_groups;
-	//! A list of IDs of sources to use
-	static set<uint> c_source_ids;
+
 
 private:
 	void LoadSNPs();

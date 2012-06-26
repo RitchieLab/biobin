@@ -157,6 +157,27 @@ public:
 	 * \param os The output stream to print to.
 	 */
 	virtual void printSources(ostream& os) = 0;
+
+	/*!
+	 * \brief Returns a vector of the source IDs from the DB
+	 * Returns the list of source IDs from the DB.  The source IDs are either
+	 * those that correspond to the c_source_names file, or all source IDs in
+	 * the database.
+	 *
+	 * \return A list of the numerical IDs of the sources
+	 */
+	virtual const set<unsigned int>& getSourceIds() = 0;
+
+	/*!
+	 * \brief Returns a string of IDs compatible with a "where" clause.
+	 * Returns a string of IDs
+	 */
+	string getSourceList();
+
+	static vector<string> c_source_names;
+
+protected:
+	static set<unsigned int> _s_source_ids;
 };
 
 }

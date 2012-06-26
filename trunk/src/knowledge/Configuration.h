@@ -14,17 +14,35 @@
 #include <string>
 #include <map>
 
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+
 namespace po = boost::program_options;
 
 using std::vector;
 using std::string;
 using std::map;
+using boost::tokenizer;
+using boost::escaped_list_separator;
+using po::validation_error;
 
 namespace Knowledge{
 
 class Configuration{
 
 public:
+
+	template <class T>
+	class Container{
+	public:
+		Container<T>(){}
+		operator vector<T>() const {return _data;}
+		void push_back(T val){ _data.push_back(val);}
+	private:
+		vector<T> _data;
+	};
+
+
 	static po::options_description& addCmdLine(po::options_description& opts);
 	static po::options_description& addConfigFile(po::options_description& opts);
 	static po::options_description& addVisible(po::options_description& opts);
@@ -65,10 +83,45 @@ private:
 
 };
 
-
-
 }
 
+namespace std{
+
+template <class T>
+ostream& operator<<(ostream& o, const Knowledge::Configuration::Container<T>& d){
+	string sep = ",";
+	vector<T>& data = (vector<T>) d ;
+	//vector<T>::const_iterator itr = data.begin();
+	for(int i=0; i<data.size(); i++){
+		if(i){
+			o << sep;
+		}
+		o << data[i];
+	}
+	o << "\n";
+
+	return o;
+}
+
+template <class T>
+istream& operator>>(istream& in, Knowledge::Configuration::Container<T>& d_out){
+	string in_s;
+	string sep = ",";
+	in >> in_s;
+	// Now, split up the string
+	tokenizer<escaped_list_separator<char> > tok(in_s);
+	for(tokenizer<escaped_list_separator<char> >::iterator beg=tok.begin(); beg!=tok.end();++beg){
+		try{
+			 d_out.push_back(boost::lexical_cast<T>(*beg));
+		}catch(boost::bad_lexical_cast& e){
+	    	throw validation_error(validation_error::invalid_option_value);
+		}
+	}
+
+	return in;
+}
+
+}
 
 
 #endif /* CONFIGURATION_H_ */
