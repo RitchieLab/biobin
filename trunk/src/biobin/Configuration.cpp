@@ -31,7 +31,7 @@ using namespace boost::program_options;
 namespace BioBin{
 
 po::options_description Configuration::_generic("BioBin Options");
-po::options_description Configuration::_cmd;
+po::options_description Configuration::_cmd("Command Line Options");
 po::options_description Configuration::_hidden;
 po::options_description Configuration::_config;
 
@@ -113,11 +113,11 @@ void Configuration::initConfig(){
 }
 
 void Configuration::initAll(){
-	if (!_cmd_init){
-		initCmd();
-	}
 	if(!_generic_init){
 		initGeneric();
+	}
+	if (!_cmd_init){
+		initCmd();
 	}
 	if(!_hidden_init){
 		initHidden();
@@ -129,7 +129,7 @@ void Configuration::initAll(){
 
 po::options_description& Configuration::addCmdLine(po::options_description& opts){
 	initAll();
-	return opts.add(_generic).add(_cmd).add(_hidden);
+	return opts.add(_cmd).add(_generic).add(_hidden);
 }
 
 po::options_description& Configuration::addConfigFile(po::options_description& opts){
