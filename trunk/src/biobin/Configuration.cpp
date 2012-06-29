@@ -209,7 +209,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//==========================================
 	BioBin::Application::c_print_populations = vm.count("print-populations");
 	BioBin::Application::c_print_sources = vm.count("print-sources");
-	BioBin::Application::s_run_normal = !(BioBin::Application::c_print_populations || BioBin::Application::c_print_sources);
+	if(BioBin::Application::s_run_normal){
+		BioBin::Application::s_run_normal = !(BioBin::Application::c_print_populations || BioBin::Application::c_print_sources);
+	}
 
 	//==========================================
 	// Parsing report strategies

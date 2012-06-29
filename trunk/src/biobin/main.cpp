@@ -159,6 +159,7 @@ int main(int argc, char *argv[]) {
 		std::cout << PACKAGE_STRING << "\n";
 		std::cout << "(c) Ritchie Lab, 2012\n";
 		std::cout << "To report bugs, please email " << PACKAGE_BUGREPORT << "\n";
+		BioBin::Application::s_run_normal = false;
 	}
 
 	try{
