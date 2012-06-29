@@ -16,7 +16,7 @@
 #include "main.h"
 #include "binmanager.h"
 #include "taskfilegeneration.h"
-#include "application.h"
+#include "binapplication.h"
 #include "PopulationManager.h"
 
 using std::string;
@@ -83,6 +83,8 @@ void Configuration::initGeneric(){
 				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
 		("report-bin-freq",value<Bool>()->default_value(false),
 				"Flag indicating desire to write Bin Case v. Control Frequency report")
+		("transpose-bins", value<Bool>()->default_value(false),
+				"Transpose the Bin report (bins on rows)")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
@@ -221,6 +223,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
+	BioBin::BinApplication::c_transpose_bins = vm["transpose-bins"].as<Bool>();
 
 	//===========================================
 	// Parsing binning strategies

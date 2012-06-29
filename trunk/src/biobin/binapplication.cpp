@@ -17,6 +17,8 @@
 
 namespace BioBin {
 
+bool BinApplication::c_transpose_bins = false;
+
 BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
 		Application(db_fn), _pop_mgr(vcf_file),	binData(_pop_mgr){}
 
@@ -44,7 +46,11 @@ void BinApplication::InitBins() {
 
 void BinApplication::writeBinData(const string& filename, const string& sep) const{
 	std::ofstream file(filename.c_str());
-	_pop_mgr.printBins(file, binData, sep);
+	if(c_transpose_bins){
+		_pop_mgr.printBinsTranspose(file, binData, sep);
+	}else{
+		_pop_mgr.printBins(file, binData, sep);
+	}
 	file.close();
 }
 

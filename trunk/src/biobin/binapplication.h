@@ -66,8 +66,7 @@ public:
 	void writeAFData(const string& filename, const string& sep=",") const;
 	void writeBinFreqData(const string& filename, const string& sep=",") const;
 
-
-
+	static bool c_transpose_bins;
 	
 private:
 	PopulationManager _pop_mgr;

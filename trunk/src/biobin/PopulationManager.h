@@ -92,6 +92,8 @@ public:
 	template <class Bin_cont>
 	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	template <class Bin_cont>
+	void printBinsTranspose(ostream& os, const Bin_cont& bins, const string& sep=",") const;
+	template <class Bin_cont>
 	void printBinFreq(ostream& os, const Bin_cont& bins, const string& sep=",") const;
 	template <class Locus_cont>
 	void printGenotypes(ostream& os, const Locus_cont& loci, const string& sep=",") const;
@@ -145,6 +147,90 @@ private:
 
 	mutable VCF::vcf_file vcf;
 };
+
+template <class Bin_cont>
+void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, const string& sep) const{
+	// Print 1st line
+	os << "Bin Name" << sep << "Total Variants" << sep << "Total Loci" << sep
+		<< "Control Loci Totals" << sep << "Case Loci Totals" << sep
+		<< "Control Bin Capacity" << sep << "Case Bin Capacity";
+
+	map<string, int>::const_iterator m_itr = _positions.begin();
+	while(m_itr != _positions.end()){
+		os << sep << (*m_itr).first;
+		++m_itr;
+	}
+
+	os << "\n";
+
+	os << "Status" << sep <<
+			-1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
+
+	m_itr = _positions.begin();
+	map<string, float>::const_iterator pheno_status;
+	while(m_itr != _positions.end()){
+		float status = -1;
+		pheno_status = _phenotypes.find((*m_itr).first);
+		if (pheno_status != _phenotypes.end()){
+			status = (*pheno_status).second;
+		}
+		os << sep << status;
+		++m_itr;
+	}
+
+	os << "\n";
+
+	typename Bin_cont::const_iterator b_itr = bins.begin();
+	Bin::const_locus_iterator l_itr;
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_itr;
+
+	while(b_itr != bins.end()){
+		// Print bin name
+		os << (*b_itr)->getName();
+
+		// print total var
+		os << sep << (*b_itr)->getSize();
+
+		// print total loci
+		os << sep << (*b_itr)->getVariantSize();
+
+		// print case/control loci
+		array<unsigned int, 2> num_loci;
+		num_loci[0] = 0;
+		num_loci[1] = 0;
+		l_itr = (*b_itr)->variantBegin();
+		while(l_itr != (*b_itr)->variantEnd()){
+			loc_itr = _locus_count.find((*l_itr));
+			if (loc_itr != _locus_count.end()){
+				num_loci[0] += (*loc_itr).second[0] != 0;
+				num_loci[1] += (*loc_itr).second[1] != 0;
+			}
+			++l_itr;
+		}
+
+		os << sep << num_loci[0] << sep << num_loci[1];
+
+		// print case/control capacity
+		array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
+		os << sep << capacity[0] << sep << capacity[1];
+
+		// print for each person
+		int bin_count = 0;
+		m_itr = _positions.begin();
+		while (m_itr != _positions.end()) {
+			l_itr = (*b_itr)->variantBegin();
+			bin_count = 0;
+			while (l_itr != (*b_itr)->variantEnd()) {
+				bin_count += getIndivContrib(**l_itr, (*m_itr).second);
+				++l_itr;
+			}
+			os << sep << bin_count;
+			++m_itr;
+		}
+		os << "\n";
+		++b_itr;
+	}
+}
 
 template <class Bin_cont>
 void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const string& sep) const{
