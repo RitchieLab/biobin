@@ -268,10 +268,9 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	Container::const_iterator itr = _dataset->begin();
 	int zone_size = _info->getZoneSize();
 	while(itr != _dataset->end()){
-		int zone_no = (*itr)->getPos()/zone_size;
 		sqlite3_bind_int(region_stmt, chr_idx, (*itr)->getChrom());
 		sqlite3_bind_int(region_stmt, pos_idx, static_cast<int>((*itr)->getPos()));
-		sqlite3_bind_int(region_stmt, pos_zone_idx, zone_no);
+		sqlite3_bind_int(region_stmt, pos_zone_idx, (*itr)->getPos()/zone_size);
 
 		// Now, execute the query!
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){
@@ -285,7 +284,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 			sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
 			sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
-			sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, zone_no);
+			sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, (*itr)->getPos()/zone_size);
 
 			while(sqlite3_step(tmp_region_stmt) == SQLITE_ROW){
 				uint pop_id_result = sqlite3_column_int(tmp_region_stmt, 0);
@@ -323,7 +322,7 @@ void RegionCollectionSQLite::prepareStmts(){
 	sqlite3_prepare_v2(db, region_bound_sql.c_str(), -1, &_region_bound_stmt, NULL);
 
 	_popID = _info->getPopulationID(pop_str);
-	_def_id = _info->getPopulationID("n/a");
+	_def_id = _info->getPopulationID("");
 
 	sqlite3_bind_int(_region_bound_stmt, 2, _popID);
 	sqlite3_bind_int(_region_bound_stmt, 3, _def_id);

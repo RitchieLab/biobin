@@ -53,7 +53,7 @@ void BinManager::InitBins(
 	deque<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
 
 	_total_variants = loci.size();
-	// Insert a null pointer so the set is not empty.  We'll delete this later...
+
 	_rare_variants = 0;
 
 	while(l_itr != loci.end()){

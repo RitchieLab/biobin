@@ -47,7 +47,7 @@ bool Bin::operator<(const Bin& other) const{
 		if(other._is_group){
 			ret_val = _member.group == other._member.group ?
 					_name < other._name :
-					_member.group < other._member.group;
+					*_member.group < *other._member.group;
 		}else{
 			ret_val = true;
 		}
@@ -70,7 +70,7 @@ bool Bin::operator<(const Bin& other) const{
 		}else{
 			ret_val = (_member.region == other._member.region) ?
 					_name < other._name :
-					_member.region < other._member.region;
+					*_member.region < *other._member.region;
 		}
 	}
 

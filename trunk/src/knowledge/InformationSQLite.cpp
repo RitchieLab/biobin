@@ -37,7 +37,7 @@ InformationSQLite::~InformationSQLite(){
 
 int InformationSQLite::getPopulationID(const string& pop_str){
 	string queryStr = string("SELECT ldprofile_id FROM ldprofile "
-			"WHERE ldprofile='") + pop_str + string("')");
+			"WHERE ldprofile='") + pop_str + string("'");
 
 	string result;
 	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
@@ -45,7 +45,7 @@ int InformationSQLite::getPopulationID(const string& pop_str){
 
 	if (err_code != 0){
 		string queryStr = string("SELECT ldprofile_id FROM ldprofile "
-				"WHERE ldprofile='n/a'");
+				"WHERE ldprofile=''");
 		if(sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery, &result, NULL)){
 			//NOTE: I should never get here in a properly formatted LOKI 2.0 database!
 			return 1;
