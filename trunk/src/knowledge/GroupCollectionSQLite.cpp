@@ -117,7 +117,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 			"'group'.description, group_concat(group_name.name) "
 			"FROM group_biopolymer INNER JOIN 'group' USING (group_id) "
 			"INNER JOIN group_name USING (group_id) "
-			"WHERE group_biopolymer.biopolymer_id=:region_id AND group_biopolymer.source_id=:id "
+			"WHERE group_biopolymer.biopolymer_id=:region_id AND 'group'.source_id=:id "
 			"GROUP BY group_biopolymer.group_id";
 
 	sqlite3_stmt* group_stmt;
@@ -145,6 +145,7 @@ void GroupCollectionSQLite::Load(RegionCollection& regions,
 					gp = _group_map[group_id];
 				}
 				gp->addRegion(**r_itr);
+				(*r_itr)->addGroup(_id, *gp);
 				_group_associations[group_id].insert(*r_itr);
 			}
 		}
@@ -204,7 +205,8 @@ uint GroupCollectionSQLite::getMaxGroup() {
 Group* GroupCollectionSQLite::addGroup(sqlite3_stmt* group_query){
 
 	uint group_id = static_cast<uint>(sqlite3_column_int(group_query, 0));
-	string gp_name = (const char *) (sqlite3_column_text(group_query, 1));
+	string gp_name = _name + ":" + (const char *) (sqlite3_column_text(group_query, 1));
+	
 	string gp_desc = "";
 	if(sqlite3_column_type(group_query,2) != SQLITE_NULL){
 		gp_desc = (const char *) (sqlite3_column_text(group_query, 2));
