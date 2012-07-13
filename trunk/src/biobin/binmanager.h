@@ -49,8 +49,7 @@ public:
 	virtual ~BinManager();
 	//BinManager(const BinManager& orig);
 	
-	void InitBins(const map<uint, Knowledge::GroupCollection*> &groups,
-			const Knowledge::RegionCollection& regions,
+	void InitBins(const Knowledge::RegionCollection& regions,
 			const deque<Knowledge::Locus*>& loci,
 			Knowledge::Information* info);
 

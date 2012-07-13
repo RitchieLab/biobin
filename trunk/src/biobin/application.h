@@ -75,10 +75,6 @@ public:
 	void SetGeneExtension(uint geneBoundaryExt);
 	void SetReportPrefix(const string& pref);
 
-	// Returns a vector of the category (source) IDs
-	vector<uint> ManagerIDs();
-	Knowledge::GroupCollection* GroupManager(uint idx);
-
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
 	static std::string reportPrefix;
 	static bool c_print_sources;
@@ -103,7 +99,7 @@ protected:
 	///< The genes
 	Knowledge::RegionCollection* regions;
 	///< The knowedge meta groups
-	std::map<uint, Knowledge::GroupCollection*> groups;
+	Knowledge::GroupCollection* groups;
 	///< the data associated with the user
 	deque<Knowledge::Locus*> dataset;
 
@@ -154,45 +150,20 @@ uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& 
 template <class T1_cont>
 uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups) {
 
-	map<int, string> group_types;
-
-	const set<uint>& group_type_ids = _info->getSourceIds();
-
-	_info->getGroupTypes(group_type_ids, group_types);
-
-	map<int, string>::const_iterator itr = group_types.begin();
-	map<int, string>::const_iterator end = group_types.end();
-
-	uint totalGroupsLoaded = 0;
-	int max_id = 0;
-	int curr_id;
-	while(itr != end){
-		Knowledge::GroupCollection* new_group = (Knowledge::GroupCollection*)
-				new Knowledge::GroupCollectionSQLite((*itr).first, (*itr).second, _db);
-		new_group->Load(*regions);
-		curr_id = (*itr).first;
-		groups[curr_id] = new_group;
-		totalGroupsLoaded += new_group->size();
-		max_id = curr_id > max_id ? curr_id : max_id;
-		++itr;
-	}
+	groups = new Knowledge::GroupCollectionSQLite(*regions, _db);
+	groups->Load();
 
 	vector<string> unmatchedAliases;
 	typename T1_cont::const_iterator udItr = userDefinedGroups.begin();
 	typename T1_cont::const_iterator udEnd = userDefinedGroups.end();
 
 	while (udItr != udEnd) {
-		string fn = *udItr;
-		//Give some bogus groupType, since it will be found in the file
-		Knowledge::GroupCollection* new_group =
-				new Knowledge::GroupCollectionSQLite(++max_id, fn, _db);
-		new_group->LoadArchive(*regions, fn, unmatchedAliases);
-		totalGroupsLoaded += new_group->size();
-		groups[max_id] = new_group;
+		groups->LoadArchive(*udItr, unmatchedAliases);
 		++udItr;
 	}
 
-	return totalGroupsLoaded;
+
+	return groups->size();
 
 }
 

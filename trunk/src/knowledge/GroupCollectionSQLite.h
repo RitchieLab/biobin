@@ -24,14 +24,15 @@ namespace Knowledge{
 class GroupCollectionSQLite : public GroupCollection {
 
 public:
-	GroupCollectionSQLite(uint type, const string& name, const string& fn);
-	GroupCollectionSQLite(uint type, const string& name, sqlite3 *db_conn);
+	GroupCollectionSQLite(RegionCollection& reg, const string& fn);
+	GroupCollectionSQLite(RegionCollection& reg, sqlite3 *db_conn);
 
 	virtual ~GroupCollectionSQLite();
 
-	virtual void Load(RegionCollection& regions, const vector<string>& group_names,
+	virtual void Load(const vector<string>& group_names,
 			const unordered_set<uint>& ids);
 
+protected:
 	virtual uint getMaxGroup();
 
 private:
@@ -39,7 +40,11 @@ private:
 	// sqlite connection
 	sqlite3 *_db;
 
+	sqlite3_stmt* _group_name_stmt;
+
 	Group* addGroup(sqlite3_stmt* group_query);
+
+	void initQueries();
 
 	static int parseGroupQuery(void*, int, char**, char**);
 	static int parseGroupRelationshipQuery(void*, int, char**, char**);

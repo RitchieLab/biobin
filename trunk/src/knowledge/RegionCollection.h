@@ -94,7 +94,6 @@ public:
 
 	};
 
-
 	/*!
 	 * Typedef to hide implementation of the collection of Regions.
 	 */
@@ -104,57 +103,19 @@ public:
 	 * Create a new RegionCollection and initialize the special "region not found"
 	 * object that is returned when needed.
 	 */
-
 	template<class T_cont>
 	RegionCollection(const T_cont& loci) :
 			_dataset(new LocusContainer<T_cont>(loci)),
 			region_not_found("Not Found", -1) {
 	}
+
 	/*!
 	 * Destroy the RegionCollection object.  This will in turn also delete any
 	 * Regions that were created with the AddRegion methods.
 	 */
 	virtual ~RegionCollection();
 
-	/*!
-	 * Inserts the given region into the id and alias maps
-	 */
-	void insertRegion(Region& region);
 
-	//void insertRegionBound(Region& region, short chr, uint start, uint end);
-
-	/*!
-	 * \brief Adds a Region to the collection.
-	 * Adds a region to the collection where the true and effective start and
-	 * stop values are identical.
-	 *
-     * \param name The primary name
-     * \param id The id from the database (must be unique)
-     * \param start	The true and effective start of the region to add
-     * \param stop The true and effective stop of the region to add
-	 * \param aliases Comma separated list of aliases
-	 *
-	 * \return The region added (or the Region found by the id)
-     */
-	Region* AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
-
-	/*!
-	 * \brief Adds a region to the collection.
-	 * Adds a Region to the collection where the true and effective start and
-	 * stop values are different.
-	 *
-     * \param name The primary name
-     * \param id The id from the database (must be unique)
-     * \param effStart The effective start of the Region to add
-     * \param effStop The effective stop of the Region to add
-     * \param trueStart The true start of the Region to add
-     * \param trueStop The true stop of the Region to add
-	 * \param aliases Comma separated list of aliases
-	 *
-	 * \return The region added (or the region found by the id)
-     */
-	Region* AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
-	
 	/*!
 	 * \brief Access bracket operator, indexing by id.
 	 * Returns a reference to a Region object that has the given ID.
@@ -229,31 +190,6 @@ public:
 	 * \return The end iterator for the collection of Regions identified by alias.
 	 */
 	const_region_iterator aliasEnd(const string& alias) const;
-
-	/*!
-	 * \brief Returns an iterator to a set of Regions at a given position.
-	 * This function returns an iterator to the set of Regions that are located
-	 * at a given position.  This can be used to find which Regions contain a
-	 * given Locus, as Regions may overlap.  If no Regions are at the given
-	 * location, the iterator is over the special empty set.
-	 *
-	 * \param chrom The chromosome (index) of the location
-	 * \param pos The position in question.
-	 *
-	 * \return An iterator to the beginning of the collection of Regions
-	 */
-	//const_region_iterator positionBegin(short chrom, uint pos) const;
-	/*!
-	 * \brief Returns an iterator to the end of a set of Regions at a position,
-	 * Because Regions may overlap, this function returns the special end
-	 * iterator of the set of Regions that contain a given position.
-	 *
-	 * \param chrom The chromosome (index) of the location
-	 * \param pos The position in question.
-	 *
-	 * \return An iterator to the end of the collection of Regions
-	 */
-	//const_region_iterator positionEnd(short chrom, uint pos) const;
 
 	const_region_iterator locusBegin(const Locus* loc) const;
 	const_region_iterator locusEnd(const Locus* loc) const;
@@ -345,6 +281,45 @@ public:
 	static vector<string> c_region_files;
 
 protected:
+	/*!
+	 * Inserts the given region into the id and alias maps
+	 */
+	void insertRegion(Region& region);
+
+	//void insertRegionBound(Region& region, short chr, uint start, uint end);
+
+	/*!
+	 * \brief Adds a Region to the collection.
+	 * Adds a region to the collection where the true and effective start and
+	 * stop values are identical.
+	 *
+     * \param name The primary name
+     * \param id The id from the database (must be unique)
+     * \param start	The true and effective start of the region to add
+     * \param stop The true and effective stop of the region to add
+	 * \param aliases Comma separated list of aliases
+	 *
+	 * \return The region added (or the Region found by the id)
+     */
+	Region* AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
+
+	/*!
+	 * \brief Adds a region to the collection.
+	 * Adds a Region to the collection where the true and effective start and
+	 * stop values are different.
+	 *
+     * \param name The primary name
+     * \param id The id from the database (must be unique)
+     * \param effStart The effective start of the Region to add
+     * \param effStop The effective stop of the Region to add
+     * \param trueStart The true start of the Region to add
+     * \param trueStop The true stop of the Region to add
+	 * \param aliases Comma separated list of aliases
+	 *
+	 * \return The region added (or the region found by the id)
+     */
+	Region* AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
+
 	//! A map from id -> Region*
 	unordered_map<uint,Region*> _region_map;
 	//! A map from alias -> set of Region*

@@ -24,7 +24,7 @@ BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
 
 void BinApplication::InitBins() {
 	
-	binData.InitBins(groups, *regions, dataset, _info);
+	binData.InitBins(*regions, dataset, _info);
 
 	std::cerr<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
 				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"

@@ -44,123 +44,7 @@ class Region{
 
 public:
 
-	// TODO: templatize this if needed
-	/*!
-	 * \brief An iterator over the groups
-	 * This iterator will traverse either all groups of a given category, or
-	 * all groups associated with the given Region.  Constructed via the
-	 * groupBegin and groupEnd methods of the Region class.
-	 *
-	 * NOTE: This iterator only implements a forward traversal, so incrementing
-	 * is the only oepration available.
-	 */
-	class const_group_iterator : public boost::iterator_facade<const_group_iterator, Group* const, boost::forward_traversal_tag>{
-	public:
-		//const_group_iterator() {}
-
-		/*!
-		 * \brief Create a const_group_iterator that iterates over all groups
-		 * This is the constructor for iterating over all groups in the given
-		 * group_map.  If begin is false, this is constructing an iterator that
-		 * points to the end of the iteration.
-		 *
-		 * \param group_map A mapping of IDs to sets of groups to iterate over
-		 * \param begin A flag telling if we want a start or end iterator
-		 */
-		const_group_iterator(const map<uint, set<Group*> >& group_map, bool begin) :
-				_is_global(true){
-			_map_iter = group_map.begin();
-			_map_end = group_map.end();
-			
-			if(_map_end == _map_iter){
-				//OK, we got passed an empty map!
-				if(begin){
-					_set_iter = _empty_set.begin();
-				} else {
-					_set_iter = _empty_set.end();
-				}
-				_curr_end = _empty_set.end();
-			}else{
-				// Not empty
-				if (begin){
-					_set_iter = (*_map_iter).second.begin();
-					_curr_end = (*_map_iter).second.end();
-				} else {
-					_map_iter = _map_end;
-					--_map_iter;
-					_set_iter = (*_map_iter).second.end();
-					_curr_end = (*_map_iter).second.end();
-					++_map_iter;
-				}
-				
-			}
-		}
-
-		/*!
-		 * \brief Create a const_group_iterator for iterating over groups from a single source.
-		 * This constructor creates a const_group_iterator for iterating over
-		 * groups from a single source.  If the group_id is not in the group_map,
-		 * we assume that the iterator iterates over an empty set.
-		 *
-		 * \param group_map The mapping of source IDs to sets of groups
-		 * \param group_id The ID of the source of interest
-		 * \param begin A flag determining if the iterator is a start or end iterator
-		 */
-		const_group_iterator(const map<uint, set<Group*> >& group_map, uint group_id, bool begin) : _is_global(false) {
-			// We don't need the _map_iter here
-			map<uint, set<Group*> >::const_iterator g_itr = group_map.find(group_id);
-			if(g_itr == group_map.end()){
-				if(begin){
-					_set_iter = _empty_set.begin();
-				}else{
-					_set_iter = _empty_set.end();
-				}
-				_curr_end = _empty_set.end();
-			}else{
-				if (begin){
-					_set_iter = (*g_itr).second.begin();
-				}else{
-					_set_iter = (*g_itr).second.end();
-				}
-				_curr_end = (*g_itr).second.end();
-			}
-		}
-
-	private:
-		friend class boost::iterator_core_access;
-
-		/*!
-		 * \brief The incrementing function for iterators
-		 * This increments an iterator, moving on to the next group, if needed
-		 */
-		void increment() {
-			++_set_iter;
-			if(_is_global && _set_iter == _curr_end){
-				++_map_iter;
-				if(_map_iter != _map_end){
-					_set_iter = (*_map_iter).second.begin();
-					_curr_end = (*_map_iter).second.end();
-				}
-			}
-		}
-
-		bool equal(const const_group_iterator& other) const{
-			return this->_set_iter == other._set_iter;
-		}
-
-		Group* const& dereference() const {return *_set_iter;}
-
-		// This should ALWAYS be empty!
-		static const set<Group*> _empty_set;
-
-		set<Group*>::const_iterator _set_iter;
-		set<Group*>::const_iterator _curr_end;
-		map<uint, set<Group*> >::const_iterator _map_iter;
-		map<uint, set<Group*> >::const_iterator _map_end;
-		bool _is_global;
-
-
-	};
+	typedef set<Group*>::const_iterator const_group_iterator;
 
 	// If I need a non-const iterator, I'll use it here
 	//typedef set<string>::iterator alias_iterator;
@@ -279,7 +163,7 @@ public:
 	 * \param type The type (or source) of the Group object
 	 * \param container The group containing this region
 	 */
-	void addGroup(uint type, Group& container);
+	void addGroup(Group& container);
 
 	/*!
 	 * \brief A mass association of Groups of a single type with this region.
@@ -293,7 +177,7 @@ public:
 	 * \tparam end The ending iterator of the container of groups
 	 */
 	template <class T_iter>
-	void addGroups(uint type, T_iter& start, const T_iter& end);
+	void addGroups(T_iter start, const T_iter& end);
 
 	/*!
 	 * \brief returns a string of aliases associated with this region.
@@ -387,16 +271,7 @@ public:
 	 *
 	 * \return An iterator over all groups
 	 */
-	const_group_iterator groupBegin() const {return const_group_iterator(_group_map,  true);}
-
-	/*!
-	 * \brief Return an iterator over groups from a particular source.
-	 * Returns an iterator to the beginning of a set of groups from a single
-	 * source.  Must be used in concert with the corresponding groupEnd
-	 *
-	 * \return An iterator over groups from a given source
-	 */
-	const_group_iterator groupBegin(uint group) const {return const_group_iterator(_group_map, group, true);}
+	const_group_iterator groupBegin() const {return _group_set.begin();}
 
 	/*!
 	 * \brief Returns the global end iterator.
@@ -404,16 +279,7 @@ public:
 	 *
 	 * \return The iterator that signals the global end of iterating over all groups
 	 */
-	const_group_iterator groupEnd() const {return const_group_iterator(_group_map, false);}
-
-	/*!
-	 * \brief Returns the local end iterator.
-	 * Returns an iterator that signals the end of a list of groups from a given
-	 * source.
-	 *
-	 * \return The iterator that is the end of a set of groups from a source.
-	 */
-	const_group_iterator groupEnd(uint group) const {return const_group_iterator(_group_map, group, false);}
+	const_group_iterator groupEnd() const {return _group_set.end();}
 
 	/*!
 	 * \brief Comparison operator, for any STL as needed.
@@ -441,8 +307,8 @@ private:
 	// A list of all aliases to this Region
 	deque<string> _aliases;
 
-	// A list / mapping of all groups associated w/ this region
-	map<uint, set<Group*> > _group_map;
+	// All of the groups associated w/ the region
+	set<Group*> _group_set;
 
 	string _name;
 	uint _id;
@@ -462,11 +328,10 @@ void Region::addLoci(T_iter begin, const T_iter& end){
 }
 
 template <class T_iter>
-void Region::addGroups(uint type, T_iter& begin, const T_iter& end){
-	set<Group*>& group_set = _group_map[type];
-	while(begin != end){
-		group_set.insert(*begin);
-		++begin;
+void Region::addGroups(T_iter itr, const T_iter& end){
+	while(itr != end){
+		addGroup(**itr);
+		++itr;
 	}
 }
 

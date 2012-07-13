@@ -62,14 +62,7 @@ Application::~Application(){
 	}
 	//dataset.clear();
 
-	map<uint, Knowledge::GroupCollection*>::iterator g_itr = groups.begin();
-	while(g_itr != groups.end()){
-		delete (*g_itr).second;
-		++g_itr;
-	}
-	//groups.clear();
-
-
+	delete groups;
 }
 
 Knowledge::RegionCollection* Application::GetRegions() {
@@ -85,24 +78,6 @@ void Application::SetReportPrefix(const string& pref) {
 		reportPrefix = "biobin";
 	else
 		reportPrefix = pref;
-}
-
-vector<uint> Application::ManagerIDs() {
-	vector<uint> ids;
-
-	map<uint, Knowledge::GroupCollection*>::const_iterator itr = groups.begin();
-	map<uint, Knowledge::GroupCollection*>::const_iterator end = groups.end();
-	while (itr != end)
-		ids.push_back(itr++->first);
-	return ids;
-}
-
-Knowledge::GroupCollection* Application::GroupManager(uint idx) {
-	map<uint, Knowledge::GroupCollection*>::const_iterator itr = groups.find(idx);
-	map<uint, Knowledge::GroupCollection*>::const_iterator end = groups.end();
-
-	// Return the pointer to GroupManager if found, o/w return null pointer
-	return ((!(itr == end)) ? (*itr).second : (NULL));
 }
 
 string Application::GetReportLog() {

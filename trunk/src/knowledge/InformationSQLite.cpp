@@ -149,7 +149,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	// regulatory codes
 	string reg_sql = "SELECT role_id FROM role WHERE role IN "
-			"('utr-3','utr-5')";
+			"('utr-3','utr-5','regulatory')";
 	sqlite3_exec(_db, reg_sql.c_str(), parseMultiIntQuery, &role_ids, NULL);
 
 	role_itr = role_ids.begin();

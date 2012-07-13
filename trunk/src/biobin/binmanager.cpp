@@ -45,7 +45,6 @@ BinManager::~BinManager() {
 }
 
 void BinManager::InitBins(
-		const map<uint, Knowledge::GroupCollection*> &groups,
 		const Knowledge::RegionCollection& regions,
 		const deque<Knowledge::Locus*>& loci,
 		Knowledge::Information* info) {

@@ -15,8 +15,6 @@ using std::stringstream;
 
 namespace Knowledge{
 
-const set<Group*> Region::const_group_iterator::_empty_set;
-
 Region::Region(const string& name, uint id) : _name(name), _id(id) {}
 
 Region::Region(const string& name, uint id, short chrom, uint start, uint end) :
@@ -35,8 +33,8 @@ void Region::addLocus(const Locus* locus){
 	_locus_map[locus->getID()] = locus;
 }
 
-void Region::addGroup(uint type, Group& container){
-	_group_map[type].insert(&container);
+void Region::addGroup(Group& container){
+	_group_set.insert(&container);
 }
 
 string Region::getAliasString(const string& sep) const{
