@@ -84,7 +84,7 @@ private:
 	};
 
 public:
-
+	// Construct a new region
 	Region(const string& name, uint id);
 
 	/*!
