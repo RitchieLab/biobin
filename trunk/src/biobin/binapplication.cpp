@@ -15,6 +15,8 @@
 
 #include "knowledge/liftover/ConverterSQLite.h"
 
+#include <boost/algorithm/string.hpp>
+
 namespace BioBin {
 
 bool BinApplication::c_transpose_bins = false;
@@ -61,10 +63,28 @@ void BinApplication::writeGenotypeData(const string& filename, const string& sep
 }
 
 void BinApplication::writeLoci(const string& filename, const string& sep) const{
+
+	string sep_repl = getEscapeString(sep);
+
 	std::ofstream locusFile(filename.c_str());
-	locusFile << "Chromosome" << sep << "Location" << sep << "ID" << sep
-			<< "Alleles" << sep << "Case Allele Freq." << sep << "Rare" << sep
-			<< "gene(s)" << sep << "bin name(s)\n";
+
+	printEscapedString(locusFile, "Chromosome", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Location", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "ID", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Alleles", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Case Allele Freq.", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Rare", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Gene(s)", sep, sep_repl);
+	locusFile << sep;
+	printEscapedString(locusFile, "Bin Name(s)", sep, sep_repl);
+	locusFile << "\n";
+
 	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
@@ -72,9 +92,15 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
 	while(itr != dataset.end()){
-		(*itr)->print(locusFile, sep);
+		printEscapedString(locusFile, (*itr)->getChromStr(), sep, sep_repl);
+		locusFile << sep << (*itr)->getPos() << sep;
+		printEscapedString(locusFile, (*itr)->getID(), sep, sep_repl);
 		locusFile << sep;
-		(*itr)->printAlleles(locusFile, "|");
+
+		stringstream allele_str;
+		(*itr)->printAlleles(allele_str, "|");
+		printEscapedString(locusFile, allele_str.str(), sep, sep_repl);
+
 		locusFile << sep << _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;
 		// Print the genes here
@@ -82,15 +108,20 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 				regions->locusBegin(*itr);
 		Knowledge::RegionCollection::const_region_iterator r_end =
 				regions->locusEnd(*itr);
+
+		stringstream gene_str;
 		if (r_itr != r_end){
-			locusFile << (*r_itr)->getName();
+			gene_str << (*r_itr)->getName();
 			while(++r_itr != r_end){
-				locusFile << "|" << (*r_itr)->getID();
+				gene_str << "|" << (*r_itr)->getID();
 			}
 		}
+		printEscapedString(locusFile, gene_str.str(), sep, sep_repl);
 		locusFile << sep;
 		// Now print the bins
-		binData.printBins(locusFile, *itr, "|");
+		stringstream bin_str;
+		binData.printBins(bin_str, *itr, "|");
+		printEscapedString(locusFile, bin_str.str(), sep, sep_repl);
 		locusFile << "\n";
 		++itr;
 	}
@@ -98,6 +129,8 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 }
 
 void BinApplication::writeAFData(const string& filename, const string& sep) const{
+	string sep_repl = getEscapeString(sep);
+
 	std::ofstream freqFile(filename.c_str());
 
 	unordered_map<Knowledge::Locus*, float> case_maf;
@@ -106,14 +139,27 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 
 	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 
-	freqFile << "Locus" << sep << "Control NMAF" << sep << "Case NMAF" << sep
-			<< "Rare" << sep << "Bins\n";
+	printEscapedString(freqFile, "Locus", sep, sep_repl);
+	freqFile << sep;
+	printEscapedString(freqFile, "Control NMAF", sep, sep_repl);
+	freqFile << sep;
+	printEscapedString(freqFile, "Case NMAF", sep, sep_repl);
+	freqFile << sep;
+	printEscapedString(freqFile, "Rare", sep, sep_repl);
+	freqFile << sep;
+	printEscapedString(freqFile, "Bins", sep, sep_repl);
+	freqFile << "\n";
+
 	while(itr != dataset.end()){
-		freqFile << (*itr)->getID() << sep << 1 - (*itr)->majorAlleleFreq() << sep
+		printEscapedString(freqFile, (*itr)->getID(), sep, sep_repl);
+
+		freqFile << sep << 1 - (*itr)->majorAlleleFreq() << sep
 				<< _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;
 
-		binData.printBins(freqFile, *itr, "|");
+		stringstream ss;
+		binData.printBins(ss, *itr, "|");
+		printEscapedString(freqFile, ss.str(), sep, sep_repl);
 
 		freqFile << "\n";
 
@@ -129,6 +175,18 @@ void BinApplication::writeBinFreqData(const string& filename, const string& sep)
 	_pop_mgr.printBinFreq(freqFile, binData, sep);
 	freqFile.close();
 
+}
+
+void BinApplication::printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const{
+	os << boost::algorithm::replace_all_copy(toPrint, toRepl, replStr);
+}
+
+string BinApplication::getEscapeString(const string& sep) const{
+	string sep_repl = "_";
+	if (sep == sep_repl){
+		sep_repl = "-";
+	}
+	return sep_repl;
 }
 
 }

@@ -28,27 +28,27 @@ void GenerateFiles::ExecuteTask() {
 
 	if (WriteBinData) {
 		std::string filename = _app->AddReport("bins", "csv", "Bin Counts");
-		_app->writeBinData(filename);
+		_app->writeBinData(filename,OutputDelimiter);
 	}
 	if (WriteGenotypeData) {
 		std::string filename = _app->AddReport("genotypes", "csv",
 				"Genotype Data");
-		_app->writeGenotypeData(filename);
+		_app->writeGenotypeData(filename,OutputDelimiter);
 	}
 	if (WriteLociData){
 		std::string filename = _app->AddReport("locus", "csv",
 				"Locus Data");
-		_app->writeLoci(filename);
+		_app->writeLoci(filename,OutputDelimiter);
 	}
 	if (WriteAFData){
 		std::string filename = _app->AddReport("AllFreq", "csv",
 				"Case vs. Control Allele Freq.");
-		_app->writeAFData(filename);
+		_app->writeAFData(filename,OutputDelimiter);
 	}
 	if(WriteBinFreqData){
 		std::string filename = _app->AddReport("BinFreq", "csv",
 						"Case vs. Control Bin Freq.");
-		_app->writeBinFreqData(filename);
+		_app->writeBinFreqData(filename,OutputDelimiter);
 	}
 }
 

@@ -116,6 +116,9 @@ public:
 
 private:
 
+	void printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const;
+	string getEscapeString(const string& sep) const;
+
 	// NO copying or assignment!
 	PopulationManager(const PopulationManager&);
 	PopulationManager& operator=(const PopulationManager&);
@@ -150,20 +153,34 @@ private:
 
 template <class Bin_cont>
 void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, const string& sep) const{
+	string sep_repl = getEscapeString(sep);
+
 	// Print 1st line
-	os << "Bin Name" << sep << "Total Variants" << sep << "Total Loci" << sep
-		<< "Control Loci Totals" << sep << "Case Loci Totals" << sep
-		<< "Control Bin Capacity" << sep << "Case Bin Capacity";
+	printEscapedString(os, "Bin Name", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Total Variants", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Total Loci", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Control Loci Totals", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Case Loci Totals", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
-		os << sep << (*m_itr).first;
+		os << sep;
+		printEscapedString(os, (*m_itr).first, sep, sep_repl);
 		++m_itr;
 	}
 
 	os << "\n";
 
-	os << "Status" << sep <<
+	printEscapedString(os, "Status", sep, sep_repl);
+	os << sep <<
 			-1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
 
 	m_itr = _positions.begin();
@@ -186,7 +203,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 
 	while(b_itr != bins.end()){
 		// Print bin name
-		os << (*b_itr)->getName();
+		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
 
 		// print total var
 		os << sep << (*b_itr)->getSize();
@@ -234,20 +251,25 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 
 template <class Bin_cont>
 void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const string& sep) const{
+	string sep_repl = getEscapeString(sep);
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
 
 	// Print first line
-	os << "ID" << sep << "Status";
+	printEscapedString(os, "ID", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Status", sep, sep_repl);
 	while(b_itr != b_end){
-		os << sep << (*b_itr)->getName();
+		os << sep;
+		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
 		++b_itr;
 	}
 	os << "\n";
 
 	// Print second Line (totals)
-	os << "Total Variants" << sep << -1;
+	printEscapedString(os, "Total Variants", sep, sep_repl);
+	os << sep << -1;
 	b_itr = bins.begin();
 	b_end = bins.end();
 	while(b_itr != b_end){
@@ -257,7 +279,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	os << "\n";
 
 	// Print third line (variant totals)
-	os << "Total Loci" << sep << -1;
+	printEscapedString(os, "Total Loci", sep, sep_repl);
+	os << sep << -1;
 	b_itr = bins.begin();
 	b_end = bins.end();
 	while(b_itr != b_end){
@@ -277,7 +300,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	int locus_count = 0;
 	// Print 4th + 5th lines (variant totals for cases + controls
 	for(int i=0; i<2; i++){
-		os << (i ? "Case" : "Control") << " Loci Totals" << sep << -1;
+		printEscapedString(os, string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
+		os << sep << -1;
 		b_itr = bins.begin();
 		b_end = bins.end();
 		while(b_itr != b_end){
@@ -299,7 +323,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 
 	// Print 6th + 7th Lines (bin capacities for cases and controls)
 	for(int i=0; i<2; i++){
-		os << (i ? "Case" : "Control") << " Bin Capacity" << sep << -1;
+		printEscapedString(os, string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
+		os << sep << -1;
 		b_itr = bins.begin();
 		b_end = bins.end();
 		while(b_itr != b_end){
@@ -324,14 +349,15 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 		b_end = bins.end();
 
 		pos = (*m_itr).second;
-
 		pheno_status = _phenotypes.find((*m_itr).first);
 		status = -1;
 		if (pheno_status != pheno_end){
 			status = (*pheno_status).second;
 		}
 
-		os << (*m_itr).first << sep << status;
+		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+
+		os << sep << status;
 
 		while(b_itr != b_end){
 			// Accumulate the contribution of this person in this bin
@@ -354,6 +380,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 
 template <class Bin_cont>
 void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const string& sep) const{
+	string sep_repl = getEscapeString(sep);
+
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
 
@@ -373,7 +401,12 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 	map<string, int>::const_iterator m_end = _positions.end();
 	int case_cont_contrib[2];
 
-	os << "Bin" << sep << "Control Freq." << sep << "Case Freq.\n";
+	printEscapedString(os, "Bin", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Control Freq.", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Case Freq.", sep, sep_repl);
+	os << "\n";
 
 	while(b_itr != b_end){
 
@@ -392,7 +425,9 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 			++v_itr;
 		}
 
-		os << (*b_itr)->getName() << sep;
+		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
+		os << sep;
+
 		short capacity = 0;
 		for (int i=0; i<=1; i++){
 			capacity = getBinCapacity(**b_itr)[i];
@@ -409,6 +444,8 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 template <class Locus_cont>
 void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, const string& sep) const{
 
+	string sep_repl = getEscapeString(sep);
+
 	typename Locus_cont::const_iterator l_itr = loci.begin();
 
 	map<string, int>::const_iterator m_itr = _positions.begin();
@@ -419,10 +456,13 @@ void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, cons
 
 	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr;
 	// Print the first line// TODO: format the genotype if we want to!
-	os << "ID" << sep << "Status";
+	printEscapedString(os, "ID", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Status", sep, sep_repl);
 
 	while(l_itr != loci.end()){
-		os << sep << (*l_itr)->getID();
+		os << sep;
+		printEscapedString(os, (*l_itr)->getID(), sep, sep_repl);
 		++l_itr;
 	}
 	os << "\n";
@@ -440,7 +480,8 @@ void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, cons
 			status = (*pheno_status).second;
 		}
 
-		os << (*m_itr).first << sep << status;
+		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+		os << sep << status;
 
 		while(l_itr != loci.end()){
 			g_itr = _genotype_bitset.find(*l_itr);

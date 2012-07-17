@@ -69,6 +69,9 @@ public:
 	static bool c_transpose_bins;
 	
 private:
+	void printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const;
+	string getEscapeString(const string& sep) const;
+
 	PopulationManager _pop_mgr;
 
 	BinManager binData;

@@ -247,6 +247,19 @@ float PopulationManager::getMAF(const vector<int>& allele_count, uint nmcc) cons
 	}
 }
 
+void PopulationManager::printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const{
+	os << boost::algorithm::replace_all_copy(toPrint, toRepl, replStr);
+}
+
+string PopulationManager::getEscapeString(const string& sep) const{
+	string sep_repl = "_";
+	if (sep == sep_repl){
+		sep_repl = "-";
+	}
+	return sep_repl;
+}
+
+
 
 }
 
@@ -272,7 +285,6 @@ std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseMod
 //    else throw boost::program_options::validation_error("Invalid unit");
     return in;
 }
-
 
 ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m){
 	o << (const char*) m;
