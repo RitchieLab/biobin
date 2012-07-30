@@ -32,6 +32,7 @@ PopulationManager::DiseaseModel PopulationManager::c_model =
 bool PopulationManager::CompressedVCF = false;
 bool PopulationManager::KeepCommonLoci = true;
 bool PopulationManager::RareCaseControl = true;
+bool PopulationManager::OverallMajorAllele = true;
 
 PopulationManager::PopulationManager(const string& vcf_fn) : vcf(vcf_fn, CompressedVCF){}
 

@@ -107,6 +107,7 @@ public:
 	static bool KeepCommonLoci;
 	// determine rarity of a variant by either case or control status
 	static bool RareCaseControl;
+	static bool OverallMajorAllele;
 
 	static float c_min_control_frac;
 
@@ -502,20 +503,11 @@ void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, cons
 
 template<class T_cont>
 void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv=0){
-	/*vector<bool> cases = controls;
-	for(vector<bool>::iterator itr = cases.begin(); itr!= cases.end(); itr++){
-		(*itr).flip();
-	}*/
 
 	loadIndividuals();
-
 	int size = _is_control.size();
-
 	set<string> unknownChromosomes;
-	//T_cont::const_iterator pos = loci_out.end();
-
 	uint totalSiteCount	= vcf.N_entries;
-
 
 	// Predefine everything so that the loop below can be as tight as possible
 	vector<pair<int, int> > genotype_pairs;
@@ -545,8 +537,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		alleleCounts[1].resize(alleleCount);
 		fill(alleleCounts[1].begin(), alleleCounts[1].end(), 0);
 
-
-
 		for (uint j=0; j<vcf.N_indv; j++) {
 			entry.get_indv_GENOTYPE_ids(j, genotype);
 
@@ -567,7 +557,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 		// To deal with the default parameter, we really just want to use
 		// vcf.include_indivs, but NOOOO C++ has to be a pain
-
 
 		bool is_rare = (getMAF(alleleCounts[0], nm[0]) < BinManager::mafCutoff) ||
 				(RareCaseControl && nm[1] > 0 && getMAF(alleleCounts[1], nm[1]) < BinManager::mafCutoff);
@@ -591,10 +580,21 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				loci_out.insert(loci_out.end(), loc);
 				_locus_position.insert(make_pair(loc, i));
 
-				loc->addAllele(entry.get_REF(), nm[0] != 0 ? (alleleCounts[0][0] / static_cast<float>(nm[0])) : 0);
-				for (uint n = 1; n<alleleCount; n++)	{
-					loc->addAllele(entry.get_ALT_allele(n-1),
-							nm[0] != 0 ? alleleCounts[0][n] / static_cast<float>(nm[0]) : -1);
+				// Add ability to order the alleles by overall population here!
+				float freq = (nm[0] != 0 ? (alleleCounts[0][0] / static_cast<float>(nm[0])) : 0);
+				int nm_sum = nm[0] + nm[1];
+				if (OverallMajorAllele){
+					freq = (nm_sum != 0 ? (alleleCounts[0][0] + alleleCounts[1][0]) / static_cast<float>(nm_sum) : 0);
+				}
+
+
+				loc->addAllele(entry.get_REF(), freq);
+				for (uint n = 1; n<alleleCount; n++){
+					freq = (nm[0] != 0 ? alleleCounts[0][n] / static_cast<float>(nm[0]) : -1);
+					if (OverallMajorAllele){
+						freq = (nm_sum != 0 ? (alleleCounts[0][n] + alleleCounts[1][n]) / static_cast<float>(nm_sum) : -1);
+					}
+					loc->addAllele(entry.get_ALT_allele(n-1), freq);
 				}
 
 				_locus_count.insert(make_pair(loc, nm));

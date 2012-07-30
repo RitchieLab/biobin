@@ -91,8 +91,10 @@ void Configuration::initGeneric(){
 				"Phenotype control value")
 		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125,"0.125"),
 				"Minimum fraction of population needed for control cases")
-		("rare-case-control", value<Bool>()->default_value(false),
+		("rare-case-control", value<Bool>()->default_value(true),
 				"Flag indicating determining rarity of variants by both case and control populations")
+		("overall-major-allele",value<Bool>()->default_value(true),
+				"Flag indicating desire to determine the major allele by the overall population instead of control")
 		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
 				"Disease model (additive, dominant, or recessive)");
 
@@ -200,6 +202,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::CompressedVCF = vm["compressed-vcf"].as<Bool>();
 	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
+	PopulationManager::OverallMajorAllele = vm["overall-major-allele"].as<Bool>();
 
 
 	if(vm.count("add-groups")){
