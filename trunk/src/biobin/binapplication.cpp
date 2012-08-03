@@ -113,7 +113,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		if (r_itr != r_end){
 			gene_str << (*r_itr)->getName();
 			while(++r_itr != r_end){
-				gene_str << "|" << (*r_itr)->getID();
+				gene_str << "|" << (*r_itr)->getName();
 			}
 		}
 		printEscapedString(locusFile, gene_str.str(), sep, sep_repl);
