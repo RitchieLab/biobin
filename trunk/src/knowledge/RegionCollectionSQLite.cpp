@@ -36,6 +36,9 @@ RegionCollectionSQLite::~RegionCollectionSQLite(){
 	if (self_open){
 		sqlite3_close(db);
 	}
+	if (self_info){
+		delete _info;
+	}
 }
 
 void RegionCollectionSQLite::loadFiles(){

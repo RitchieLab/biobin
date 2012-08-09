@@ -58,10 +58,24 @@ public:
 	virtual void printPopulations(ostream& os);
 	virtual void printSources(ostream& os);
 
+	virtual void loadRoles();
+
 	virtual const set<unsigned int>& getSourceIds();
 
 private:
 	void prepRoleStmt();
+	void prepRoleTables();
+
+	static string _role_region_tbl;
+	static string _role_zone_tbl;
+
+	// blatantly stolen from ldsplineimporter!
+	void getAndDropIndexes(const string& tbl_name, map<string, string>& indexes_out);
+	void restoreIndexes(const string& tbl_name, const map<string, string>& index_map);
+	void UpdateZones();
+
+	static int parseRegionIndex(void*, int, char**, char**);
+
 
 	/*!
 	 *  SQLite callback to parse a single column, which is returned via the
@@ -91,6 +105,9 @@ private:
 
 	// The prepared statement for getting SNP roles
 	sqlite3_stmt* _role_stmt;
+
+	// Prepared statment for getting SNP roles from regions
+	sqlite3_stmt* _region_role_stmt;
 
 };
 

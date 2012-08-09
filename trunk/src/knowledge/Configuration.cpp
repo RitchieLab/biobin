@@ -55,7 +55,9 @@ void Configuration::initGeneric(){
 			("include-sources",value<Container<string> >()->composing(),
 					"A list of source names to include")
 			("include-source-file",value<Container<string> >()->composing(),
-					"A list of filenames containing source names to include");
+					"A list of filenames containing source names to include")
+			("role-file", value<Container<string> >()->composing(),
+					"A file containing custom roles");
 
 
 	_generic_init = true;
@@ -174,6 +176,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 
 	if (vm.count("region-file")){
 		RegionCollection::c_region_files = vm["region-file"].as<Container<string> >();
+	}
+	if (vm.count("role-file")){
+		Information::c_role_files = vm["role-file"].as<Container<string> >();
 	}
 
 	if (vm.count("include-sources")){

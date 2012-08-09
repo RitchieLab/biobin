@@ -150,7 +150,7 @@ uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& 
 template <class T1_cont>
 uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups) {
 
-	groups = new Knowledge::GroupCollectionSQLite(*regions, _db);
+	groups = new Knowledge::GroupCollectionSQLite(*regions, _db, _info);
 	groups->Load();
 
 	vector<string> unmatchedAliases;

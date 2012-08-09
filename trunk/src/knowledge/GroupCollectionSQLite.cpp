@@ -21,20 +21,28 @@ using std::deque;
 namespace Knowledge{
 
 GroupCollectionSQLite::GroupCollectionSQLite(RegionCollection& reg,
-		const string& fn) :
-			GroupCollection(reg), _self_open(true){
+		const string& fn, Information* info) :
+			GroupCollection(reg), _self_open(true), _self_info(!info){
 	sqlite3_open(fn.c_str(),&_db);
 	getMaxGroup();
-	_info = new InformationSQLite(_db);
+	if(!info){
+		_info = new InformationSQLite(_db);
+	}else{
+		_info = info;
+	}
 
 	initQueries();
 }
 
 GroupCollectionSQLite::GroupCollectionSQLite(RegionCollection& reg,
-		sqlite3 *db_conn) :
-			GroupCollection(reg), _self_open(false), _db(db_conn){
+		sqlite3 *db_conn, Information* info) :
+			GroupCollection(reg), _self_open(false), _self_info(!info), _db(db_conn) {
 	getMaxGroup();
-	_info = new InformationSQLite(_db);
+	if(!info){
+		_info = new InformationSQLite(_db);
+	}else{
+		_info = info;
+	}
 
 	initQueries();
 }
@@ -44,6 +52,9 @@ GroupCollectionSQLite::~GroupCollectionSQLite(){
 
 	if (_self_open){
 		sqlite3_close(_db);
+	}
+	if(_self_info){
+		delete _info;
 	}
 }
 

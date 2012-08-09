@@ -69,17 +69,15 @@ public:
 		explicit snp_role(const string& val) :	_data(val) {
 			if (s_val_map.find(_data) == s_val_map.end()) {
 				s_val_map.insert(std::make_pair(_data, 1 << (++s_num_vals - 1)));
-				s_enums.insert(this);
+				s_enums.insert(new snp_role(*this));
 			}
 		}
-
-
 
 	public:
 
 		friend class Information;
 
-		operator int() const { return s_val_map[_data];}
+		operator unsigned long() const { return s_val_map[_data];}
 		operator string() const {return _data;}
 
 		static const_iterator begin() { return const_iterator(s_enums.begin());}
@@ -89,8 +87,9 @@ public:
 
 		string _data;
 		static int s_num_vals;
-		static map<string, int> s_val_map;
+		static map<string, unsigned long> s_val_map;
 		static set<const snp_role*, Ptr_Less> s_enums;
+
 	};
 
 	static const snp_role INTRON;
@@ -168,6 +167,11 @@ public:
 	 */
 	virtual const set<unsigned int>& getSourceIds() = 0;
 
+	/*
+	 * Load the roles from the files given in the c_role_files member
+	 */
+	virtual void loadRoles() = 0;
+
 	/*!
 	 * \brief Returns a string of IDs compatible with a "where" clause.
 	 * Returns a string of IDs
@@ -175,9 +179,13 @@ public:
 	string getSourceList();
 
 	static vector<string> c_source_names;
+	static vector<string> c_role_files;
 
 protected:
 	static set<unsigned int> _s_source_ids;
+
+	// Allows children to create SNP roles
+	static Information::snp_role getRole(const string& role){ return snp_role(role);}
 };
 
 }

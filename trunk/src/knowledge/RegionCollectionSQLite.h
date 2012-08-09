@@ -38,7 +38,7 @@ public:
 	 * \param fn The filename of the LOKI database.
 	 */
 	template <class T_cont>
-	RegionCollectionSQLite(const string& fn, const T_cont& loci);
+	RegionCollectionSQLite(const string& fn, const T_cont& loci, Information* info=0);
 	/*!
 	 * \brief Create a RegionCollection giving an open DB connection.
 	 * Creates a RegionCollection with an already open databse connection that
@@ -49,7 +49,7 @@ public:
 	 * \param db The database connection to the LOKI database.
 	 */
 	template <class T_cont>
-	RegionCollectionSQLite(sqlite3 *db, const T_cont& loci);
+	RegionCollectionSQLite(sqlite3 *db, const T_cont& loci, Information* info=0);
 	/*!
 	 * Destroys the RegionCollection objects, and if necessary closes the
 	 * database connection.
@@ -75,6 +75,7 @@ public:
 private:
 	//! true if we opened the connection, false otherwise
 	bool self_open;
+	bool self_info;
 	//! sqlite connection
 	sqlite3 *db;
 
@@ -109,18 +110,26 @@ private:
 
 template<class T_cont>
 RegionCollectionSQLite::RegionCollectionSQLite(const string& fn,
-		const T_cont& loci) : RegionCollection(loci), self_open(true) {
+		const T_cont& loci, Information* info) : RegionCollection(loci), self_open(true), self_info(!info) {
 	sqlite3_open(fn.c_str(), &db);
-	_info = new InformationSQLite(db);
+	if(!info){
+		_info = new InformationSQLite(db);
+	}else{
+		_info = info;
+	}
 
 	prepareStmts();
 }
 
 template<class T_cont>
 RegionCollectionSQLite::RegionCollectionSQLite(sqlite3* db_conn,
-		const T_cont& loci) : RegionCollection(loci),
-		self_open(false), db(db_conn) {
-	_info = new InformationSQLite(db);
+		const T_cont& loci, Information* info) : RegionCollection(loci),
+		self_open(false), self_info(!info), db(db_conn) {
+	if(!info){
+		_info = new InformationSQLite(db);
+	}else{
+		_info = info;
+	}
 
 	prepareStmts();
 }

@@ -44,7 +44,6 @@ GroupCollection::~GroupCollection(){
 		delete itr->second;
 		++itr;
 	}
-	delete _info;
 }
 
 Group* GroupCollection::AddGroup(uint id, const string& name, const string& desc){

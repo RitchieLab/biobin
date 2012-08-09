@@ -123,7 +123,7 @@ void Application::Init(const string& filename, bool reportVersion) {
 
 	sqlite3_open(dbPath.c_str(), &_db);
 	_info = new Knowledge::InformationSQLite(_db);
-	regions = new Knowledge::RegionCollectionSQLite(_db, dataset);
+	regions = new Knowledge::RegionCollectionSQLite(_db, dataset, _info);
 
 }
 

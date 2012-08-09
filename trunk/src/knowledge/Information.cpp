@@ -12,7 +12,7 @@
 using std::stringstream;
 
 namespace Knowledge{
-map<string, int> Information::snp_role::s_val_map;
+map<string, unsigned long> Information::snp_role::s_val_map;
 set<const Information::snp_role*, Information::snp_role::Ptr_Less> Information::snp_role::s_enums;
 int Information::snp_role::s_num_vals = 0;
 
@@ -21,6 +21,7 @@ const Information::snp_role Information::INTRON("intron");
 const Information::snp_role Information::REGULATORY("reg");
 
 vector<string> Information::c_source_names;
+vector<string> Information::c_role_files;
 set<unsigned int> Information::_s_source_ids;
 
 string Information::getSourceList(){

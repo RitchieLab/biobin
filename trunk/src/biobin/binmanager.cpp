@@ -192,6 +192,10 @@ void BinManager::collapseBins(Information* info){
 	b_itr = _bin_list.begin();
 	set<Bin*> new_bins;
 
+	if (ExpandByExons){
+		info->loadRoles();
+	}
+
 	// once we hit intergenic bins, we can't break it down by role any more!
 	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
 		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
@@ -204,6 +208,7 @@ void BinManager::collapseBins(Information* info){
 
 			while(role_itr != role_end){
 				Bin* new_bin = new Bin(**b_itr);
+				Information::snp_role r = *role_itr;
 				new_bin->addExtraData("_" + static_cast<string>(*role_itr));
 				role_bin_list.push_back(make_pair(&(*role_itr), new_bin));
 				++role_itr;

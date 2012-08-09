@@ -24,8 +24,8 @@ namespace Knowledge{
 class GroupCollectionSQLite : public GroupCollection {
 
 public:
-	GroupCollectionSQLite(RegionCollection& reg, const string& fn);
-	GroupCollectionSQLite(RegionCollection& reg, sqlite3 *db_conn);
+	GroupCollectionSQLite(RegionCollection& reg, const string& fn, Information* info=0);
+	GroupCollectionSQLite(RegionCollection& reg, sqlite3 *db_conn, Information* info=0);
 
 	virtual ~GroupCollectionSQLite();
 
@@ -37,6 +37,7 @@ protected:
 
 private:
 	bool _self_open;
+	bool _self_info;
 	// sqlite connection
 	sqlite3 *_db;
 
