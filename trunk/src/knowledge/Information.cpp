@@ -26,7 +26,7 @@ set<unsigned int> Information::_s_source_ids;
 
 string Information::getSourceList(){
 	string ret_val = "";
-	if(c_source_names.size() > 0){
+	//if(c_source_names.size() > 0){
 		const set<unsigned int>& id_set = getSourceIds();
 		if(id_set.size() > 0){
 			stringstream id_str;
@@ -40,7 +40,7 @@ string Information::getSourceList(){
 
 			ret_val = id_str.str();
 		}
-	}
+	//}
 
 	return ret_val;
 }

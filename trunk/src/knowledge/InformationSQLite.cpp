@@ -451,8 +451,10 @@ int InformationSQLite::parseSingleIntQuery(void* obj, int n_cols,
 	if (n_cols == 0){
 		return 1;
 	}
-	int* ret_int_p = (int*) (obj);
-	(*ret_int_p) = atoi(col_vals[0]);
+	if(col_vals[0]){
+		int* ret_int_p = (int*) (obj);
+		(*ret_int_p) = atoi(col_vals[0]);
+	}
 	return 0;
 }
 
