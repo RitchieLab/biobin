@@ -410,6 +410,7 @@ const set<unsigned int>& InformationSQLite::getSourceIds(){
 			where_str << ")";
 
 			where_clause = where_str.str();
+			_s_source_ids.insert(-1);
 		}
 
 		string source_sql = source_query + where_clause;
