@@ -87,6 +87,8 @@ private:
 
 	static string _s_tmp_region_tbl;
 	static string _s_tmp_zone_tbl;
+	static string _s_tmp_name_tbl;
+	static string _s_tmp_bound_tbl;
 
 	//! Adds a region based on the row (or returns the already added region)
 	Knowledge::Region* addRegion(sqlite3_stmt* row);
@@ -104,8 +106,8 @@ private:
 	 * Callback to parse a list of region IDs and add them to the undordered_list
 	 */
 	static int parseRegionIDQuery(void*, int, char**, char**);
-
 	static int parseSingleIntQuery(void*, int, char**, char**);
+
 };
 
 template<class T_cont>

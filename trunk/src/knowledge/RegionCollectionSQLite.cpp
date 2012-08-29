@@ -27,7 +27,8 @@ namespace Knowledge{
 
 string RegionCollectionSQLite::_s_tmp_region_tbl = "__tmp_region";
 string RegionCollectionSQLite::_s_tmp_zone_tbl = "__tmp_zone";
-
+string RegionCollectionSQLite::_s_tmp_name_tbl = "__tmp_name";
+string RegionCollectionSQLite::_s_tmp_bound_tbl = "__tmp_bound";
 
 RegionCollectionSQLite::~RegionCollectionSQLite(){
 	sqlite3_finalize(_region_name_stmt);
@@ -49,13 +50,28 @@ void RegionCollectionSQLite::loadFiles(){
 
 	string tmp_region_sql = "CREATE TEMPORARY TABLE " + _s_tmp_region_tbl + " ("
 			"region_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-			"label VARCHAR(64) NOT NULL,"
-			"chr TINYINT NOT NULL,"
-			"posMin BIGINT NOT NULL,"
-			"posMax BIGINT NOT NULL"
+			"label VARCHAR(64) NOT NULL"
 		")";
 
 	sqlite3_exec(db, tmp_region_sql.c_str(), NULL, NULL, NULL);
+
+	string tmp_bound_sql = "CREATE TEMPORARY TABLE " + _s_tmp_bound_tbl + "("
+			"region_id INTEGER NOT NULL,"
+			"chr TINYINT NOT NULL,"
+			"posMin BIGINT NOT NULL,"
+			"posMax BIGINT NOT NULL,"
+			"PRIMARY KEY (region_id, chr, posMin, posMax)"
+		")";
+
+	sqlite3_exec(db, tmp_bound_sql.c_str(), NULL, NULL, NULL);
+
+	string tmp_name_sql = "CREATE TEMPORARY TABLE " + _s_tmp_name_tbl + " ("
+			"region_id INTEGER NOT NULL,"
+			"name VARCHAR(64) NOT NULL PRIMARY KEY"
+		");";
+
+	sqlite3_exec(db, tmp_name_sql.c_str(), NULL, NULL, NULL);
+
 
 	string tmp_zone_sql = "CREATE TEMPORARY TABLE " + _s_tmp_zone_tbl + " ("
 			"region_id INTEGER NOT NULL,"
@@ -68,10 +84,14 @@ void RegionCollectionSQLite::loadFiles(){
 
 	// Insert a phony record to set the autoincrement
 	string region_id_sql = "INSERT INTO " + _s_tmp_region_tbl + " "
-			"(region_id, label, chr, posMin, posMax) "
-			"SELECT MAX(biopolymer_id), 'Fake', -1, 0, 0 FROM biopolymer";
+			"(region_id, label) "
+			"SELECT MAX(biopolymer_id), 'Fake' FROM biopolymer";
 
 	sqlite3_exec(db, region_id_sql.c_str(), NULL, NULL, NULL);
+
+	string region_id_del = "DELETE FROM " + _s_tmp_region_tbl;
+
+	sqlite3_exec(db, region_id_del.c_str(), NULL, NULL, NULL);
 
 	vector<string>::const_iterator fn_itr = c_region_files.begin();
 	while(fn_itr != c_region_files.end()){
@@ -93,11 +113,26 @@ void RegionCollectionSQLite::loadFiles(){
 
 void RegionCollectionSQLite::loadFile(const string& fn){
 
-	string insert_sql = "INSERT OR IGNORE INTO " + _s_tmp_region_tbl + " "
-			"(label, chr, posMin, posMax) VALUES (?,?,?,?)";
+	string insert_bound_sql = "INSERT OR IGNORE INTO " + _s_tmp_bound_tbl + " "
+			"(region_id, chr, posMin, posMax) VALUES (?,?,?,?)";
 
-	sqlite3_stmt* insert_stmt;
-	sqlite3_prepare_v2(db, insert_sql.c_str(), -1, &insert_stmt, NULL);
+	string insert_region_sql = "INSERT INTO " + _s_tmp_region_tbl + " "
+			"(label) VALUES (?)";
+
+	string insert_name_sql = "INSERT OR IGNORE INTO " + _s_tmp_name_tbl + " "
+			"(region_id, name) VALUES (?,?)";
+
+	string find_region_sql = "SELECT region_id FROM " + _s_tmp_name_tbl + " "
+			"WHERE name=?";
+
+	sqlite3_stmt* insert_bound_stmt;
+	sqlite3_prepare_v2(db, insert_bound_sql.c_str(), -1, &insert_bound_stmt, NULL);
+	sqlite3_stmt* insert_region_stmt;
+	sqlite3_prepare_v2(db, insert_region_sql.c_str(), -1, &insert_region_stmt, NULL);
+	sqlite3_stmt* insert_name_stmt;
+	sqlite3_prepare_v2(db, insert_name_sql.c_str(), -1, &insert_name_stmt, NULL);
+	sqlite3_stmt* find_region_stmt;
+	sqlite3_prepare_v2(db, find_region_sql.c_str(), -1, &find_region_stmt, NULL);
 
 	// Find the file and upload it...
 	ifstream data_file(fn.c_str());
@@ -115,19 +150,44 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 				int posMax = atoi(result[3].c_str());
 
 				if(chr != -1 && posMin && posMax){
-					sqlite3_bind_int(insert_stmt, 2, chr);
-					sqlite3_bind_int(insert_stmt, 3, posMin);
-					sqlite3_bind_int(insert_stmt, 4, posMax);
-					sqlite3_bind_text(insert_stmt, 1, result[1].c_str(), -1, SQLITE_STATIC);
+					int region_id = -1;
+					sqlite3_bind_text(find_region_stmt, 1, result[1].c_str(), -1, SQLITE_STATIC);
+					while(sqlite3_step(find_region_stmt) == SQLITE_ROW){
+						region_id = sqlite3_column_int(find_region_stmt, 0);
+					}
+					sqlite3_reset(find_region_stmt);
 
-					while(sqlite3_step(insert_stmt)==SQLITE_ROW) {}
+					if(region_id == -1){
+						sqlite3_bind_text(insert_region_stmt, 1, result[1].c_str(), -1, SQLITE_STATIC);
+						while(sqlite3_step(insert_region_stmt) == SQLITE_ROW){}
+						sqlite3_reset(insert_region_stmt);
 
-					sqlite3_reset(insert_stmt);
+						sqlite3_exec(db, "SELECT LAST_INSERT_ROWID()",  &parseSingleIntQuery, &region_id, NULL);
+
+						sqlite3_bind_text(insert_name_stmt, 2, result[1].c_str(), -1, SQLITE_STATIC);
+						sqlite3_bind_int(insert_name_stmt, 1, region_id);
+						while(sqlite3_step(insert_name_stmt) == SQLITE_ROW){}
+						sqlite3_reset(insert_region_stmt);
+					}
+
+					sqlite3_bind_int(insert_bound_stmt, 1, region_id);
+					sqlite3_bind_int(insert_bound_stmt, 2, chr);
+					sqlite3_bind_int(insert_bound_stmt, 3, posMin);
+					sqlite3_bind_int(insert_bound_stmt, 4, posMax);
+
+					while(sqlite3_step(insert_bound_stmt)==SQLITE_ROW) {}
+
+					sqlite3_reset(insert_bound_stmt);
 				}
 			}
 		}
 		data_file.close();
 	}
+
+	sqlite3_finalize(insert_bound_stmt);
+	sqlite3_finalize(insert_region_stmt);
+	sqlite3_finalize(insert_name_stmt);
+	sqlite3_finalize(find_region_stmt);
 }
 
 void RegionCollectionSQLite::updateZones(){
@@ -137,14 +197,14 @@ void RegionCollectionSQLite::updateZones(){
 	int zone_size=_info->getZoneSize();
 
 	// Reverse any regions that are backwards
-	string region_reverse_sql = "UPDATE " + _s_tmp_region_tbl + " "
+	string region_reverse_sql = "UPDATE " + _s_tmp_bound_tbl + " "
 			"SET posMin = posMax, posMax = posMin WHERE posMin > posMax";
 	sqlite3_exec(db, region_reverse_sql.c_str(), NULL, NULL, NULL);
 
 	// Find the minimum and maximum zone sizes
 	int minPos, maxPos = 0;
-	string min_pos_sql = "SELECT MIN(posMin) FROM " + _s_tmp_region_tbl;
-	string max_pos_sql = "SELECT MAX(posMax) FROM " + _s_tmp_region_tbl;
+	string min_pos_sql = "SELECT MIN(posMin) FROM " + _s_tmp_bound_tbl;
+	string max_pos_sql = "SELECT MAX(posMax) FROM " + _s_tmp_bound_tbl;
 
 	sqlite3_exec(db, min_pos_sql.c_str(), &parseSingleIntQuery, &minPos, NULL);
 	sqlite3_exec(db, max_pos_sql.c_str(), &parseSingleIntQuery, &maxPos, NULL);
@@ -173,7 +233,7 @@ void RegionCollectionSQLite::updateZones(){
 	stringstream zone_ins_str;
 	zone_ins_str << "INSERT OR IGNORE INTO " << _s_tmp_zone_tbl << " (region_id,chr,zone) "
 			<< "SELECT rb.region_id, rb.chr, z.zone "
-			<< "FROM " << _s_tmp_region_tbl << " AS rb JOIN " << tmp_zone_tbl << " AS z "
+			<< "FROM " << _s_tmp_bound_tbl << " AS rb JOIN " << tmp_zone_tbl << " AS z "
 			<< "ON z.zone >= rb.posMin / " << zone_size << " "
 			<< "AND z.zone <= rb.posMax / " << zone_size << " ";
 
@@ -255,9 +315,10 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 	sqlite3_stmt* tmp_region_stmt;
 
-	string tmp_region_sql = "SELECT region_id, label, chr, posMin, posMax "
+	string tmp_region_sql = "SELECT z.region_id, label, z.chr, posMin, posMax "
 			"FROM " + _s_tmp_zone_tbl + " AS z "
-			"INNER JOIN " + _s_tmp_region_tbl + " AS r USING (region_id, chr) "
+			"INNER JOIN " + _s_tmp_bound_tbl + " USING (region_id, chr) "
+			"INNER JOIN " + _s_tmp_region_tbl + " USING (region_id) "
 			"WHERE zone=:pos_zone AND z.chr=:chrom AND posMin<=:pos AND posMax>=:pos";
 
 	sqlite3_prepare_v2(db, tmp_region_sql.c_str(), -1, &tmp_region_stmt, NULL);
@@ -284,7 +345,6 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		sqlite3_reset(region_stmt);
 
 		if(c_region_files.size() != 0){
-
 			sqlite3_bind_int(tmp_region_stmt, tmp_chr_idx, (*itr)->getChrom());
 			sqlite3_bind_int(tmp_region_stmt, tmp_pos_idx, static_cast<int>((*itr)->getPos()));
 			sqlite3_bind_int(tmp_region_stmt, tmp_pos_zone_idx, (*itr)->getPos()/zone_size);
@@ -393,6 +453,5 @@ int RegionCollectionSQLite::parseSingleIntQuery(void* pop_id, int n_cols, char**
 	(*result) = atoi(col_vals[0]);
 	return 0;
 }
-
 
 } // namespace Knowledge;

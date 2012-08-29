@@ -155,7 +155,7 @@ void InformationSQLite::loadRoles(){
 	map<string, int>::const_iterator role_itr;
 	int max_role = 0;
 
-	string max_role_sql = "SELECT max(role_id) FROM snp_biopolymer_role";
+	string max_role_sql = "SELECT max(role_id) FROM role";
 	sqlite3_exec(_db, max_role_sql.c_str(), parseSingleIntQuery, &max_role, NULL);
 
 	string insert_sql_null = "INSERT OR IGNORE INTO " + _role_region_tbl + " "
