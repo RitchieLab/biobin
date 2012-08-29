@@ -142,9 +142,9 @@ void InformationSQLite::printPopulations(ostream& os){
 }
 
 void InformationSQLite::printSources(ostream& os){
-	string src_sql = "SELECT source_id, source FROM source";
+	string src_sql = "SELECT source FROM source";
 
-	os << "ID\tSource Name\n";
+	os << "Source Name\n";
 	sqlite3_exec(_db, src_sql.c_str(), printQueryResult, &os, NULL);
 
 }
