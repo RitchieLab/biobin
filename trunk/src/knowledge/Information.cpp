@@ -19,9 +19,11 @@ int Information::snp_role::s_num_vals = 0;
 const Information::snp_role Information::EXON("exon");
 const Information::snp_role Information::INTRON("intron");
 const Information::snp_role Information::REGULATORY("reg");
+const Information::snp_role Information::OTHER("other");
 
 vector<string> Information::c_source_names;
 vector<string> Information::c_role_files;
+vector<string> Information::c_source_exclude;
 set<unsigned int> Information::_s_source_ids;
 
 string Information::getSourceList(){

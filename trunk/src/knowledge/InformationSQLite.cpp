@@ -14,6 +14,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include <boost/algorithm/string.hpp>
 
@@ -372,6 +373,20 @@ void InformationSQLite::prepRoleStmt(){
 	}
 	role_ids.clear();
 
+	// other codes
+	string other_sql = "SELECT role_id FROM role WHERE role NOT IN "
+			"('intron','splice-3','splice-5','cds-synon','stop-gain',"
+			"'missense','frameshift','utr-3','utr-5','regulatory')";
+	sqlite3_exec(_db, other_sql.c_str(), parseMultiIntQuery, &role_ids, NULL);
+
+	role_itr = role_ids.begin();
+	while(role_itr != role_ids.end()){
+		_role_map.insert(std::make_pair(*role_itr,OTHER));
+		++role_itr;
+	}
+	role_ids.clear();
+
+
 	// Prep the SQL statement to get the code
 	string role_sql = "SELECT role_id FROM snp_locus "
 			"INNER JOIN snp_biopolymer_role USING (rs) "
@@ -395,6 +410,7 @@ const set<unsigned int>& InformationSQLite::getSourceIds(){
 	if(_s_source_ids.size() == 0){
 
 		vector<int> query_results;
+		vector<int> exclude_results;
 		string source_query = "SELECT source_id FROM source ";
 		string where_clause = "";
 
@@ -415,9 +431,29 @@ const set<unsigned int>& InformationSQLite::getSourceIds(){
 
 		string source_sql = source_query + where_clause;
 		sqlite3_exec(_db, source_sql.c_str(), parseMultiIntQuery, &query_results, NULL);
+		std::sort(query_results.begin(), query_results.end());
 
-		_s_source_ids.insert(query_results.begin(), query_results.end());
+		if (c_source_exclude.size() != 0){
+			stringstream where_str;
+			where_str << "WHERE source IN (";
+			for(unsigned int i=0; i<c_source_exclude.size(); i++){
+				if(i){
+					where_str << ",";
+				}
+				where_str << "'" << c_source_exclude[i] << "'";
+			}
+			where_str << ")";
+
+			where_clause = where_str.str();
+			source_sql = source_query + where_clause;
+			sqlite3_exec(_db, source_sql.c_str(), parseMultiIntQuery, &exclude_results, NULL);
+		}
+		std::sort(exclude_results.begin(), exclude_results.end());
+		std::set_difference(query_results.begin(), query_results.end(),
+				exclude_results.begin(), exclude_results.end(),
+				std::inserter(_s_source_ids,_s_source_ids.end()));
 	}
+
 	return _s_source_ids;
 }
 

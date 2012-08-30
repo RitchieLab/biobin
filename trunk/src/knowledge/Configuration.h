@@ -13,12 +13,14 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <sstream>
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace po = boost::program_options;
 
+using std::stringstream;
 using std::vector;
 using std::string;
 using std::map;
@@ -35,6 +37,7 @@ public:
 	template <class T>
 	class Container{
 	public:
+		explicit Container<T>(const string& str){stringstream ss(str);ss >> (*this);}
 		Container<T>(){}
 		operator vector<T>() const {return _data;}
 		void push_back(T val){ _data.push_back(val);}
@@ -50,7 +53,6 @@ public:
 	static void printConfig(std::ostream& os);
 	//static void printHelp(std::ostream& os);
 	//static void printOptions(std::ostream& os, const po::variables_map& vm);
-
 	static void parseOptions(const po::variables_map& vm);
 
 private:
@@ -90,9 +92,9 @@ namespace std{
 template <class T>
 ostream& operator<<(ostream& o, const Knowledge::Configuration::Container<T>& d){
 	string sep = ",";
-	vector<T>& data = (vector<T>) d ;
+	const vector<T>& data = (vector<T>) d ;
 	//vector<T>::const_iterator itr = data.begin();
-	for(int i=0; i<data.size(); i++){
+	for(unsigned int i=0; i<data.size(); i++){
 		if(i){
 			o << sep;
 		}

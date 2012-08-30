@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
@@ -18,6 +19,7 @@
 #include "GroupCollection.h"
 #include "Information.h"
 
+using std::stringstream;
 using std::string;
 using std::vector;
 using po::value;
@@ -54,8 +56,8 @@ void Configuration::initGeneric(){
 					"A file containing custom regions")
 			("include-sources",value<Container<string> >()->composing(),
 					"A list of source names to include")
-			("include-source-file",value<Container<string> >()->composing(),
-					"A list of filenames containing source names to include")
+			("exclude-sources",value<Container<string> >()->default_value(Container<string>("dbsnp,oreganno,ucsc-ecr"))->composing(),
+					"A list of source names to exclude")
 			("role-file", value<Container<string> >()->composing(),
 					"A file containing custom roles");
 
@@ -125,6 +127,9 @@ void Configuration::printConfig(std::ostream& os){
 			if(name.find_last_of('=') != string::npos){
 				int eq_pos = name.find_last_of('=');
 				txt_val = name.substr(eq_pos + 1, name.find_last_of(')') - eq_pos - 1);
+			} else {
+				// If we made it here, the "default" is nothing!
+				os << "#";
 			}
 		}else{
 			os << "#";
@@ -185,29 +190,30 @@ void Configuration::parseOptions(const po::variables_map& vm){
 		Information::c_source_names = vm["include-sources"].as<Container<string> >();
 	}
 
-	if (vm.count("include-source-file")){
-		vector<string> files = vm["include-source-file"].as<Container<string> >();
-		// Iterate over each file, adding it to the group names
-		vector<string>::const_iterator f_itr = files.begin();
-		vector<string>::const_iterator f_end = files.end();
-		while(f_itr != f_end){
-			ifstream data_file((*f_itr).c_str());
-			if (!data_file.is_open()){
-				std::cerr<<"WARNING: cannot find " << (*f_itr) <<", ignoring.";
-			} else {
-				string line;
-				vector<string> result;
-				while(data_file.good()){
-					getline(data_file, line);
-					split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
-					Information::c_source_names.insert(Information::c_source_names.end(), result.begin(), result.end());
-				}
-				data_file.close();
-			}
-			++f_itr;
+	if (vm.count("exclude-sources")){
+		Information::c_source_exclude = vm["exclude-sources"].as<Container<string> >();
+
+		// Now, check to make sure that nothing is included AND excluded!
+		std::sort(Information::c_source_names.begin(),Information::c_source_names.end());
+		std::sort(Information::c_source_exclude.begin(),Information::c_source_exclude.end());
+		vector<string> incl_excl;
+		std::set_intersection(
+				Information::c_source_names.begin(), Information::c_source_names.end(),
+				Information::c_source_exclude.begin(), Information::c_source_exclude.end(),
+				std::back_inserter(incl_excl));
+
+		if (incl_excl.size() > 0){
+			// throw an error!
+			std::cerr << "ERROR: Sources cannot be both included and excluded:\n"
+					<< "Include List: " << vm["include-sources"].as<Container<string> >()
+					<< "Exclude List: " << vm["exclude-sources"].as<Container<string> >();
+
+			throw validation_error(validation_error::invalid_option_value);
 		}
 	}
+
 }
+
 }
 
 

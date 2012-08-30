@@ -95,6 +95,7 @@ public:
 	static const snp_role INTRON;
 	static const snp_role EXON;
 	static const snp_role REGULATORY;
+	static const snp_role OTHER;
 
 	/*!
 	 * Destroys the Information object
@@ -179,6 +180,7 @@ public:
 	string getSourceList();
 
 	static vector<string> c_source_names;
+	static vector<string> c_source_exclude;
 	static vector<string> c_role_files;
 
 protected:
