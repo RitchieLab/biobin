@@ -28,7 +28,6 @@ bool BinManager::ExpandByGenes = true;
 bool BinManager::UsePathways = true;
 bool BinManager::IncludeIntergenic = true;
 bool BinManager::ExpandByExons = false;
-bool BinManager::ExpandByFunction = false;
 bool BinManager::FilterByRole = false;
 bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
