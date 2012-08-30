@@ -29,6 +29,8 @@ bool BinManager::UsePathways = true;
 bool BinManager::IncludeIntergenic = true;
 bool BinManager::ExpandByExons = false;
 bool BinManager::ExpandByFunction = false;
+bool BinManager::FilterByRole = false;
+bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
 uint BinManager::maxSnpCount = 200;
 
@@ -186,8 +188,6 @@ void BinManager::collapseBins(Information* info){
 		}
 	}
 
-	// TODO: Expand by functionality and sub-gene information here
-
 	//expand by role
 	b_itr = _bin_list.begin();
 	set<Bin*> new_bins;
@@ -206,12 +206,15 @@ void BinManager::collapseBins(Information* info){
 			typedef vector<pair<const Information::snp_role*, Bin*> > role_bin_type;
 			role_bin_type role_bin_list;
 
-			while(role_itr != role_end){
-				Bin* new_bin = new Bin(**b_itr);
-				Information::snp_role r = *role_itr;
-				new_bin->addExtraData("_" + static_cast<string>(*role_itr));
-				role_bin_list.push_back(make_pair(&(*role_itr), new_bin));
-				++role_itr;
+			// Only needed if not filtering or keeping unknown
+			if(!FilterByRole || !KeepUnknown){
+				while(role_itr != role_end){
+					Bin* new_bin = new Bin(**b_itr);
+					Information::snp_role r = *role_itr;
+					new_bin->addExtraData("_" + static_cast<string>(*role_itr));
+					role_bin_list.push_back(make_pair(&(*role_itr), new_bin));
+					++role_itr;
+				}
 			}
 
 			v_itr = (*b_itr)->variantBegin();
@@ -230,6 +233,7 @@ void BinManager::collapseBins(Information* info){
 					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
 				}
 
+				// If we're filtering, this will be an empty loop
 				role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
 				while(role_bin_itr != role_bin_list.end()){
 					if (role & *((*role_bin_itr).first) ){
@@ -239,6 +243,7 @@ void BinManager::collapseBins(Information* info){
 					++role_bin_itr;
 				}
 
+				// If there was a role, remove it from the current bin
 				if (role){
 					_locus_bins[*v_itr].erase(*b_itr);
 					v_itr = (*b_itr)->erase(v_itr);
@@ -249,6 +254,7 @@ void BinManager::collapseBins(Information* info){
 
 			}
 
+			// Again, if we filter, this will be empty and correct!
 			bool unk = false;
 			role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
 			while(role_bin_itr != role_bin_list.end()){
@@ -261,6 +267,11 @@ void BinManager::collapseBins(Information* info){
 
 			if(unk){
 				(*b_itr)->addExtraData("_unk");
+			}
+
+			// If we're dropping the unknown, erase this bin
+			if(FilterByRole && !KeepUnknown){
+				eraseBin(b_itr);
 			}
 		}
 		++b_itr;

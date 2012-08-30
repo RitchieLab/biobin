@@ -70,7 +70,11 @@ public:
 	static bool IncludeIntergenic;					///< Include INtergenic bins?
 	static bool ExpandByGenes;						///< Do we want to drop down to genes, if the group is large enough?
 	static bool ExpandByExons;						///< Do we want to drop to to introns and exons, if the group is large enough
-	static bool ExpandByFunction;					///< Indicate that we do want to use function 
+	static bool ExpandByFunction;					///< Indicate that we do want to use function
+	//! do we want to filter the unknown role bins?
+	static bool FilterByRole;
+	//! Keep or drop the unknown bins?
+	static bool KeepUnknown;
 	static float mafCutoff; 	///< Max maf to produce result in a bin
 
 	// Carried this over from taskbincollapse, but I'm not sure what it does

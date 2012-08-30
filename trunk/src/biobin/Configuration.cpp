@@ -62,6 +62,10 @@ void Configuration::initGeneric(){
 				"The size above which bins are expanded into child bins, if possible")
 		("bin-expand-exons,x",value<Bool>()->default_value(false),
 				"Flag indicating to expand bins into exons/intron regions")
+		("filter-bin-role",value<Bool>()->default_value(false),
+				"Flag indicating desire to filter by unknown role")
+		("keep-unknown-role",value<Bool>()->default_value(false),
+				"When filtering by bin role, if true, keep only unknown role bins, if false, drop unknown role bins")
 		("bin-expand-functions,f",value<Bool>()->default_value(false),
 				"Flag indicating to expand bins by functionality of the variants")
 		("bin-pathways",value<Bool>()->default_value(true),
@@ -233,6 +237,8 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//===========================================
 	BinManager::ExpandByExons = vm["bin-expand-exons"].as<Bool>();
 	BinManager::ExpandByFunction = vm["bin-expand-functions"].as<Bool>();
+	BinManager::FilterByRole = vm["filter-bin-role"].as<Bool>();
+	BinManager::KeepUnknown = vm["keep-unknown-role"].as<Bool>();
 	if(BinManager::ExpandByFunction){
 		std::cerr<<"WARNING: expansion by functionality is not currently supported.\n";
 	}
