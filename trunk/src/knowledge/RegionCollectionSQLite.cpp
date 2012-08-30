@@ -167,7 +167,7 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 						sqlite3_bind_text(insert_name_stmt, 2, result[1].c_str(), -1, SQLITE_STATIC);
 						sqlite3_bind_int(insert_name_stmt, 1, region_id);
 						while(sqlite3_step(insert_name_stmt) == SQLITE_ROW){}
-						sqlite3_reset(insert_region_stmt);
+						sqlite3_reset(insert_name_stmt);
 					}
 
 					sqlite3_bind_int(insert_bound_stmt, 1, region_id);
