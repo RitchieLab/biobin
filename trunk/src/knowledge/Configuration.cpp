@@ -56,7 +56,7 @@ void Configuration::initGeneric(){
 					"A file containing custom regions")
 			("include-sources",value<Container<string> >()->composing(),
 					"A list of source names to include")
-			("exclude-sources",value<Container<string> >()->default_value(Container<string>("dbsnp,oreganno,ucsc-ecr"))->composing(),
+			("exclude-sources",value<Container<string> >()->default_value(Container<string>("dbsnp,oreganno,ucsc_ecr"))->composing(),
 					"A list of source names to exclude")
 			("role-file", value<Container<string> >()->composing(),
 					"A file containing custom roles");
