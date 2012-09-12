@@ -197,7 +197,7 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 
 	// once we hit intergenic bins, we can't break it down by role any more!
 	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
-		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
+		if((uint)(*b_itr)->getSize() >= BinTraverseThreshold){
 
 			Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
 			Information::snp_role::const_iterator role_end = Information::snp_role::end();
