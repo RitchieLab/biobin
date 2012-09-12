@@ -84,7 +84,7 @@ private:
 	BinManager& operator=(const BinManager&);
 
 	// Collapses all of the bins according to the preferences we set.
-	void collapseBins(Knowledge::Information* info);
+	void collapseBins(Knowledge::Information* info, const Knowledge::RegionCollection& reg);
 	// Erases (and increments) a single bin
 	void eraseBin(set<Bin*>::iterator&);
 

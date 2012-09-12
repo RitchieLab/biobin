@@ -127,7 +127,7 @@ void BinManager::InitBins(
 	// At this point, we have all of the top level bins constructed and
 	// stored in the variable _bin_list.  We should now collapse the
 	// bins according to the preferences given
-	collapseBins(info);
+	collapseBins(info, regions);
 }
 
 void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
@@ -147,7 +147,7 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 
 }
 
-void BinManager::collapseBins(Information* info){
+void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 
 	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
@@ -192,7 +192,7 @@ void BinManager::collapseBins(Information* info){
 	set<Bin*> new_bins;
 
 	if (ExpandByExons){
-		info->loadRoles();
+		info->loadRoles(reg);
 	}
 
 	// once we hit intergenic bins, we can't break it down by role any more!

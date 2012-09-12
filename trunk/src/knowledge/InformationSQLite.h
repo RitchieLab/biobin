@@ -58,7 +58,7 @@ public:
 	virtual void printPopulations(ostream& os);
 	virtual void printSources(ostream& os);
 
-	virtual void loadRoles();
+	virtual void loadRoles(const RegionCollection& reg);
 
 	virtual const set<unsigned int>& getSourceIds();
 

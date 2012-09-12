@@ -8,6 +8,7 @@
 #include "InformationSQLite.h"
 #include "Locus.h"
 #include "Region.h"
+#include "RegionCollection.h"
 
 #include <sstream>
 #include <stdlib.h>
@@ -150,7 +151,9 @@ void InformationSQLite::printSources(ostream& os){
 
 }
 
-void InformationSQLite::loadRoles(){
+void InformationSQLite::loadRoles(const RegionCollection& reg){
+	// NOTE: We MUST have loaded the regions already!!
+
 	// A mapping of roled to their ID
 	map<string, int> role_id_map;
 	map<string, int>::const_iterator role_itr;
@@ -173,8 +176,8 @@ void InformationSQLite::loadRoles(){
 	sqlite3_stmt* insert_stmt_null;
 	sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1, &insert_stmt_null, NULL);
 
-	sqlite3_stmt* find_gene_stmt;
-	sqlite3_prepare_v2(_db, get_gene_sql.c_str(), -1, &find_gene_stmt, NULL);
+	//sqlite3_stmt* find_gene_stmt;
+	//sqlite3_prepare_v2(_db, get_gene_sql.c_str(), -1, &find_gene_stmt, NULL);
 
 
 	// Get rid of any indexes in the 2 tables of interest
@@ -233,6 +236,18 @@ void InformationSQLite::loadRoles(){
 						sqlite3_bind_int(insert_stmt_gene, 3, posMin);
 						sqlite3_bind_int(insert_stmt_gene, 4, posMax);
 
+						// Instead of finding the gene via SQL, we will find it
+						// in the RegionCollection object
+						string alias = result[4];
+						RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
+						while(itr != reg.aliasEnd(alias)){
+							sqlite3_bind_int(insert_stmt_gene, 5, (*itr)->getID());
+							while(sqlite3_step(insert_stmt_gene) == SQLITE_ROW){}
+							sqlite3_reset(insert_stmt_gene);
+							++itr;
+						}
+
+						/*
 						sqlite3_bind_text(find_gene_stmt, 1, result[4].c_str(), -1, SQLITE_STATIC);
 						while(sqlite3_step(find_gene_stmt) == SQLITE_ROW){
 							sqlite3_bind_int(insert_stmt_gene, 5, sqlite3_column_int(find_gene_stmt, 0));
@@ -240,6 +255,7 @@ void InformationSQLite::loadRoles(){
 							sqlite3_reset(insert_stmt_gene);
 						}
 						sqlite3_reset(find_gene_stmt);
+						*/
 
 					}
 				}
@@ -262,7 +278,7 @@ void InformationSQLite::loadRoles(){
 	restoreIndexes(_role_region_tbl, region_idx);
 	sqlite3_finalize(insert_stmt_gene);
 	sqlite3_finalize(insert_stmt_null);
-	sqlite3_finalize(find_gene_stmt);
+	//sqlite3_finalize(find_gene_stmt);
 
 	// Populate the zone table
 	UpdateZones();

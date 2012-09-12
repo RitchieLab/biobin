@@ -25,6 +25,7 @@ namespace Knowledge {
 
 class Locus;
 class Region;
+class RegionCollection;
 
 /*!
  * \brief Defines a class that gets general information about the database.
@@ -171,7 +172,7 @@ public:
 	/*
 	 * Load the roles from the files given in the c_role_files member
 	 */
-	virtual void loadRoles() = 0;
+	virtual void loadRoles(const RegionCollection& reg) = 0;
 
 	/*!
 	 * \brief Returns a string of IDs compatible with a "where" clause.
