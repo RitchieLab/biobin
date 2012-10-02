@@ -40,9 +40,10 @@ int ConverterSQLite::Load() {
 	// Find the current version that we are building to
 	stringstream ss;
 	ss << "SELECT chain_id, score, old_chr, old_start, old_end, new_chr, is_fwd "
-			"FROM chain INNER JOIN build_assembly "
-			"ON build_assembly.assembly=chain.old_assembly "
-			"WHERE build = '" << _origBuild << "';";
+			"FROM chain INNER JOIN grch_ucschg "
+			"ON grch_ucschg.ucschg=chain.old_ucschg "
+			"WHERE grch = '" << _origBuild << "' AND " <<
+			"new_ucschg = (SELECT value FROM setting WHERE setting='ucschg');";
 
 	sqlite3_exec(_db, ss.str().c_str(), parseChains, this, NULL);
 

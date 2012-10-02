@@ -50,7 +50,7 @@ void Configuration::initGeneric(){
 					"A file containg a group definition")
 			("population,P", value<string>(&RegionCollection::pop_str)->default_value(""),
 					"The population to base the gene boundaries on")
-			("gene-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
+			("region-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
 					"The amount to expand the genes by (when using NO-LD)")
 			("region-file", value<Container<string> >()->composing(),
 					"A file containing custom regions")

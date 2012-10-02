@@ -68,11 +68,11 @@ void Configuration::initGeneric(){
 				"When filtering by bin role, if true, keep only unknown role bins, if false, drop unknown role bins")
 		("bin-pathways",value<Bool>()->default_value(true),
 				"Flag indicating not to include pathways in the analysis")
-		("bin-genes",value<Bool>()->default_value(true),
+		("bin-regions",value<Bool>()->default_value(true),
 				"Flag indicating not to include genes in the analysis")
-		("bin-intergenic",value<Bool>()->default_value(true),
+		("bin-interregion",value<Bool>()->default_value(true),
 				"Flag indicating not to include intergenic bins in the analysis")
-		("intergenic-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
+		("interregion-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
 		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-loci",value<Bool>()->default_value(true),
@@ -237,15 +237,15 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BinManager::FilterByRole = vm["filter-bin-role"].as<Bool>();
 	BinManager::KeepUnknown = vm["keep-unknown-role"].as<Bool>();
 	BioBin::BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
-	BioBin::BinManager::ExpandByGenes = vm["bin-genes"].as<Bool>();
-	BioBin::BinManager::IncludeIntergenic = vm["bin-intergenic"].as<Bool>();
+	BioBin::BinManager::ExpandByGenes = vm["bin-regions"].as<Bool>();
+	BioBin::BinManager::IncludeIntergenic = vm["bin-interregion"].as<Bool>();
 	if(BioBin::Application::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		if(!BioBin::BinManager::IncludeIntergenic){
-			std::cerr << "ERROR: You must bin by either pathways, genes, or intergenic.\n";
+			std::cerr << "ERROR: You must bin by either pathways, regions, or interregion.\n";
 			throw validation_error(validation_error::invalid_option_value);
 		}else{
-			std::cerr<<"WARNING: You elected not to bin by pathways or genes.  " <<
-							"You will only get intergenic bins.\n";
+			std::cerr<<"WARNING: You elected not to bin by pathways or regions.  " <<
+							"You will only get interregion bins.\n";
 		}
 
 
