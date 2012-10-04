@@ -191,7 +191,6 @@ protected:
 	//! mapping of group->region relationships
 	unordered_map<uint, unordered_set<Region*> > _group_associations;
 
-	static const vector<string> child_types;
 	RegionCollection& _regions;
 
 	Information* _info;

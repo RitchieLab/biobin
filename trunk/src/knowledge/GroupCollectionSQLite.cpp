@@ -99,15 +99,6 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 		sqlite3_finalize(name_stmt);
 	}
 
-
-	vector<string>::const_iterator rel_type = child_types.begin();
-	stringstream rel_stream;
-	rel_stream << "('" << *rel_type << "'";
-	while(++rel_type != child_types.end()){
-		rel_stream << ", '" << *rel_type << "'";
-	}
-	rel_stream << ")";
-
 	// OK, now get a list of IDs that are children of anything in the group,
 	// but only if we are filtering
 	if (id_list.size() > 0){
@@ -117,9 +108,7 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 		deque<uint> loadables(id_list.begin(), id_list.end());
 
 		string child_cmd = "SELECT related_group_id FROM group_group "
-				"INNER JOIN relationship USING (relationship_id) "
-				"WHERE relationship IN " + rel_stream.str() + " "
-				"AND direction=1 AND group_id=:gid";
+				"WHERE contains=1 AND group_id=:gid";
 
 		sqlite3_stmt* child_stmt;
 		sqlite3_prepare_v2(_db, child_cmd.c_str(), -1, &child_stmt, NULL);
@@ -184,9 +173,7 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 			"'group'.description, source "
 			"FROM group_group INNER JOIN 'group' USING (group_id) "
 			"INNER JOIN source ON 'group'.source_id='group'.source_id "
-			"INNER JOIN relationship ON group_group.relationship_id=relationship.relationship_id "
-			"WHERE group_group.related_group_id=:gid AND direction=-1 "
-			"AND relationship IN " + rel_stream.str();
+			"WHERE group_group.contains=1 AND group_group.related_group_id=:gid";
 
 	sqlite3_stmt* parent_stmt;
 	sqlite3_prepare_v2(_db, parent_cmd.c_str(), -1, &parent_stmt, NULL);

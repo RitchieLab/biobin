@@ -27,10 +27,6 @@ using boost::to_upper;
 
 namespace Knowledge{
 
-string __child_type_init[] = {"is_a", "part_of"};
-
-const vector<string> GroupCollection::child_types(__child_type_init, __child_type_init + (sizeof(__child_type_init) / sizeof(__child_type_init[0])));
-
 vector<string> GroupCollection::c_group_names;
 unordered_set<uint> GroupCollection::c_id_list;
 Group GroupCollection::_group_not_found(-1, "Not found", "");
