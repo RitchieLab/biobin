@@ -130,11 +130,18 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 		sqlite3_finalize(child_stmt);
 	}
 
+	string ambig = "";
+	if (c_ambiguity == GroupCollection::STRICT){
+		ambig = " AND specificity>=100 ";
+	}else if(c_ambiguity == GroupCollection::RESOLVABLE){
+		ambig = " AND (quality >= 100 OR implication >= 100) ";
+	}
+
 	string group_cmd = "SELECT group_id, label, description, source "
 			"FROM group_biopolymer "
 			"INNER JOIN 'group' USING (group_id) "
 			"INNER JOIN source ON 'group'.source_id=source.source_id "
-			"WHERE group_biopolymer.biopolymer_id=:region_id " + src_str.str();
+			"WHERE group_biopolymer.biopolymer_id=:region_id " + ambig + src_str.str();
 
 	sqlite3_stmt* group_stmt;
 	sqlite3_prepare_v2(_db, group_cmd.c_str(), -1, &group_stmt, NULL);

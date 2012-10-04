@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 
 #include "RegionCollection.h"
 #include "Information.h"
@@ -20,6 +21,7 @@ using std::ifstream;
 using std::getline;
 using std::stringstream;
 
+using boost::program_options::validation_error;
 using boost::algorithm::split;
 using boost::algorithm::join;
 using boost::algorithm::is_any_of;
@@ -30,6 +32,7 @@ namespace Knowledge{
 vector<string> GroupCollection::c_group_names;
 unordered_set<uint> GroupCollection::c_id_list;
 Group GroupCollection::_group_not_found(-1, "Not found", "");
+GroupCollection::AmbiguityModel GroupCollection::c_ambiguity(GroupCollection::PERMISSIVE);
 
 GroupCollection::GroupCollection(RegionCollection& reg) : _regions(reg) {}
 
@@ -192,6 +195,33 @@ uint GroupCollection::initGroupFromArchive(const string& src_name, const vector<
 
 }
 
+namespace std{
 
+istream& operator>>(istream& in,
+		Knowledge::GroupCollection::AmbiguityModel& model_out) {
+	string token;
+	in >> token;
+	if (token.size() > 0) {
+		char s = token[0];
+		if (s == 's' || s == 'S') {
+			model_out = Knowledge::GroupCollection::STRICT;
+		} else if (s == 'r' || s == 'R') {
+			model_out = Knowledge::GroupCollection::RESOLVABLE;
+		} else if (s == 'p' || s == 'P') {
+			model_out = Knowledge::GroupCollection::PERMISSIVE;
+		} else {
+			throw validation_error(validation_error::invalid_option_value);
+		}
+	} else {
+		throw validation_error(validation_error::invalid_option_value);
+	}
+	//    else throw boost::program_options::validation_error("Invalid unit");
+	return in;
+}
+ostream& operator<<(ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m){
+	o << (const char*) m << endl;
+	return o;
 
+}
 
+}

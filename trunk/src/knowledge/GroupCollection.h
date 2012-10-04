@@ -34,6 +34,31 @@ class Information;
 class GroupCollection{
 
 public:
+	enum Ambiguity_ENUM { STRICT, RESOLVABLE, PERMISSIVE };
+
+	class AmbiguityModel{
+	public:
+		AmbiguityModel() : _data(RESOLVABLE){}
+		AmbiguityModel(const Ambiguity_ENUM& d):_data(d){}
+		operator const char*() const{
+			switch(_data){
+			case GroupCollection::STRICT:
+				return "strict";
+			case GroupCollection::RESOLVABLE:
+				return "resolvable";
+			case GroupCollection::PERMISSIVE:
+				return "permissive";
+			default:
+				return "unknown";
+			}
+		}
+		operator int() const{return _data;}
+
+	private:
+		Ambiguity_ENUM _data;
+	};
+
+
 	/*!
 	 * Creates a collection of groups from a single source, identified by the
 	 * id and name.
@@ -158,6 +183,8 @@ public:
 	static vector<string> c_group_names;
 	//! A configuration value of group IDs to include
 	static unordered_set<uint> c_id_list;
+	//! The ambiguity setting to use
+	static AmbiguityModel c_ambiguity;
 
 protected:
 	/*!
@@ -204,6 +231,11 @@ private:
 	uint initGroupFromArchive(const string& src_name, const vector<string>& split_line);
 };
 
+}
+
+namespace std{
+istream& operator>>(istream& in, Knowledge::GroupCollection::AmbiguityModel& model_out);
+ostream& operator<<(ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m);
 }
 
 

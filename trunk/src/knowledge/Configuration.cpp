@@ -59,7 +59,9 @@ void Configuration::initGeneric(){
 			("exclude-sources",value<Container<string> >()->default_value(Container<string>("dbsnp,oreganno,ucsc_ecr"))->composing(),
 					"A list of source names to exclude")
 			("role-file", value<Container<string> >()->composing(),
-					"A file containing custom roles");
+					"A file containing custom roles")
+			("ambiguity", value<GroupCollection::AmbiguityModel>(&GroupCollection::c_ambiguity)->default_value(GroupCollection::RESOLVABLE),
+					"Ambiguity mode (strict, resolvable, permissive)");
 
 
 	_generic_init = true;
