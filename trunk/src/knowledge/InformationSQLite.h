@@ -109,6 +109,9 @@ private:
 	// Prepared statment for getting SNP roles from regions
 	sqlite3_stmt* _region_role_stmt;
 
+	// Zone size used in the temp tables
+	int _tmp_zone_sz;
+
 };
 
 }

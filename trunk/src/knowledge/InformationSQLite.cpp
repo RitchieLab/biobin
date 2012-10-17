@@ -116,6 +116,13 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 	}
 	sqlite3_reset(_role_stmt);
 
+	//stringstream rrs_q;
+	//rrs_q << "EXPLAIN QUERY PLAN " << sqlite3_sql(_region_role_stmt);
+	//string rrs_s = rrs_q.str();
+	//std::cout << std::endl << rrs_s <<std::endl << std::endl;
+	//int err_code = sqlite3_exec(_db, rrs_s.c_str(), &printQueryResult, &std::cout, NULL);
+	//std::cout << std::endl;
+
 	// Look up region role here
 	int chr_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":chr");
 	int pos_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":pos");
@@ -188,6 +195,9 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 	unsigned int n_roles = 3;
 
 	vector<string>::const_iterator fn_itr = c_role_files.begin();
+	unsigned long running_total = 0;
+	unsigned long prev_total = 0;
+	unsigned int n_vals = 0;
 	while(fn_itr != c_role_files.end()){
 
 		// for each role file, open it and load it into the db
@@ -206,6 +216,17 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 					short chr = Locus::getChrom(result[0]);
 					int posMin = atoi(result[2].c_str());
 					int posMax = atoi(result[3].c_str());
+
+					if(posMin > posMax){
+						std::swap(posMin, posMax);
+					}
+
+					prev_total = running_total;
+					running_total += posMax - posMin;
+					++n_vals;
+					if(running_total < prev_total){
+						std::cerr << "WARNING: Overflow!!" << std::endl;
+					}
 
 					int role_id;
 					role_itr = role_id_map.find(result[1]);
@@ -247,16 +268,6 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 							++itr;
 						}
 
-						/*
-						sqlite3_bind_text(find_gene_stmt, 1, result[4].c_str(), -1, SQLITE_STATIC);
-						while(sqlite3_step(find_gene_stmt) == SQLITE_ROW){
-							sqlite3_bind_int(insert_stmt_gene, 5, sqlite3_column_int(find_gene_stmt, 0));
-							while(sqlite3_step(insert_stmt_gene) == SQLITE_ROW){}
-							sqlite3_reset(insert_stmt_gene);
-						}
-						sqlite3_reset(find_gene_stmt);
-						*/
-
 					}
 				}
 			}
@@ -266,6 +277,11 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 		++fn_itr;
 
 	}
+
+	// I want the zone size to be 1/2 the avg. region size in the temp tables
+	_tmp_zone_sz = running_total / (2*n_vals);
+	int zs_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":zs");
+	sqlite3_bind_int(_region_role_stmt, zs_idx, _tmp_zone_sz);
 
 	// If too many roles, print a warning
 	if(n_roles > sizeof(unsigned long)){
@@ -290,7 +306,8 @@ void InformationSQLite::UpdateZones(){
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter
 
 	// Get the zone size
-	int zone_size=getZoneSize();
+	int zone_size=_tmp_zone_sz;
+	//getZoneSize();
 
 	// Reverse any regions that are backwards
 	string region_reverse_sql = "UPDATE " + _role_region_tbl +
@@ -414,7 +431,7 @@ void InformationSQLite::prepRoleStmt(){
 	stringstream region_role_sql_str;
 	region_role_sql_str << "SELECT role_id FROM " << _role_zone_tbl << " AS z "
 			<< "INNER JOIN " << _role_region_tbl << " AS r USING (role_region_id) "
-			<< "WHERE z.chr=:chr AND z.zone=:pos/" << getZoneSize() << " "
+			<< "WHERE z.chr=:chr AND z.zone=:pos/:zs "
 			<< "AND posMin<=:pos AND posMax>=:pos AND "
 			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
 
@@ -551,12 +568,17 @@ int InformationSQLite::printQueryResult(void* obj, int n_cols, char** col_vals, 
 void InformationSQLite::getAndDropIndexes(const string& tbl_name,
 		map<string, string>& indexes_out) {
 
-	string idx_cmd = "SELECT name, sql FROM sqlite_master "
+	string idx_cmd = "SELECT name, sql FROM (SELECT * FROM sqlite_master UNION ALL SELECT * FROM sqlite_temp_master)"
 			"WHERE type='index' AND tbl_name='" + tbl_name + "' "
 					"AND sql NOT NULL";
 
 	sqlite3_exec(_db, idx_cmd.c_str(), &parseRegionIndex, &indexes_out, NULL);
 
+	//string tbl_view = "SELECT name, sql FROM (SELECT * FROM sqlite_master UNION ALL SELECT * FROM sqlite_temp_master)"
+	//		"WHERE tbl_name='" + tbl_name + "' AND sql NOT NULL";
+
+	//sqlite3_exec(_db, tbl_view.c_str(), &printQueryResult, &std::cout, NULL);
+	//std::cout << std::endl;
 	// Now, drop those indexes!const string& tbl_name,
 	string drop_cmd = "DROP INDEX ";
 
@@ -598,12 +620,9 @@ void InformationSQLite::prepRoleTables(){
 			"("
 			"role_region_id INTEGER NOT NULL,"
 			"chr TINYINT NOT NULL,"
-			"zone INTEGER NOT NULL,"
-			"PRIMARY KEY (role_region_id,chr,zone)"
+			"zone INTEGER NOT NULL"
 			")");
 
-	sql_stmts.push_back("CREATE INDEX '" + _role_region_tbl + "__chr_min' ON " + _role_region_tbl + " (chr,posMin)");
-	sql_stmts.push_back("CREATE INDEX '" + _role_region_tbl + "__chr_max' ON " + _role_region_tbl + " (chr,posMax)");
 	sql_stmts.push_back("CREATE INDEX '" + _role_zone_tbl + "__zone' ON " + _role_zone_tbl + " (chr,zone,role_region_id)");
 
 	vector<string>::const_iterator sql_itr = sql_stmts.begin();
