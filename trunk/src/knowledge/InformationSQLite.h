@@ -53,7 +53,7 @@ public:
 			map<int, string>& group_types_out);
 	virtual int getZoneSize();
 
-	virtual int getSNPRole(const Locus& loc, const Region& reg);
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg, bool use_cache);
 
 	virtual void printPopulations(ostream& os);
 	virtual void printSources(ostream& os);

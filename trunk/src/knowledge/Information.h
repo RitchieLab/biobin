@@ -14,12 +14,15 @@
 #include <map>
 #include <set>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/unordered_map.hpp>
 
 using std::ostream;
 using std::string;
 using std::vector;
 using std::map;
 using std::set;
+using std::pair;
+using boost::unordered_map;
 
 namespace Knowledge {
 
@@ -138,10 +141,11 @@ public:
 	 *
 	 * \param loc The Locus object in question
 	 * \param reg The associated Region to get the role for.
+	 * \param use_cache A flag indicating desire to use caching to speed up lookup
 	 *
 	 * \return An integer that represents a bitmask of the snp_roles
 	 */
-	virtual int getSNPRole(const Locus& loc, const Region& reg) = 0;
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg, bool use_cache=true) = 0;
 
 	/*!
 	 * \brief Prints a list of the populations.
@@ -180,6 +184,12 @@ public:
 	 */
 	string getSourceList();
 
+	/*!
+	 * \brief Clears the role cache.
+	 * Clears the cache of Locus, Region -> roles if used
+	 */
+	void clearCache(){ _role_cache.clear();}
+
 	static vector<string> c_source_names;
 	static vector<string> c_source_exclude;
 	static vector<string> c_role_files;
@@ -189,6 +199,8 @@ protected:
 
 	// Allows children to create SNP roles
 	static Information::snp_role getRole(const string& role){ return snp_role(role);}
+
+	unordered_map<pair<const Locus*, const Region*>, unsigned long> _role_cache;
 };
 
 }

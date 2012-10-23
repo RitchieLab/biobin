@@ -99,8 +99,17 @@ void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 	sqlite3_exec(_db, query_str.c_str(), parseGroupTypeQuery, &group_types_out, NULL);
 }
 
-int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
-	int ret_val = 0;
+unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg, bool use_cache){
+	unsigned long ret_val = 0;
+
+	if(use_cache){
+		unordered_map<pair<const Locus*, const Region*>, unsigned long >::const_iterator cache_itr =
+				_role_cache.find(std::make_pair(&loc, &reg));
+		if(cache_itr != _role_cache.end()){
+			return (*cache_itr).second;
+		}
+	}
+
 	map<int, Information::snp_role>::const_iterator db_role = _role_map.end();
 
 	// Look up dbSNP role here
@@ -115,13 +124,6 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 		}
 	}
 	sqlite3_reset(_role_stmt);
-
-	//stringstream rrs_q;
-	//rrs_q << "EXPLAIN QUERY PLAN " << sqlite3_sql(_region_role_stmt);
-	//string rrs_s = rrs_q.str();
-	//std::cout << std::endl << rrs_s <<std::endl << std::endl;
-	//int err_code = sqlite3_exec(_db, rrs_s.c_str(), &printQueryResult, &std::cout, NULL);
-	//std::cout << std::endl;
 
 	// Look up region role here
 	int chr_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":chr");
@@ -139,7 +141,9 @@ int InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 	}
 	sqlite3_reset(_region_role_stmt);
 
-
+	if(use_cache){
+		_role_cache.insert(std::make_pair(std::make_pair(&loc, &reg), ret_val));
+	}
 	return ret_val;
 }
 
@@ -179,9 +183,9 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 
 
 	sqlite3_stmt* insert_stmt_gene;
-	sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1, &insert_stmt_gene, NULL);
+	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1, &insert_stmt_gene, NULL);
 	sqlite3_stmt* insert_stmt_null;
-	sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1, &insert_stmt_null, NULL);
+	err_code = sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1, &insert_stmt_null, NULL);
 
 	//sqlite3_stmt* find_gene_stmt;
 	//sqlite3_prepare_v2(_db, get_gene_sql.c_str(), -1, &find_gene_stmt, NULL);
@@ -368,6 +372,7 @@ void InformationSQLite::UpdateZones(){
 }
 
 void InformationSQLite::prepRoleStmt(){
+
 	vector<int> role_ids;
 	vector<int>::const_iterator role_itr;
 	// intron codes
@@ -605,6 +610,14 @@ void InformationSQLite::restoreIndexes(const string& tbl_name, const map<string,
 }
 
 void InformationSQLite::prepRoleTables(){
+
+	// Check the pragma temp_store
+	string memory_pragma = "PRAGMA temp_store;";
+	int mem_prag = -1;
+	sqlite3_exec(_db, memory_pragma.c_str(), &parseSingleIntQuery, &mem_prag, NULL);
+	if(mem_prag != 2){
+		std::cerr << "WARNING: SQLite3 storage pragma not set to memory.  Using region roles may take a long time.\n";
+	}
 
 	vector<string> sql_stmts;
 	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _role_region_tbl +

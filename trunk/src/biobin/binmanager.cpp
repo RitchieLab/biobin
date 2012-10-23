@@ -202,44 +202,40 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 			Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
 			Information::snp_role::const_iterator role_end = Information::snp_role::end();
 
-			typedef vector<pair<const Information::snp_role*, Bin*> > role_bin_type;
-			role_bin_type role_bin_list;
-
-			// Only needed if not filtering or keeping unknown
-			if(!FilterByRole || !KeepUnknown){
-				while(role_itr != role_end){
-					Bin* new_bin = new Bin(**b_itr);
-					Information::snp_role r = *role_itr;
-					new_bin->addExtraData("_" + static_cast<string>(*role_itr));
-					role_bin_list.push_back(make_pair(&(*role_itr), new_bin));
-					++role_itr;
-				}
-			}
+			map<const Information::snp_role, Bin*> role_bin_list;
+			map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
 
 			v_itr = (*b_itr)->variantBegin();
 			v_end = (*b_itr)->variantEnd();
 			while (v_itr != v_end){
-				int role = 0;
+				unsigned long role = 0;
 				if((*b_itr)->isGroup()){
 					Group* curr_group = (*b_itr)->getGroup();
 					Group::const_region_iterator r_itr = curr_group->regionBegin();
 					Group::const_region_iterator r_end = curr_group->regionEnd();
 					while(r_itr != r_end){
-						role |= info->getSNPRole(**v_itr, **r_itr);
+						role |= info->getSNPRole(**v_itr, **r_itr, true);
 						++r_itr;
 					}
 				}else{
-					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
+					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion(), true);
 				}
 
-				// If we're filtering, this will be an empty loop
-				role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
-				while(role_bin_itr != role_bin_list.end()){
-					if (role & *((*role_bin_itr).first) ){
-						((*role_bin_itr).second)->addLocus(*v_itr);
-						_locus_bins[*v_itr].insert((*role_bin_itr).second);
+				while(role_itr != role_end){
+					if ((!FilterByRole || !KeepUnknown) && (role & *role_itr)){
+						Bin* new_bin = 0;
+						role_bin_itr = role_bin_list.find(*role_itr);
+						if(role_bin_itr == role_bin_list.end()){
+							new_bin = (role_bin_list[*role_itr] = new Bin(**b_itr));
+							new_bin->addExtraData("_" + static_cast<string>(*role_itr));
+						}else{
+							new_bin = (*role_bin_itr).second;
+						}
+
+						new_bin->addLocus(*v_itr);
+						_locus_bins[*v_itr].insert(new_bin);
 					}
-					++role_bin_itr;
+					++role_itr;
 				}
 
 				// If there was a role, remove it from the current bin
@@ -255,12 +251,10 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 
 			// Again, if we filter, this will be empty and correct!
 			bool unk = false;
-			role_bin_type::const_iterator role_bin_itr = role_bin_list.begin();
+			role_bin_itr = role_bin_list.begin();
 			while(role_bin_itr != role_bin_list.end()){
-				if((*role_bin_itr).second->getSize() > 0){
-					new_bins.insert((*role_bin_itr).second);
-					unk = true;
-				}
+				new_bins.insert((*role_bin_itr).second);
+				unk = true;
 				++role_bin_itr;
 			}
 
@@ -275,6 +269,8 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 		}
 		++b_itr;
 	}
+
+	info->clearCache();
 
 	_bin_list.insert(new_bins.begin(), new_bins.end());
 

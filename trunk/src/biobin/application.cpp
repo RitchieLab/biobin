@@ -122,6 +122,11 @@ void Application::Init(const string& filename, bool reportVersion) {
 	}
 
 	sqlite3_open(dbPath.c_str(), &_db);
+
+	// set the pragma to only allow temporary storage in memory
+	string memory_pragma = "PRAGMA temp_store=2;";
+	err_code = sqlite3_exec(_db, memory_pragma.c_str(), NULL, NULL, NULL);
+
 	_info = new Knowledge::InformationSQLite(_db);
 	regions = new Knowledge::RegionCollectionSQLite(_db, dataset, _info);
 
