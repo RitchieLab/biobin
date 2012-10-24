@@ -282,8 +282,8 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 
 	}
 
-	// I want the zone size to be 1/2 the avg. region size in the temp tables
-	_tmp_zone_sz = running_total / (2*n_vals);
+	// I want the zone size to be the avg. region size in the temp tables
+	_tmp_zone_sz = running_total / (n_vals);
 	int zs_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":zs");
 	sqlite3_bind_int(_region_role_stmt, zs_idx, _tmp_zone_sz);
 

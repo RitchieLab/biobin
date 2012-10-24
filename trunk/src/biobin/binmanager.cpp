@@ -215,11 +215,11 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 					Group::const_region_iterator r_itr = curr_group->regionBegin();
 					Group::const_region_iterator r_end = curr_group->regionEnd();
 					while(r_itr != r_end){
-						role |= info->getSNPRole(**v_itr, **r_itr, true);
+						role |= info->getSNPRole(**v_itr, **r_itr, false);
 						++r_itr;
 					}
 				}else{
-					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion(), true);
+					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion(), false);
 				}
 
 				role_itr = Information::snp_role::begin();
