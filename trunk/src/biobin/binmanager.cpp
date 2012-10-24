@@ -195,15 +195,16 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 		info->loadRoles(reg);
 	}
 
+	map<const Information::snp_role, Bin*> role_bin_list;
+	map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
+
+	Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
+	Information::snp_role::const_iterator role_end = Information::snp_role::end();
 	// once we hit intergenic bins, we can't break it down by role any more!
 	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
 		if((uint)(*b_itr)->getSize() >= BinTraverseThreshold){
 
-			Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
-			Information::snp_role::const_iterator role_end = Information::snp_role::end();
-
-			map<const Information::snp_role, Bin*> role_bin_list;
-			map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
+			role_bin_list.clear();
 
 			v_itr = (*b_itr)->variantBegin();
 			v_end = (*b_itr)->variantEnd();
@@ -221,6 +222,7 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion(), true);
 				}
 
+				role_itr = Information::snp_role::begin();
 				while(role_itr != role_end){
 					if ((!FilterByRole || !KeepUnknown) && (role & *role_itr)){
 						Bin* new_bin = 0;
