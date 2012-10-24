@@ -12,6 +12,8 @@
 #include "PopulationManager.h"
 
 using std::stringstream;
+using std::set;
+using std::list;
 
 namespace BioBin{
 

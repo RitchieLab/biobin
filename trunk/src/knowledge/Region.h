@@ -16,14 +16,6 @@
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
-using std::deque;
-using std::string;
-using std::set;
-using std::map;
-using std::vector;
-using boost::unordered_map;
-
-
 
 namespace Knowledge{
 
@@ -44,14 +36,14 @@ class Region{
 
 public:
 
-	typedef set<Group*>::const_iterator const_group_iterator;
+	typedef std::set<Group*>::const_iterator const_group_iterator;
 
 	// If I need a non-const iterator, I'll use it here
 	//typedef set<string>::iterator alias_iterator;
 	/*!
 	 * A typedef to abstract the implementation of the storage of aliases
 	 */
-	typedef deque<string>::const_iterator const_alias_iterator;
+	typedef std::deque<std::string>::const_iterator const_alias_iterator;
 
 private:
 
@@ -85,7 +77,7 @@ private:
 
 public:
 	// Construct a new region
-	Region(const string& name, uint id);
+	Region(const std::string& name, uint id);
 
 	/*!
 	 * \brief Construct a region using ony start/stop values.
@@ -102,7 +94,7 @@ public:
 	 * \param start The true and effective beginning of the region
 	 * \param end The true and effective ending of the region
 	 */
-	Region(const string& name, uint id, short chrom, uint start, uint end);
+	Region(const std::string& name, uint id, short chrom, uint start, uint end);
 
 	/*!
 	 * \brief Construct a region using start/stop and effective (population) start/stop values.
@@ -118,7 +110,7 @@ public:
 	 * \param true_start The true start of the region
 	 * \param true_end The true end of the region
 	 */
-	Region(const string& name, uint id, short chrom,
+	Region(const std::string& name, uint id, short chrom,
 			uint eff_start, uint eff_end, uint true_start, uint true_end);
 
 	/*!
@@ -188,7 +180,7 @@ public:
 	 * \return A sep-delinieated string of all aliases (including the canonical
 	 * name) associated with this region.
 	 */
-	string getAliasString(const string& sep=",") const;
+	std::string getAliasString(const std::string& sep=",") const;
 
 	/*!
 	 * \brief Adds a list of aliases to this region.
@@ -200,9 +192,9 @@ public:
 	 * \param aliases A sep-separated string of aliases for this region
 	 * \param sep The string separator
 	 */
-	void addAliases(const string& aliases, const string& sep=",");
+	void addAliases(const std::string& aliases, const std::string& sep=",");
 
-	void addAlias(const string& alias) { _aliases.push_back(alias); }
+	void addAlias(const std::string& alias) { _aliases.push_back(alias); }
 
 	/*!
 	 * Return the number of Loci associated with this region
@@ -230,7 +222,7 @@ public:
 	 *
 	 * \return The canonical name of the region.
 	 */
-	const string& getName() const {return _name;}
+	const std::string& getName() const {return _name;}
 
 	/*!
 	 * \brief Check if this region contains the given Locus.
@@ -302,19 +294,19 @@ private:
 	Region& operator=(const Region& other);
 
 	// A map of IDs -> Loci
-	unordered_map<string, const Locus*> _locus_map;
+	boost::unordered_map<std::string, const Locus*> _locus_map;
 
 	// A list of all aliases to this Region
-	deque<string> _aliases;
+	std::deque<std::string> _aliases;
 
 	// All of the groups associated w/ the region
-	set<Group*> _group_set;
+	std::set<Group*> _group_set;
 
-	string _name;
+	std::string _name;
 	uint _id;
 
-	vector<Boundary> _pop_bounds;
-	vector<Boundary> _def_bounds;
+	std::vector<Boundary> _pop_bounds;
+	std::vector<Boundary> _def_bounds;
 
 };
 

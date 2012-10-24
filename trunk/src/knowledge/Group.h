@@ -13,10 +13,6 @@
 
 #include "Region.h"
 
-using std::string;
-using std::set;
-
-
 namespace Knowledge{
 
 /*!
@@ -36,11 +32,11 @@ public:
 	/*!
 	 * A typedef to hide the implementation of the storage of Regions
 	 */
-	typedef set<Region*>::const_iterator const_region_iterator;
+	typedef std::set<Region*>::const_iterator const_region_iterator;
 	/*!
 	 * A typedef to hide the implementation of the storage of Groups
 	 */
-	typedef set<Group*>::const_iterator const_group_iterator;
+	typedef std::set<Group*>::const_iterator const_group_iterator;
 
 	/*!
 	 * \brief Constructs a group.
@@ -52,7 +48,7 @@ public:
 	 * \param name The canonical name of the group.
 	 * \param desc A description of the group.
 	 */
-	Group(uint id, const string& name, const string& desc = "");
+	Group(uint id, const std::string& name, const std::string& desc = "");
 
 	/*!
 	 * \brief Adds children groups.
@@ -142,13 +138,13 @@ public:
 	 *
 	 * \return The name of the group.
 	 */
-	const string& getName() const {return _name;}
+	const std::string& getName() const {return _name;}
 	/*!
 	 * Returns the description of the group (useful for display).
 	 *
 	 * \return The description of the group.
 	 */
-	const string& getDescription() const {return _description;}
+	const std::string& getDescription() const {return _description;}
 
 	/*!
 	 * \brief Comparison operator for STL groups.
@@ -181,12 +177,12 @@ private:
 	void addParent(Group& parent) {_parents.insert(&parent);}
 
 	uint _id;
-	string _name;
-	string _description;
+	std::string _name;
+	std::string _description;
 
-	set<Region*> _regions;
-	set<Group*> _children;
-	set<Group*> _parents;
+	std::set<Region*> _regions;
+	std::set<Group*> _children;
+	std::set<Group*> _parents;
 
 };
 

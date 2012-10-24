@@ -7,6 +7,9 @@
 
 #include "Group.h"
 
+using std::string;
+using std::set;
+
 namespace Knowledge{
 
 Group::Group(uint id, const string& name, const string& desc) :

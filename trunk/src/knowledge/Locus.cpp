@@ -13,6 +13,12 @@
 using std::new_handler;
 using std::set_new_handler;
 using std::sort;
+using std::string;
+using std::set;
+using std::vector;
+using std::pair;
+using std::ostream;
+using boost::pool;
 
 namespace Knowledge{
 

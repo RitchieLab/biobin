@@ -15,8 +15,7 @@
 #include "knowledge/Region.h"
 #include "knowledge/Locus.h"
 
-using std::set;
-using std::list;
+
 
 namespace BioBin{
 
@@ -26,8 +25,8 @@ class Bin{
 
 public:
 	//! Typedef to hide implementation details of the Locus containment
-	typedef list<Knowledge::Locus*>::const_iterator const_locus_iterator;
-	typedef list<Knowledge::Locus*>::iterator locus_iterator;
+	typedef std::list<Knowledge::Locus*>::const_iterator const_locus_iterator;
+	typedef std::list<Knowledge::Locus*>::iterator locus_iterator;
 
 	/*!
 	 * \brief Construct a bin representing a Group (or Pathway)
@@ -152,10 +151,10 @@ private:
 	mutable int _size_cache;
 	mutable bool _cached;
 
-	string _name;
-	vector<string> _extra_data;
+	std::string _name;
+	std::vector<std::string> _extra_data;
 
-	list<Knowledge::Locus*> _variants;
+	std::list<Knowledge::Locus*> _variants;
 
 	const PopulationManager& _pop_mgr;
 };

@@ -12,6 +12,12 @@
 #include <sstream>
 
 using std::stringstream;
+using std::deque;
+using std::string;
+using std::set;
+using std::map;
+using std::vector;
+using boost::unordered_map;
 
 namespace Knowledge{
 

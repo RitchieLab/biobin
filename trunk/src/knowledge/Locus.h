@@ -19,13 +19,6 @@
 
 #include "Allele.h"
 
-using std::string;
-using std::set;
-using std::vector;
-using std::pair;
-using std::ostream;
-using boost::pool;
-
 namespace Knowledge {
 
 /*!
@@ -46,7 +39,7 @@ public:
 	static void* operator new(size_t size);
 	static void operator delete(void* deadObj, size_t size);
 
-	typedef vector<Allele>::const_iterator const_allele_iterator;
+	typedef std::vector<Allele>::const_iterator const_allele_iterator;
 
 	/*!
 	 * \brief Constructs a Locus object using the chromosome string.
@@ -59,8 +52,8 @@ public:
 	 * \param pos The position on the chromosome of this locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(const string& chrom_str, uint pos, bool rare = false,
-			const string& id = "");
+	Locus(const std::string& chrom_str, uint pos, bool rare = false,
+			const std::string& id = "");
 
 	/*!
 	 * \brief Constructs a locus object using the chromosome index.
@@ -74,7 +67,7 @@ public:
 	 * \param pos The position on the chromosome of the locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(short chrom, uint pos, bool rare = false, const string& id = "");
+	Locus(short chrom, uint pos, bool rare = false, const std::string& id = "");
 
 	/*!
 	 * \brief Add an associated allele to this particular Locus.
@@ -89,7 +82,7 @@ public:
 	 * \param allele The data of the given allele
 	 * \param freq The frequency of the allele to add.
 	 */
-	void addAllele(const string& allele, float freq);
+	void addAllele(const std::string& allele, float freq);
 
 	/*!
 	 * \brief Adds a list of alleles to this locus.
@@ -157,7 +150,7 @@ public:
 	 *
 	 * \return The unique ID of the Locus.
 	 */
-	const string& getID() const {
+	const std::string& getID() const {
 		return _id;
 	}
 	;
@@ -167,7 +160,7 @@ public:
 	 *
 	 * \return The chromosome string of the Locus.
 	 */
-	const string& getChromStr() const {
+	const std::string& getChromStr() const {
 		return getChromStr(_chrom);
 	}
 	;
@@ -187,7 +180,7 @@ public:
 	 *
 	 * \return The base pair location of this Locus.
 	 */
-	uint getPos() const {
+	unsigned int getPos() const {
 		return _pos;
 	}
 	;
@@ -215,7 +208,7 @@ public:
 	 *
 	 * \return A boolean that is false <==> the given allele is the major allele
 	 */
-	bool isMinor(const string& allele) const;
+	bool isMinor(const std::string& allele) const;
 
 	/*!
 	 * \brief Returns the distance to another Locus.
@@ -227,7 +220,7 @@ public:
 	 *
 	 * \return The distance from this locus to the other (-1 if on different chromosomes)
 	 */
-	uint distance(const Locus& other) const;
+	unsigned int distance(const Locus& other) const;
 
 	/*!
 	 * \brief Comparison operator for use in STL ordered classes.
@@ -253,7 +246,7 @@ public:
 	 *
 	 * \return The encoded genotype
 	 */
-	short encodeGenotype(uint a1, uint a2) const;
+	short encodeGenotype(unsigned int a1, unsigned int a2) const;
 
 	/*!
 	 * \brief Decodes the genotype into a pair of values.
@@ -267,19 +260,19 @@ public:
 	 *
 	 * \return A pair of integers representing the allele numbers.
 	 */
-	pair<uint, uint> decodeGenotype(short encoded_type) const;
+	std::pair<unsigned int, unsigned int> decodeGenotype(short encoded_type) const;
 
 	/*!
 	 * \brief A function to print a Locus.
 	 * This function prints a
 	 */
-	void print(ostream& o, const string& sep = ",",
+	void print(std::ostream& o, const std::string& sep = ",",
 			bool printAlleles = false) const;
 
 	/*!
 	 * \brief a function to print the alleles
 	 */
-	void printAlleles(ostream& o, const string& sep = "|") const;
+	void printAlleles(std::ostream& o, const std::string& sep = "|") const;
 
 	/*!
 	 * \brief Converts a chromosome index into a chromosome string
@@ -290,7 +283,7 @@ public:
 	 *
 	 * \return A chromosome string
 	 */
-	static const string& getChromStr(short chrom);
+	static const std::string& getChromStr(short chrom);
 
 	/*!
 	 * \brief Converts chromosome string into an index
@@ -300,10 +293,10 @@ public:
 	 * \param chrom_str A chromosome string
 	 * \return The corresponding index for the chromosome
 	 */
-	static short getChrom(const string& chrom_str);
+	static short getChrom(const std::string& chrom_str);
 
 	// Special flag for invalid chromosome (bad string or bad position)
-	static const string invalid_chrom;
+	static const std::string invalid_chrom;
 
 private:
 	// No copying or assigning - use pointers, please!
@@ -320,24 +313,23 @@ private:
 	// index into list of chromosomes
 	short _chrom;
 	// Position on the chromosome
-	uint _pos;
+	unsigned int _pos;
 	// Identifier of this Locus (could be a RSID or anything)
-	string _id;
+	std::string _id;
 
 	// A set of alleles for this Locus
-	// NOTE: I'm using set here to maintain sorted order
 	// IN this case, the final element will be the largest, so
 	// *(_alleles.rbegin()) is the major allele
-	vector<Allele> _alleles;
+	std::vector<Allele> _alleles;
 
 	//flag determining rarity
 	bool _is_rare;
 
 	// Vector of a list of chromosomes
-	static const vector<string> _chrom_list;
+	static const std::vector<std::string> _chrom_list;
 
 	// memory pool of Locus objects (for speed, Locus objects are fairly lightweight)
-	static pool<> s_locus_pool;
+	static boost::pool<> s_locus_pool;
 
 };
 
@@ -351,7 +343,7 @@ void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
 
 }
 
-ostream& operator<<(ostream& o, const Knowledge::Locus& l);
+std::ostream& operator<<(std::ostream& o, const Knowledge::Locus& l);
 
 namespace std {
 
