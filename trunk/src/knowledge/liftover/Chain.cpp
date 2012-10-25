@@ -10,6 +10,9 @@
 
 using std::max;
 using std::min;
+using std::pair;
+using std::make_pair;
+using std::set;
 
 namespace Knowledge{
 

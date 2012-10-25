@@ -14,13 +14,6 @@
 #include <vector>
 #include <string>
 
-using std::string;
-using std::vector;
-using std::ostream;
-using std::istream;
-
-namespace po = boost::program_options;
-
 namespace BioBin{
 
 class Configuration{
@@ -30,28 +23,27 @@ public:
 	public:
 		Bool() : _data(false) {}
 		Bool(const bool d) : _data(d){}
-		Bool(const string& d) : _data(fromString(d)){}
+		Bool(const std::string& d) : _data(fromString(d)){}
 
 		operator const char*() const{ return _data ? "Y" : "N"; }
 		operator bool() const{ return _data;}
 
 	private:
-		static bool fromString(const string& s){
+		static bool fromString(const std::string& s){
 			return (s[0] == 'Y' || s[0] == 'y');
 		}
 
 		bool _data;
 	};
 
-	static po::options_description& addCmdLine(po::options_description& opts);
-	static po::options_description& addConfigFile(po::options_description& opts);
-	static po::options_description& addVisible(po::options_description& opts);
+	static boost::program_options::options_description& addCmdLine(boost::program_options::options_description& opts);
+	static boost::program_options::options_description& addConfigFile(boost::program_options::options_description& opts);
+	static boost::program_options::options_description& addVisible(boost::program_options::options_description& opts);
 
 	static void printConfig(std::ostream& os);
 	static void printHelp(std::ostream& os);
-	//static void printOptions(std::ostream& os, const po::variables_map& vm);
 
-	static void parseOptions(const po::variables_map& vm);
+	static void parseOptions(const boost::program_options::variables_map& vm);
 
 private:
 	// No construction or assignment of this class.  EVER!
@@ -68,16 +60,16 @@ private:
 	static void initAll();
 
 	template <class T>
-	static void validate(boost::any& v, const vector<string>& values, vector<T>*, int);
+	static void validate(boost::any& v, const std::vector<std::string>& values, std::vector<T>*, int);
 
 	// Options allowed in both command line and config file
-	static po::options_description _generic;
+	static boost::program_options::options_description _generic;
 	// Options allowed only in the config file
-	static po::options_description _config;
+	static boost::program_options::options_description _config;
 	// Options allowed only in the command line
-	static po::options_description _cmd;
+	static boost::program_options::options_description _cmd;
 	// Options allowed in config file and command line, but hidden from help
-	static po::options_description _hidden;
+	static boost::program_options::options_description _hidden;
 
 	static bool _generic_init;
 	static bool _config_init;
@@ -88,15 +80,15 @@ private:
 
 
 template <class T>
-void Configuration::validate(boost::any& v, const vector<string>& values, vector<T>*, int){
+void Configuration::validate(boost::any& v, const std::vector<std::string>& values, std::vector<T>*, int){
 	if(v.empty()){
-		v = boost::any(vector<T>());
+		v = boost::any(std::vector<T>());
 	}
 
-	vector<T>* val_vec_ptr = boost::any_cast<vector<T> >(&v);
+	std::vector<T>* val_vec_ptr = boost::any_cast<std::vector<T> >(&v);
 
-	vector<string>::const_iterator itr = values.begin();
-	vector<string>::const_iterator end = values.end();
+	std::vector<std::string>::const_iterator itr = values.begin();
+	std::vector<std::string>::const_iterator end = values.end();
 	while(itr != end){
 		val_vec_ptr->push_back(boost::lexical_cast<T>(*itr));
 		++itr;

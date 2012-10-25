@@ -7,6 +7,11 @@
 
 #include "Allele.h"
 
+using std::string;
+using std::set;
+
+using std::ostream;
+
 namespace Knowledge{
 
 set<string> Allele::s_string_pool;

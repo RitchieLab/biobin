@@ -13,10 +13,7 @@
 #include <ostream>
 #include <stdlib.h>
 
-using std::string;
-using std::set;
 
-using std::ostream;
 
 namespace Knowledge{
 
@@ -38,7 +35,7 @@ public:
 	 * \param freq The frequency of this allele
 	 * \param pos The position of the allele in the given input file
 	 */
-	Allele(const string& data, float freq, uint pos) :
+	Allele(const std::string& data, float freq, unsigned int pos) :
 			_data(&(*(s_string_pool.insert(data).first))), _freq(freq), _pos(pos) {
 	}
 
@@ -73,7 +70,7 @@ public:
 	 * Returns the data of the allele.
 	 * \return The data associated with this specific allele.
 	 */
-	const string& getData() const { return *_data;}
+	const std::string& getData() const { return *_data;}
 	// Returns the position of the allele (0 is reference typically)
 	unsigned short getPos() const {return _pos;}
 
@@ -84,15 +81,15 @@ public:
 	 * \param o The output stream to print to
 	 * \param sep The separator used to separate data from frequency
 	 */
-	void print(ostream& o, const string& sep=":") const;
+	void print(std::ostream& o, const std::string& sep=":") const;
 
 private:
 
-	const string* _data;
+	const std::string* _data;
 	float _freq;
 	unsigned short _pos;
 
-	static set<string> s_string_pool;
+	static std::set<std::string> s_string_pool;
 };
 
 }
@@ -101,6 +98,6 @@ private:
  * \brief A shortcut for printing the allele.
  * This function allows for
  */
-ostream& operator<<(ostream& o, const Knowledge::Allele& l);
+std::ostream& operator<<(std::ostream& o, const Knowledge::Allele& l);
 
 #endif /* ALLELE_H_ */

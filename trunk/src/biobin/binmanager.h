@@ -23,15 +23,6 @@
 
 #include "Bin.h"
 
-using std::map;
-using std::vector;
-using std::string;
-using std::pair;
-using std::set;
-using std::deque;
-
-using boost::unordered_map;
-
 namespace Knowledge{
 class Information;
 }
@@ -42,7 +33,7 @@ class PopulationManager;
 
 class BinManager {
 public:
-	typedef set<Bin*>::const_iterator const_iterator;
+	typedef std::set<Bin*>::const_iterator const_iterator;
 
 	BinManager(const PopulationManager& pop_mgr);
 
@@ -50,7 +41,7 @@ public:
 	//BinManager(const BinManager& orig);
 	
 	void InitBins(const Knowledge::RegionCollection& regions,
-			const deque<Knowledge::Locus*>& loci,
+			const std::deque<Knowledge::Locus*>& loci,
 			Knowledge::Information* info);
 
 	int numRareVariants() const { return _rare_variants;}
@@ -61,11 +52,11 @@ public:
 	const_iterator begin() const {return _bin_list.begin();}
 	const_iterator end() const {return _bin_list.end();}
 
-	void printBins(std::ostream& os, Knowledge::Locus* locus, const string& sep=":") const;
+	void printBins(std::ostream& os, Knowledge::Locus* locus, const std::string& sep=":") const;
 
-	static uint IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
-	static uint BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing
-	static uint MinBinSize;							///< How small do we tolerate bins to be before we ignore the bin altogether
+	static unsigned int IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
+	static unsigned int BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing
+	static unsigned int MinBinSize;							///< How small do we tolerate bins to be before we ignore the bin altogether
 	static bool UsePathways;						///< Do we want to use pathways in the analysis?
 	static bool IncludeIntergenic;					///< Include Intergenic bins?
 	static bool ExpandByGenes;						///< Do we want to drop down to genes, if the group is large enough?
@@ -77,7 +68,7 @@ public:
 	static float mafCutoff; 	///< Max maf to produce result in a bin
 
 	// Carried this over from taskbincollapse, but I'm not sure what it does
-	static uint maxSnpCount;
+	static unsigned int maxSnpCount;
 private:
 
 	BinManager(const BinManager&);
@@ -86,29 +77,27 @@ private:
 	// Collapses all of the bins according to the preferences we set.
 	void collapseBins(Knowledge::Information* info, const Knowledge::RegionCollection& reg);
 	// Erases (and increments) a single bin
-	void eraseBin(set<Bin*>::iterator&);
+	void eraseBin(std::set<Bin*>::iterator&);
 
 	Bin* addRegionBin(Knowledge::Region* reg);
 
 	// The authoritative list of all of the bins.  Everything else holds pointers
 	// to bins in this set.
-	set<Bin*> _bin_list;
+	std::set<Bin*> _bin_list;
 	// Mapping of Region IDs to bins
-	map<int, Bin*> _region_bins;
+	std::map<int, Bin*> _region_bins;
 	// Mapping of group IDs to bins
-	map<int, Bin*> _group_bins;
+	std::map<int, Bin*> _group_bins;
 	// List of intergenic bins
-	map<pair<short, int>, Bin*> _intergenic_bins;
+	std::map<std::pair<short, int>, Bin*> _intergenic_bins;
 	// List of bins by locus
-	unordered_map<Knowledge::Locus*, set<Bin*> > _locus_bins;
+	boost::unordered_map<Knowledge::Locus*, std::set<Bin*> > _locus_bins;
 
 	// # of all variants, rare and common
 	int _rare_variants;
 	int _total_variants;
 
 	const PopulationManager& _pop_mgr;
-
-
 };
 
 

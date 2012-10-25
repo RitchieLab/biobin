@@ -17,6 +17,13 @@
 
 #include <boost/algorithm/string.hpp>
 
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
+
+using boost::unordered_map;
+
 namespace BioBin {
 
 bool BinApplication::c_transpose_bins = false;

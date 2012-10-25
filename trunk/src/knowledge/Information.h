@@ -16,14 +16,6 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/unordered_map.hpp>
 
-using std::ostream;
-using std::string;
-using std::vector;
-using std::map;
-using std::set;
-using std::pair;
-using boost::unordered_map;
-
 namespace Knowledge {
 
 class Locus;
@@ -55,7 +47,7 @@ public:
 				const snp_role&, boost::forward_traversal_tag> {
 
 		public:
-			const_iterator(set<const snp_role*, Ptr_Less>::const_iterator itr) : _itr(itr) {}
+			const_iterator(std::set<const snp_role*, Ptr_Less>::const_iterator itr) : _itr(itr) {}
 
 		private:
 			friend class boost::iterator_core_access;
@@ -66,11 +58,11 @@ public:
 			}
 			const snp_role & dereference() const {return **_itr;}
 
-			set<const snp_role*, Ptr_Less>::const_iterator _itr;
+			std::set<const snp_role*, Ptr_Less>::const_iterator _itr;
 		};
 
 	private:
-		explicit snp_role(const string& val) :	_data(val) {
+		explicit snp_role(const std::string& val) :	_data(val) {
 			if (s_val_map.find(_data) == s_val_map.end()) {
 				s_val_map.insert(std::make_pair(_data, 1 << (++s_num_vals - 1)));
 				s_enums.insert(new snp_role(*this));
@@ -82,17 +74,17 @@ public:
 		friend class Information;
 
 		operator unsigned long() const { return s_val_map[_data];}
-		operator string() const {return _data;}
+		operator std::string() const {return _data;}
 
 		static const_iterator begin() { return const_iterator(s_enums.begin());}
 		static const_iterator end() { return const_iterator(s_enums.end()); }
 
 	private:
 
-		string _data;
+		std::string _data;
 		static int s_num_vals;
-		static map<string, unsigned long> s_val_map;
-		static set<const snp_role*, Ptr_Less> s_enums;
+		static std::map<std::string, unsigned long> s_val_map;
+		static std::set<const snp_role*, Ptr_Less> s_enums;
 
 	};
 
@@ -115,7 +107,7 @@ public:
 	 *
 	 * \return The integer index of the given population, or 0 if not found.
 	 */
-	virtual int getPopulationID(const string& pop_str) = 0;
+	virtual int getPopulationID(const std::string& pop_str) = 0;
 
 	/*!
 	 * \brief Gets the names of the sources for the given IDs
@@ -125,8 +117,8 @@ public:
 	 * return source information for all available sources
 	 * \param[out] type_names_out A mapping of ID->source name
 	 */
-	virtual void getGroupTypes(const set<unsigned int>& group_ids,
-			map<int, string>& type_names_out) = 0;
+	virtual void getGroupTypes(const std::set<unsigned int>& group_ids,
+			std::map<int, std::string>& type_names_out) = 0;
 
 	/*!
 	 * \brief Gets the zone size.
@@ -153,7 +145,7 @@ public:
 	 *
 	 * \param os The output stream to print to.
 	 */
-	virtual void printPopulations(ostream& os) = 0;
+	virtual void printPopulations(std::ostream& os) = 0;
 
 	/*!
 	 * \brief Prints a list of all of the available sources
@@ -161,7 +153,7 @@ public:
 	 *
 	 * \param os The output stream to print to.
 	 */
-	virtual void printSources(ostream& os) = 0;
+	virtual void printSources(std::ostream& os) = 0;
 
 	/*!
 	 * \brief Returns a vector of the source IDs from the DB
@@ -171,7 +163,7 @@ public:
 	 *
 	 * \return A list of the numerical IDs of the sources
 	 */
-	virtual const set<unsigned int>& getSourceIds() = 0;
+	virtual const std::set<unsigned int>& getSourceIds() = 0;
 
 	/*
 	 * Load the roles from the files given in the c_role_files member
@@ -182,7 +174,7 @@ public:
 	 * \brief Returns a string of IDs compatible with a "where" clause.
 	 * Returns a string of IDs
 	 */
-	string getSourceList();
+	std::string getSourceList();
 
 	/*!
 	 * \brief Clears the role cache.
@@ -190,17 +182,17 @@ public:
 	 */
 	void clearCache(){ _role_cache.clear();}
 
-	static vector<string> c_source_names;
-	static vector<string> c_source_exclude;
-	static vector<string> c_role_files;
+	static std::vector<std::string> c_source_names;
+	static std::vector<std::string> c_source_exclude;
+	static std::vector<std::string> c_role_files;
 
 protected:
-	static set<unsigned int> _s_source_ids;
+	static std::set<unsigned int> _s_source_ids;
 
 	// Allows children to create SNP roles
-	static Information::snp_role getRole(const string& role){ return snp_role(role);}
+	static Information::snp_role getRole(const std::string& role){ return snp_role(role);}
 
-	unordered_map<pair<const Locus*, const Region*>, unsigned long> _role_cache;
+	boost::unordered_map<std::pair<const Locus*, const Region*>, unsigned long> _role_cache;
 };
 
 }

@@ -21,12 +21,17 @@
 
 using std::string;
 using std::vector;
-using po::value;
+using std::ostream;
+using std::istream;
 
 using boost::shared_ptr;
 using boost::any;
 
-using namespace boost::program_options;
+namespace po = boost::program_options;
+
+using po::value;
+
+//using namespace boost::program_options;
 
 namespace BioBin{
 
@@ -242,7 +247,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	if(BioBin::Application::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		if(!BioBin::BinManager::IncludeIntergenic){
 			std::cerr << "ERROR: You must bin by either pathways, regions, or interregion.\n";
-			throw validation_error(validation_error::invalid_option_value);
+			throw po::validation_error(po::validation_error::invalid_option_value);
 		}else{
 			std::cerr<<"WARNING: You elected not to bin by pathways or regions.  " <<
 							"You will only get interregion bins.\n";
@@ -265,7 +270,7 @@ std::istream& operator>>(std::istream& in, BioBin::Configuration::Bool& d_out)
     	char s = token[0];
     	d_out = (s == 'y' || s == 'Y');
     }else{
-    	throw validation_error(validation_error::invalid_option_value);
+    	throw po::validation_error(po::validation_error::invalid_option_value);
     }
 //    else throw boost::program_options::validation_error("Invalid unit");
     return in;

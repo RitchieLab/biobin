@@ -12,8 +12,6 @@
 
 #include <sys/types.h>
 
-using std::string;
-
 namespace BioBin {
 
 class Application;

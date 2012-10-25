@@ -13,13 +13,6 @@
 
 #include "Region.h"
 
-using boost::unordered_map;
-using boost::unordered_set;
-using std::string;
-using std::vector;
-using std::set;
-
-
 namespace Knowledge{
 
 class Information;
@@ -81,7 +74,7 @@ public:
 	class const_iterator : public boost::iterator_facade<const_iterator, Region* const, boost::forward_traversal_tag>{
 
 	public:
-		const_iterator(unordered_map<uint, Region*>::const_iterator itr) : _itr(itr){}
+		const_iterator(boost::unordered_map<unsigned int, Region*>::const_iterator itr) : _itr(itr){}
 
 	private:
 		friend class boost::iterator_core_access;
@@ -90,14 +83,14 @@ public:
 		bool equal(const const_iterator& other) const { return _itr == other._itr;}
 		Region* const& dereference() const { return (*_itr).second;}
 
-		unordered_map<uint, Region*>::const_iterator _itr;
+		boost::unordered_map<unsigned int, Region*>::const_iterator _itr;
 
 	};
 
 	/*!
 	 * Typedef to hide implementation of the collection of Regions.
 	 */
-	typedef set<Region*>::const_iterator const_region_iterator;
+	typedef std::set<Region*>::const_iterator const_region_iterator;
 
 	/*!
 	 * Create a new RegionCollection and initialize the special "region not found"
@@ -126,7 +119,7 @@ public:
 	 *
 	 * \return A reference to the Region.
 	 */
-	Region& operator[](const uint id);
+	Region& operator[](const unsigned int id);
 
 	/**
 	 * Access bracket operator, indexing by alias
@@ -144,7 +137,7 @@ public:
 	 *
 	 * \return A reference to the Region.
 	 */	
-	const Region& operator[](const uint id) const;
+	const Region& operator[](const unsigned int id) const;
 
 	/*!
 	 * \brief An iterator to the beginning of the collection of Regions.
@@ -179,7 +172,7 @@ public:
 	 * \return An iterator to the start of the set of Regions identified by the
 	 * given alias.
 	 */
-	const_region_iterator aliasBegin(const string& alias) const;
+	const_region_iterator aliasBegin(const std::string& alias) const;
 	/*!
 	 * \brief Returns an iterator to the end of the set of Regions for an alias.
 	 * This method returns the special one-past-the-end iterator for the Regions
@@ -189,7 +182,7 @@ public:
 	 *
 	 * \return The end iterator for the collection of Regions identified by alias.
 	 */
-	const_region_iterator aliasEnd(const string& alias) const;
+	const_region_iterator aliasEnd(const std::string& alias) const;
 
 	const_region_iterator locusBegin(const Locus* loc) const;
 	const_region_iterator locusEnd(const Locus* loc) const;
@@ -203,7 +196,7 @@ public:
 	 *
 	 * \return A boolean that is true <==> alias is contained in the list of aliases.
 	 */
-	bool isValid(const string& alias) const {
+	bool isValid(const std::string& alias) const {
 		return _alias_map.find(alias) != _alias_map.end();
 	}
 
@@ -235,8 +228,8 @@ public:
 	 *
 	 * \return 0 if successfully loaded, anything else upon error.
 	 */
-	virtual uint Load(const unordered_set<uint>& ids,
-			const vector<string>& aliasList) = 0;
+	virtual unsigned int Load(const boost::unordered_set<unsigned int>& ids,
+			const std::vector<std::string>& aliasList) = 0;
 
 	virtual void loadFiles() = 0;
 
@@ -249,7 +242,7 @@ public:
 	 *
 	 * \return 0 if successfully loaded, anything else upon error.
 	 */
-	uint Load(const vector<string>& aliasList);
+	unsigned int Load(const std::vector<std::string>& aliasList);
 
 	/*!
 	 * \brief Calls Load(...) with an empty aliasList.
@@ -260,7 +253,7 @@ public:
 	 *
 	 * \return 0 if successfully loaded, anything else upon error.
 	 */
-	uint Load(const unordered_set<uint>& ids);
+	unsigned int Load(const boost::unordered_set<unsigned int>& ids);
 
 	/*!
 	 * \brief Calls Load(...) with empty set of ids.
@@ -270,15 +263,15 @@ public:
 	 *
 	 * \return 0 if successfully loaded, anything else upon error.
 	 */
-	uint Load();
+	unsigned int Load();
 
 
 	//! The configured population to use here (default "NO-LD")
-	static string pop_str;
+	static std::string pop_str;
 	//! The amount of gene boundary expansion (if using no-ld, default 0)
 	static int gene_expansion;
 	//! A vector of strngs containing custom regions
-	static vector<string> c_region_files;
+	static std::vector<std::string> c_region_files;
 
 protected:
 	/*!
@@ -301,7 +294,8 @@ protected:
 	 *
 	 * \return The region added (or the Region found by the id)
      */
-	Region* AddRegion(const string& name, uint id, short chrom, uint start, uint stop, const string& aliases = "");
+	Region* AddRegion(const std::string& name, unsigned int id, short chrom,
+			unsigned int start, unsigned int stop, const std::string& aliases = "");
 
 	/*!
 	 * \brief Adds a region to the collection.
@@ -318,12 +312,14 @@ protected:
 	 *
 	 * \return The region added (or the region found by the id)
      */
-	Region* AddRegion(const string& name, uint id, short chrom, uint effStart, uint effStop, uint trueStart, uint trueStop, const string& aliases = "");
+	Region* AddRegion(const std::string& name, unsigned int id, short chrom,
+			unsigned int effStart, unsigned int effStop, unsigned int trueStart,
+			unsigned int trueStop, const std::string& aliases = "");
 
 	//! A map from id -> Region*
-	unordered_map<uint,Region*> _region_map;
+	boost::unordered_map<unsigned int,Region*> _region_map;
 	//! A map from alias -> set of Region*
-	unordered_map<string,set<Region*> > _alias_map;
+	boost::unordered_map<std::string,std::set<Region*> > _alias_map;
 
 	//! object to get generalized information
 	Information* _info;
@@ -331,7 +327,7 @@ protected:
 	const Container* const _dataset;
 
 	// Instead of mapping by position, let's map by locus!
-	unordered_map<const Locus*, set<Region*> > _locus_map;
+	boost::unordered_map<const Locus*, std::set<Region*> > _locus_map;
 
 private:
 	/**
@@ -350,7 +346,7 @@ private:
 	 * Special value used for if the requested alias not present
 	 * (NOTE: will be initialized by the default constructor)
 	 */
-	const set<Region*> empty_region_set;
+	const std::set<Region*> empty_region_set;
 
 };
 

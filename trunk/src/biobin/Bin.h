@@ -10,12 +10,11 @@
 
 #include <set>
 #include <list>
+#include <string>
 
 #include "knowledge/Group.h"
 #include "knowledge/Region.h"
 #include "knowledge/Locus.h"
-
-
 
 namespace BioBin{
 
@@ -95,7 +94,7 @@ public:
 	Knowledge::Group* getGroup() const { return _is_group ? _member.group : NULL;}
 	Knowledge::Region* getRegion() const {return (!_is_group && !_is_intergenic) ? _member.region : NULL; }
 
-	const string& getName() const{ return _name;}
+	const std::string& getName() const{ return _name;}
 	bool isGroup() const {return _is_group;}
 	bool isIntergenic() const {return _is_intergenic;}
 	short getChrom() const {return _chrom;}
@@ -131,7 +130,7 @@ public:
 	 * just a string that we tack on to the end of the identifier.  Note that
 	 * we'll need to change the name here, too
 	 */
-	void addExtraData(const string& addl_data) { _extra_data.push_back(addl_data); _name += addl_data;}
+	void addExtraData(const std::string& addl_data) { _extra_data.push_back(addl_data); _name += addl_data;}
 
 
 private:

@@ -16,6 +16,12 @@
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 
+using boost::unordered_map;
+using boost::unordered_set;
+using std::string;
+using std::vector;
+using std::set;
+
 namespace Knowledge{
 
 // The configured population to use here

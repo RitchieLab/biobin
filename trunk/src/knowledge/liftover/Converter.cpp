@@ -5,12 +5,18 @@
  * Created on May 6, 2011, 1:25 PM
  */
 
+#include <iostream>
+
 #include "Converter.h"
 #include "Chain.h"
 
+using std::pair;
+using std::set;
+using std::map;
+using std::string;
 using std::make_pair;
 
-#include <iostream>
+using Knowledge::Locus;
 
 namespace Knowledge {
 namespace Liftover {

@@ -33,11 +33,6 @@
 #include <set>
 #include <map>
 
-using std::string;
-using std::vector;
-using std::map;
-using std::set;
-
 #include "knowledge/Region.h"
 #include "knowledge/Locus.h"
 #include "knowledge/Group.h"
@@ -47,11 +42,11 @@ namespace BioBin {
 	
 class BinApplication : public Application {
 public:
-	BinApplication(const string& db_fn, const string& vcf_file);
+	BinApplication(const std::string& db_fn, const std::string& vcf_file);
 	virtual ~BinApplication() {}
 
 	template <class SNP_cont>
-	void InitVcfDataset(string& genomicBuild,
+	void InitVcfDataset(std::string& genomicBuild,
 			SNP_cont& lostSnps);
 
 	/**
@@ -60,17 +55,17 @@ public:
      */
 	void InitBins();
 
-	void writeBinData(const string& filename, const string& sep=",") const;
-	void writeGenotypeData(const string& filename, const string& sep=",") const;
-	void writeLoci(const string& filename, const string& sep=",") const;
-	void writeAFData(const string& filename, const string& sep=",") const;
-	void writeBinFreqData(const string& filename, const string& sep=",") const;
+	void writeBinData(const std::string& filename, const std::string& sep=",") const;
+	void writeGenotypeData(const std::string& filename, const std::string& sep=",") const;
+	void writeLoci(const std::string& filename, const std::string& sep=",") const;
+	void writeAFData(const std::string& filename, const std::string& sep=",") const;
+	void writeBinFreqData(const std::string& filename, const std::string& sep=",") const;
 
 	static bool c_transpose_bins;
 	
 private:
-	void printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const;
-	string getEscapeString(const string& sep) const;
+	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
+	string getEscapeString(const std::string& sep) const;
 
 	PopulationManager _pop_mgr;
 
@@ -82,11 +77,6 @@ private:
 template <class SNP_cont>
 void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
 
-	// First things first, let's load our individuals
-	//const vector<bool>& controls = _pop_mgr.loadIndividuals(_data);
-
-	//locusRemap.clear();
-	//locusRemap.reserve(locusArray.size());
 	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
 	int chainCount = cnv.Load();
 

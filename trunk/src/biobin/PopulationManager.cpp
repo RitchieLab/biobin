@@ -13,6 +13,17 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
+using std::fill;
+using std::vector;
+using std::string;
+using std::map;
+using std::ostream;
+using boost::array;
+using boost::unordered_map;
+using boost::dynamic_bitset;
+
+using Knowledge::Locus;
+
 using boost::program_options::validation_error;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;

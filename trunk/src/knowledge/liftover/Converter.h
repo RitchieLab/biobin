@@ -11,13 +11,9 @@
 #include <utility>
 #include <set>
 #include <map>
+#include <string>
 
 #include "knowledge/Locus.h"
-
-using Knowledge::Locus;
-using std::pair;
-using std::set;
-using std::map;
 
 namespace Knowledge {
 
@@ -28,12 +24,12 @@ class Chain;
 class Converter {
 public:
 
-	static const pair<short, pair<int, int> > FAILED_REGION;
+	static const std::pair<short, std::pair<int, int> > FAILED_REGION;
 	static const float MIN_MAPPING_FRACTION;
 
 public:
 
-	Converter(const string& origBuild);
+	Converter(const std::string& origBuild);
 	virtual ~Converter();
 
 	/**
@@ -59,7 +55,7 @@ public:
 	 * \return A pair containing the new chromosome and a pair of the
 	 * new region's boundaries.  If unable to map, returns the FAILED_REGION
 	 */
-	pair<short, pair<int, int> > convertRegion(short chrom, int start, int end) const;
+	std::pair<short, std::pair<int, int> > convertRegion(short chrom, int start, int end) const;
 
 	/**
 	 * \brief Converts an (iterable) set of Loci.
@@ -83,14 +79,14 @@ public:
 	 * Converts a single locus and returns a new locus object, or 0 if unable
 	 * to convert.
 	 */
-	Locus* convertLocus(const Locus& old_loc) const;
+	Knowledge::Locus* convertLocus(const Knowledge::Locus& old_loc) const;
 
 protected:
 	// A mapping of chromosome -> chains, ordered by score
-	map<short, set<Chain*> > _chains;
+	std::map<short, std::set<Chain*> > _chains;
 
 	// The string describing the original build to lift from
-	string _origBuild;
+	std::string _origBuild;
 
 private:
 	// No copying or assignment allowed
@@ -103,7 +99,7 @@ template <class T_iter, class T_map, class T_cont>
 void Converter::convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out, T_cont& unmapped_out) const{
 
 	while (itr != end){
-		Locus* new_loc = convertLocus(**itr);
+		Knowledge::Locus* new_loc = convertLocus(**itr);
 
 		if(new_loc == 0){
 			unmapped_out.insert(unmapped_out.end(), *itr);
@@ -113,8 +109,6 @@ void Converter::convertLoci(T_iter itr, const T_iter& end, T_map& locus_map_out,
 		++itr;
 	}
 }
-
-
 
 }
 }

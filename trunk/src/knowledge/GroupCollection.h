@@ -16,11 +16,6 @@
 
 #include "Group.h"
 
-using boost::unordered_map;
-using boost::unordered_set;
-using std::string;
-using std::vector;
-
 namespace Knowledge{
 
 class RegionCollection;
@@ -91,7 +86,7 @@ public:
 	 *
 	 * \return The group with the given ID, or the special "group not found"
 	 */
-	Group& operator[](uint id);
+	Group& operator[](unsigned int id);
 	/*!
 	 * Accessing a given group by ID.  Again, will not create an object if one
 	 * is not found, but will return the special _group_not_found Group.
@@ -100,7 +95,7 @@ public:
 	 *
 	 * \return The group with the given ID, or the special "group not found"
 	 */
-	const Group& operator[](uint id) const;
+	const Group& operator[](unsigned int id) const;
 
 	/*!
 	 * \brief Loads the groups into memory by name and ID.
@@ -113,8 +108,8 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	virtual void Load(const vector<string>& groupNames,
-			const unordered_set<uint>& ids) = 0;
+	virtual void Load(const std::vector<std::string>& groupNames,
+			const boost::unordered_set<unsigned int>& ids) = 0;
 
 	/*!
 	 * \brief Loads groups into memory by name.
@@ -126,7 +121,7 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	void Load(const vector<string>& groupNames);
+	void Load(const std::vector<std::string>& groupNames);
 	/*!
 	 * \brief Load all IDs into memory.
 	 * Load all IDs into memory.  Calls Load(regions, ids) with an empty set of
@@ -150,15 +145,15 @@ public:
 	 *
 	 * \return 0 if successful, anything else, otherwise.
 	 */
-	void LoadArchive(const string& filename,
-			vector<string>& unmatched_aliases);
+	void LoadArchive(const std::string& filename,
+			std::vector<std::string>& unmatched_aliases);
 
 	/*!
 	 * Returns the number of Groups in the collection.
 	 *
 	 * \return The size of the collection.
 	 */
-	uint size() { return _group_map.size(); }
+	unsigned int size() { return _group_map.size(); }
 
 	/*!
 	 * Adds a parent/child relationship between two groups.  This will also add
@@ -167,7 +162,7 @@ public:
 	 * \param parent_id The Database ID of the parent group
 	 * \param child_id The Database ID of the child group
 	 */
-	void addRelationship(uint parent_id, uint child_id);
+	void addRelationship(unsigned int parent_id, unsigned int child_id);
 	/*!
 	 * Adds an association between a group and a region.  This will also add the
 	 * relationships to the objects themselves.  Note that the region must be
@@ -177,12 +172,12 @@ public:
 	 * \param region_id The database ID of the region
 	 * \param regions The collection of regions where the given ID can be found
 	 */
-	void addAssociation(uint group_id, uint region_id);
+	void addAssociation(unsigned int group_id, unsigned int region_id);
 
 	//! A configuration value of group names to include
-	static vector<string> c_group_names;
+	static std::vector<std::string> c_group_names;
 	//! A configuration value of group IDs to include
-	static unordered_set<uint> c_id_list;
+	static boost::unordered_set<unsigned int> c_id_list;
 	//! The ambiguity setting to use
 	static AmbiguityModel c_ambiguity;
 
@@ -194,7 +189,7 @@ protected:
 	 * \param name The name of the group
 	 * \param desc A description of the group's functionality
 	 */
-	Group* AddGroup(uint id, const string& name, const string& desc="");
+	Group* AddGroup(unsigned int id, const std::string& name, const std::string& desc="");
 
 	/*!
 	 * \brief Returns the maximum ID contained within the database.
@@ -207,16 +202,16 @@ protected:
 	 *
 	 * \return The maximum ID within the database (including custom-loaded groups)
 	 */
-	virtual uint getMaxGroup() = 0;
+	virtual unsigned int getMaxGroup() = 0;
 
 	//! The maximum group number (for loading from archive)
-	uint _max_group;
+	unsigned int _max_group;
 	//! Mapping of ids -> Groups
-	unordered_map<uint, Group*> _group_map;
+	boost::unordered_map<unsigned int, Group*> _group_map;
 	//! mapping of parent->child relationships
-	unordered_map<uint, unordered_set<uint> > _group_relationships;
+	boost::unordered_map<unsigned int, boost::unordered_set<unsigned int> > _group_relationships;
 	//! mapping of group->region relationships
-	unordered_map<uint, unordered_set<Region*> > _group_associations;
+	boost::unordered_map<unsigned int, boost::unordered_set<Region*> > _group_associations;
 
 	RegionCollection& _regions;
 
@@ -228,7 +223,7 @@ private:
 	/*!
 	 * A helper function that initializes a group from an archive file.
 	 */
-	uint initGroupFromArchive(const string& src_name, const vector<string>& split_line);
+	unsigned int initGroupFromArchive(const std::string& src_name, const std::vector<std::string>& split_line);
 };
 
 }

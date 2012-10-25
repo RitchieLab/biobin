@@ -17,23 +17,13 @@
 #include <boost/array.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include "knowledge/Locus.h"
-#include "knowledge/liftover/Converter.h"
 #include "Bin.h"
 #include "binmanager.h"
-//#include "dataimporter.h"
+
+#include "knowledge/Locus.h"
+#include "knowledge/liftover/Converter.h"
+
 #include "vcftools/vcf_file.h"
-
-using std::fill;
-using std::vector;
-using std::string;
-using std::map;
-using std::ostream;
-using boost::array;
-using boost::unordered_map;
-using boost::dynamic_bitset;
-
-using Knowledge::Locus;
 
 namespace BioBin{
 
@@ -70,38 +60,30 @@ public:
 		DiseaseModel_ENUM _data;
 	};
 
-	// nothing needed for default constructor
-	//PopulationManager(){}
-
-	explicit PopulationManager(const string& vcf_file);
-
-
-
-	//template <class Locus_cont>
-	//void loadGenotypes(const Locus_cont& dataset, DataImporter& importer);
+	explicit PopulationManager(const std::string& vcf_file);
 
 	template <class T_cont>
 	void loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv);
 
 	// Usage functions
-	int genotypeContribution(const Locus& locus) const;
+	int genotypeContribution(const Knowledge::Locus& locus) const;
 
-	const vector<bool>& getControls() const {return _is_control;}
+	const std::vector<bool>& getControls() const {return _is_control;}
 
 	// Printing functions
 	template <class Bin_cont>
-	void printBins(ostream& os, const Bin_cont& bins, const string& sep=",") const;
+	void printBins(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
 	template <class Bin_cont>
-	void printBinsTranspose(ostream& os, const Bin_cont& bins, const string& sep=",") const;
+	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
 	template <class Bin_cont>
-	void printBinFreq(ostream& os, const Bin_cont& bins, const string& sep=",") const;
+	void printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
 	template <class Locus_cont>
-	void printGenotypes(ostream& os, const Locus_cont& loci, const string& sep=",") const;
+	void printGenotypes(std::ostream& os, const Locus_cont& loci, const std::string& sep=",") const;
 
-	float getCaseAF(const Locus& loc) const;
+	float getCaseAF(const Knowledge::Locus& loc) const;
 
 	static float c_phenotype_control;
-	static vector<string> c_phenotype_files;
+	static std::vector<std::string> c_phenotype_files;
 
 	static bool CompressedVCF;					///< gzipped file Y/N
 	static bool KeepCommonLoci;
@@ -113,12 +95,12 @@ public:
 
 	static DiseaseModel c_model;
 
-	typedef pair<dynamic_bitset<>, dynamic_bitset<> > bitset_pair;
+	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
 
 private:
 
-	void printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const;
-	string getEscapeString(const string& sep) const;
+	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
+	std::string getEscapeString(const std::string& sep) const;
 
 	// NO copying or assignment!
 	PopulationManager(const PopulationManager&);
@@ -126,35 +108,35 @@ private:
 
 	// Loading functions
 	void loadIndividuals();
-	void parsePhenotypeFile(const string& filename);
+	void parsePhenotypeFile(const std::string& filename);
 
-	int getIndivContrib(const Locus& loc, int position) const;
-	int getTotalContrib(const Locus& loc) const;
+	int getIndivContrib(const Knowledge::Locus& loc, int position) const;
+	int getTotalContrib(const Knowledge::Locus& loc) const;
 
-	float getMAF(const vector<int>& allele_count, uint nmcc) const;
+	float getMAF(const std::vector<int>& allele_count, unsigned int nmcc) const;
 
-	array<unsigned int, 2> getBinCapacity(Bin& bin) const;
+	boost::array<unsigned int, 2> getBinCapacity(Bin& bin) const;
 
-	map<string, float> _phenotypes;
-	map<string, int> _positions;
+	std::map<std::string, float> _phenotypes;
+	std::map<std::string, int> _positions;
 
 	// _is_control can be passed to the VCF parser
-	vector<bool> _is_control;
-	dynamic_bitset<> _control_bitset;
+	std::vector<bool> _is_control;
+	boost::dynamic_bitset<> _control_bitset;
 
-	unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
 
 	// A map to keep track of where in the file a locus resides
-	unordered_map<Knowledge::Locus*, int> _locus_position;
+	boost::unordered_map<Knowledge::Locus*, int> _locus_position;
 
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> > _locus_count;
+	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> > _locus_count;
 
 	mutable VCF::vcf_file vcf;
 };
 
 template <class Bin_cont>
-void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, const string& sep) const{
-	string sep_repl = getEscapeString(sep);
+void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+	std::string sep_repl = getEscapeString(sep);
 
 	// Print 1st line
 	printEscapedString(os, "Bin Name", sep, sep_repl);
@@ -171,7 +153,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 	os << sep;
 	printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
 
-	map<string, int>::const_iterator m_itr = _positions.begin();
+	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
 		os << sep;
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
@@ -185,7 +167,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 			-1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
 
 	m_itr = _positions.begin();
-	map<string, float>::const_iterator pheno_status;
+	std::map<std::string, float>::const_iterator pheno_status;
 	while(m_itr != _positions.end()){
 		float status = -1;
 		pheno_status = _phenotypes.find((*m_itr).first);
@@ -200,7 +182,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	Bin::const_locus_iterator l_itr;
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_itr;
+	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_itr;
 
 	while(b_itr != bins.end()){
 		// Print bin name
@@ -213,7 +195,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 		os << sep << (*b_itr)->getVariantSize();
 
 		// print case/control loci
-		array<unsigned int, 2> num_loci;
+		boost::array<unsigned int, 2> num_loci;
 		num_loci[0] = 0;
 		num_loci[1] = 0;
 		l_itr = (*b_itr)->variantBegin();
@@ -229,7 +211,7 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 		os << sep << num_loci[0] << sep << num_loci[1];
 
 		// print case/control capacity
-		array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
+		boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
 		os << sep << capacity[0] << sep << capacity[1];
 
 		// print for each person
@@ -251,8 +233,8 @@ void PopulationManager::printBinsTranspose(ostream& os, const Bin_cont& bins, co
 }
 
 template <class Bin_cont>
-void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const string& sep) const{
-	string sep_repl = getEscapeString(sep);
+void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+	std::string sep_repl = getEscapeString(sep);
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
@@ -294,8 +276,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
 
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_itr;
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator loc_not_found =
+	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_itr;
+	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_not_found =
 			_locus_count.end();
 
 	int locus_count = 0;
@@ -335,11 +317,11 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 		os << "\n";
 	}
 
-	map<string, int>::const_iterator m_itr = _positions.begin();
-	map<string, int>::const_iterator m_end = _positions.end();
+	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
+	std::map<std::string, int>::const_iterator m_end = _positions.end();
 
-	map<string, float>::const_iterator pheno_status;
-	map<string, float>::const_iterator pheno_end = _phenotypes.end();
+	std::map<std::string, float>::const_iterator pheno_status;
+	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
 
 	int pos;
 	float status;
@@ -380,8 +362,8 @@ void PopulationManager::printBins(ostream& os, const Bin_cont& bins, const strin
 
 
 template <class Bin_cont>
-void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const string& sep) const{
-	string sep_repl = getEscapeString(sep);
+void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+	std::string sep_repl = getEscapeString(sep);
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
@@ -389,8 +371,8 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 	int n_cases = 0;
 	int n_controls = 0;
 
-	vector<bool>::const_iterator c_itr = _is_control.begin();
-	vector<bool>::const_iterator c_end = _is_control.end();
+	std::vector<bool>::const_iterator c_itr = _is_control.begin();
+	std::vector<bool>::const_iterator c_end = _is_control.end();
 
 	while(c_itr != c_end){
 		n_controls += *c_itr;
@@ -398,8 +380,8 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 		++c_itr;
 	}
 
-	map<string, int>::const_iterator m_itr;
-	map<string, int>::const_iterator m_end = _positions.end();
+	std::map<std::string, int>::const_iterator m_itr;
+	std::map<std::string, int>::const_iterator m_end = _positions.end();
 	int case_cont_contrib[2];
 
 	printEscapedString(os, "Bin", sep, sep_repl);
@@ -443,19 +425,19 @@ void PopulationManager::printBinFreq(ostream& os, const Bin_cont& bins, const st
 }
 
 template <class Locus_cont>
-void PopulationManager::printGenotypes(ostream& os, const Locus_cont& loci, const string& sep) const{
+void PopulationManager::printGenotypes(std::ostream& os, const Locus_cont& loci, const std::string& sep) const{
 
 	string sep_repl = getEscapeString(sep);
 
 	typename Locus_cont::const_iterator l_itr = loci.begin();
 
-	map<string, int>::const_iterator m_itr = _positions.begin();
-	map<string, int>::const_iterator m_end = _positions.end();
+	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
+	std::map<std::string, int>::const_iterator m_end = _positions.end();
 
-	map<string, float>::const_iterator pheno_status;
-	map<string, float>::const_iterator pheno_end = _phenotypes.end();
+	std::map<std::string, float>::const_iterator pheno_status;
+	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
 
-	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator g_itr;
 	// Print the first line// TODO: format the genotype if we want to!
 	printEscapedString(os, "ID", sep, sep_repl);
 	os << sep;
@@ -506,23 +488,23 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 	loadIndividuals();
 	int size = _is_control.size();
-	set<string> unknownChromosomes;
-	uint totalSiteCount	= vcf.N_entries;
+	std::set<std::string> unknownChromosomes;
+	unsigned int totalSiteCount	= vcf.N_entries;
 
 	// Predefine everything so that the loop below can be as tight as possible
-	vector<pair<int, int> > genotype_pairs;
+	std::vector<std::pair<int, int> > genotype_pairs;
 	genotype_pairs.resize(size);
-	bitset_pair gen_bits(make_pair(dynamic_bitset<>(size),dynamic_bitset<>(size)));
-	pair<int,int> genotype;
-	array<unsigned short, 2> nm;
-	uint alleleCount = 0;
-	string line;
-	array<vector<int>, 2> alleleCounts;
-	pair<unordered_map<const Locus*, bitset_pair>::iterator, bool> gen_pair;
-	unordered_map<const Locus*, bitset_pair>::iterator gen_itr;
+	bitset_pair gen_bits(std::make_pair(boost::dynamic_bitset<>(size),boost::dynamic_bitset<>(size)));
+	std::pair<int,int> genotype;
+	boost::array<unsigned short, 2> nm;
+	unsigned int alleleCount = 0;
+	std::string line;
+	boost::array<std::vector<int>, 2> alleleCounts;
+	std::pair<boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator, bool> gen_pair;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator gen_itr;
 	VCF::vcf_entry entry(vcf.N_indv);
 
-	for (uint i=0; i<totalSiteCount; i++) {
+	for (unsigned int i=0; i<totalSiteCount; i++) {
 		vcf.get_vcf_entry(i, line);
 		entry.reset(line);
 		entry.parse_basic_entry(true);
@@ -537,7 +519,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		alleleCounts[1].resize(alleleCount);
 		fill(alleleCounts[1].begin(), alleleCounts[1].end(), 0);
 
-		for (uint j=0; j<vcf.N_indv; j++) {
+		for (unsigned int j=0; j<vcf.N_indv; j++) {
 			entry.get_indv_GENOTYPE_ids(j, genotype);
 
 			if(genotype.first != -1){
@@ -562,10 +544,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				(RareCaseControl && nm[1] > 0 && getMAF(alleleCounts[1], nm[1]) < BinManager::mafCutoff);
 
 		if(KeepCommonLoci || is_rare ){
-			Locus* loc = new Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
+			Knowledge::Locus* loc = new Knowledge::Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
 
 			if(conv){
-				Locus* new_loc = conv->convertLocus(*loc);
+				Knowledge::Locus* new_loc = conv->convertLocus(*loc);
 				if (! new_loc){
 					// Add to the
 					delete loc;
@@ -599,12 +581,12 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 
 				_locus_count.insert(make_pair(loc, nm));
 				gen_pair = _genotype_bitset.insert(
-						make_pair(loc,
-								make_pair(dynamic_bitset<>(size),
-										dynamic_bitset<>(size))));
+						std::make_pair(loc,
+								std::make_pair(boost::dynamic_bitset<>(size),
+										boost::dynamic_bitset<>(size))));
 				gen_itr = gen_pair.first;
 
-				for (uint j=0; j<vcf.N_indv; ++j) {
+				for (unsigned int j=0; j<vcf.N_indv; ++j) {
 
 					//MOVE THIS!!
 					(*gen_itr).second.first[j] = genotype_pairs[j].first != -1 && static_cast<unsigned short>(genotype_pairs[j].first) != loc->getMajorPos();

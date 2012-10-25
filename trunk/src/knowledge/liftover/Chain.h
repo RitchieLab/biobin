@@ -13,10 +13,6 @@
 
 #include "Segment.h"
 
-using std::pair;
-using std::make_pair;
-using std::set;
-
 namespace Knowledge{
 
 namespace Liftover{
@@ -51,7 +47,7 @@ public:
 		return _id;
 	}
 
-	pair<int, int> convertRegion(int start, int end, float minMappingFrac=0.95) const;
+	std::pair<int, int> convertRegion(int start, int end, float minMappingFrac=0.95) const;
 
 	void addSegment(int old_s, int old_e, int new_s);
 
@@ -68,7 +64,7 @@ private:
 	short _new_chrom;
 	bool _is_fwd;
 
-	set<Segment> _data;
+	std::set<Segment> _data;
 };
 
 }

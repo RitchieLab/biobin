@@ -12,9 +12,6 @@
 #include "InformationSQLite.h"
 
 #include <sqlite3.h>
-#include <string>
-
-using std::string;
 
 namespace Knowledge{
 
@@ -38,7 +35,7 @@ public:
 	 * \param fn The filename of the LOKI database.
 	 */
 	template <class T_cont>
-	RegionCollectionSQLite(const string& fn, const T_cont& loci, Information* info=0);
+	RegionCollectionSQLite(const std::string& fn, const T_cont& loci, Information* info=0);
 	/*!
 	 * \brief Create a RegionCollection giving an open DB connection.
 	 * Creates a RegionCollection with an already open databse connection that
@@ -67,8 +64,8 @@ public:
 	 *
 	 * \return 0 if successfully loaded, anything else upon error.
 	 */
-	virtual uint Load(const unordered_set<uint>& ids,
-			const vector<string>& aliasList);
+	virtual unsigned int Load(const boost::unordered_set<unsigned int>& ids,
+			const std::vector<std::string>& aliasList);
 
 	virtual void loadFiles();
 
@@ -85,16 +82,16 @@ private:
 	int _popID;
 	int _def_id;
 
-	static string _s_tmp_region_tbl;
-	static string _s_tmp_zone_tbl;
-	static string _s_tmp_name_tbl;
-	static string _s_tmp_bound_tbl;
+	static std::string _s_tmp_region_tbl;
+	static std::string _s_tmp_zone_tbl;
+	static std::string _s_tmp_name_tbl;
+	static std::string _s_tmp_bound_tbl;
 
 	//! Adds a region based on the row (or returns the already added region)
 	Knowledge::Region* addRegion(sqlite3_stmt* row);
 
 	//! Adds the stuff from a single region file
-	void loadFile(const string& fn);
+	void loadFile(const std::string& fn);
 
 	//! Creates zones for the temp region table
 	void updateZones();
@@ -111,7 +108,7 @@ private:
 };
 
 template<class T_cont>
-RegionCollectionSQLite::RegionCollectionSQLite(const string& fn,
+RegionCollectionSQLite::RegionCollectionSQLite(const std::string& fn,
 		const T_cont& loci, Information* info) : RegionCollection(loci), self_open(true), self_info(!info) {
 	sqlite3_open(fn.c_str(), &db);
 	if(!info){

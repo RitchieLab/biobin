@@ -7,14 +7,16 @@
 
 #include "ConverterSQLite.h"
 
-#include "Chain.h"
-
-#include <sqlite3.h>
 #include <sstream>
-
 #include <iostream>
 
+#include "Chain.h"
+
+
 using std::stringstream;
+using std::map;
+using std::set;
+using std::string;
 
 namespace Knowledge {
 namespace Liftover{

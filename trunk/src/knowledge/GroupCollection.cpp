@@ -17,15 +17,19 @@
 #include "RegionCollection.h"
 #include "Information.h"
 
+using std::string;
+using std::vector;
 using std::ifstream;
 using std::getline;
 using std::stringstream;
 
-using boost::program_options::validation_error;
+using boost::unordered_map;
+using boost::unordered_set;
+using boost::to_upper;
 using boost::algorithm::split;
 using boost::algorithm::join;
 using boost::algorithm::is_any_of;
-using boost::to_upper;
+using boost::program_options::validation_error;
 
 namespace Knowledge{
 

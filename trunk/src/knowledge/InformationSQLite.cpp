@@ -19,9 +19,15 @@
 
 #include <boost/algorithm/string.hpp>
 
+using std::ostream;
+using std::pair;
+using std::string;
+using std::map;
 using std::vector;
+using std::set;
 using std::stringstream;
 using std::ifstream;
+using boost::unordered_map;
 using boost::is_any_of;
 using boost::algorithm::split;
 
@@ -32,6 +38,10 @@ string InformationSQLite::_role_zone_tbl = "__tmp_role_zone";
 
 InformationSQLite::InformationSQLite(const string& filename) : _self_open(true){
 	sqlite3_open(filename.c_str(), &_db);
+	// set the pragma to only allow temporary storage in memory
+	string memory_pragma = "PRAGMA temp_store=2;";
+	sqlite3_exec(_db, memory_pragma.c_str(), NULL, NULL, NULL);
+
 	prepRoleTables();
 	prepRoleStmt();
 }

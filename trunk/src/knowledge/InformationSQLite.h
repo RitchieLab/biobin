@@ -16,9 +16,6 @@
 
 #include "Information.h"
 
-using std::string;
-using std::map;
-
 namespace Knowledge{
 
 /*!
@@ -37,7 +34,7 @@ public:
 	 *
 	 * \param filename The SQLite file containing the LOKI database
 	 */
-	InformationSQLite(const string& filename);
+	InformationSQLite(const std::string& filename);
 	/*!
 	 * \brief Creates an Information object with an sqlite DB connection.
 	 * Creates an Information object using an already open connection to a
@@ -48,30 +45,30 @@ public:
 	 */
 	InformationSQLite(sqlite3* db);
 
-	virtual int getPopulationID(const string& pop_str);
-	virtual void getGroupTypes(const set<uint>& type_ids,
-			map<int, string>& group_types_out);
+	virtual int getPopulationID(const std::string& pop_str);
+	virtual void getGroupTypes(const std::set<unsigned int>& type_ids,
+			std::map<int, std::string>& group_types_out);
 	virtual int getZoneSize();
 
 	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg, bool use_cache);
 
-	virtual void printPopulations(ostream& os);
-	virtual void printSources(ostream& os);
+	virtual void printPopulations(std::ostream& os);
+	virtual void printSources(std::ostream& os);
 
 	virtual void loadRoles(const RegionCollection& reg);
 
-	virtual const set<unsigned int>& getSourceIds();
+	virtual const std::set<unsigned int>& getSourceIds();
 
 private:
 	void prepRoleStmt();
 	void prepRoleTables();
 
-	static string _role_region_tbl;
-	static string _role_zone_tbl;
+	static std::string _role_region_tbl;
+	static std::string _role_zone_tbl;
 
 	// blatantly stolen from ldsplineimporter!
-	void getAndDropIndexes(const string& tbl_name, map<string, string>& indexes_out);
-	void restoreIndexes(const string& tbl_name, const map<string, string>& index_map);
+	void getAndDropIndexes(const std::string& tbl_name, std::map<std::string, std::string>& indexes_out);
+	void restoreIndexes(const std::string& tbl_name, const std::map<std::string, std::string>& index_map);
 	void UpdateZones();
 
 	static int parseRegionIndex(void*, int, char**, char**);
@@ -101,7 +98,7 @@ private:
 	bool _self_open;
 
 	// A mapping of db integer roles to SNP roles
-	map<int, Information::snp_role> _role_map;
+	std::map<int, Information::snp_role> _role_map;
 
 	// The prepared statement for getting SNP roles
 	sqlite3_stmt* _role_stmt;

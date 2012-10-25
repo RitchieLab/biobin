@@ -16,6 +16,13 @@
 #include "knowledge/RegionCollectionSQLite.h"
 #include "knowledge/GroupCollectionSQLite.h"
 
+using std::string;
+using std::vector;
+using std::map;
+using std::new_handler;
+using std::set_new_handler;
+using std::deque;
+
 namespace BioBin {
 
 bool Application::errorExit = false;

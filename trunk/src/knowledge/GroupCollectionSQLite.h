@@ -8,32 +8,25 @@
 #ifndef KNOWLEDGE_GROUPCOLLECTIONSQLITE_H
 #define KNOWLEDGE_GROUPCOLLECTIONSQLITE_H
 
-#include <sqlite3.h>
-
-#include <string>
-
-#include <boost/unordered_set.hpp>
-
 #include "GroupCollection.h"
 
-using std::string;
-using boost::unordered_set;
+#include <sqlite3.h>
 
 namespace Knowledge{
 
 class GroupCollectionSQLite : public GroupCollection {
 
 public:
-	GroupCollectionSQLite(RegionCollection& reg, const string& fn, Information* info=0);
+	GroupCollectionSQLite(RegionCollection& reg, const std::string& fn, Information* info=0);
 	GroupCollectionSQLite(RegionCollection& reg, sqlite3 *db_conn, Information* info=0);
 
 	virtual ~GroupCollectionSQLite();
 
-	virtual void Load(const vector<string>& group_names,
-			const unordered_set<uint>& ids);
+	virtual void Load(const std::vector<std::string>& group_names,
+			const boost::unordered_set<unsigned int>& ids);
 
 protected:
-	virtual uint getMaxGroup();
+	virtual unsigned int getMaxGroup();
 
 private:
 	bool _self_open;

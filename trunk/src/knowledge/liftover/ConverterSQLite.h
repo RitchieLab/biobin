@@ -9,19 +9,17 @@
 #define	KNOWLEDGE_CONVERTERSQLITE_H
 
 #include "Converter.h"
+
 #include <string>
-
-using std::string;
-
-class sqlite3;
+#include <sqlite3.h>
 
 namespace Knowledge {
 namespace Liftover {
 
 class ConverterSQLite : public Converter {
 public:
-	ConverterSQLite(const string& orig_build, const string& db_fn);
-	ConverterSQLite(const string& orig_build, sqlite3* db);
+	ConverterSQLite(const std::string& orig_build, const std::string& db_fn);
+	ConverterSQLite(const std::string& orig_build, sqlite3* db);
 	virtual ~ConverterSQLite();
 	
 	virtual int Load();

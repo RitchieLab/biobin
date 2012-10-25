@@ -19,9 +19,12 @@
 #include "GroupCollection.h"
 #include "Information.h"
 
+namespace po = boost::program_options;
+
 using std::stringstream;
-using std::string;
 using std::vector;
+using std::string;
+using po::validation_error;
 using po::value;
 using boost::shared_ptr;
 using std::ifstream;

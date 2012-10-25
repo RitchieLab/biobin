@@ -28,24 +28,17 @@
 #include "knowledge/liftover/Converter.h"
 #include "knowledge/GroupCollectionSQLite.h"
 
-using std::string;
-using std::vector;
-using std::map;
-using std::new_handler;
-using std::set_new_handler;
-using std::deque;
-
 namespace BioBin {
 
 class Application {
 
 public:
 	
-	Application(const string& db_fn);
+	Application(const std::string& db_fn);
 	virtual ~Application();
 
-	string GetReportLog();
-	string AddReport(const string& suffix, const string& extension, const string& description);
+	std::string GetReportLog();
+	std::string AddReport(const std::string& suffix, const std::string& extension, const std::string& description);
 
 	// We want to separate the next two steps because some jobs require only one
 	// of the two be performed, and they do take time to complete
@@ -56,8 +49,8 @@ public:
     * @return Number of regions loaded
     */
 	template <class T_cont>
-	uint LoadRegionData(T_cont& aliasesNotFound,
-			const vector<string>& aliasList);		///< Comma separated list of strings
+	unsigned int LoadRegionData(T_cont& aliasesNotFound,
+			const std::vector<std::string>& aliasList);		///< Comma separated list of strings
 
 	/**
 	 * Loads group data using group name rather than IDs
@@ -66,14 +59,14 @@ public:
     * @return
     */
 	template <class T1_cont>
-	uint LoadGroupDataByName(T1_cont& userDefinedGroups);
+	unsigned int LoadGroupDataByName(T1_cont& userDefinedGroups);
 
-	uint GetPopulationID(const string& pop);
+	unsigned int GetPopulationID(const std::string& pop);
 
 	Knowledge::RegionCollection* GetRegions();
 
-	void SetGeneExtension(uint geneBoundaryExt);
-	void SetReportPrefix(const string& pref);
+	void SetGeneExtension(unsigned int geneBoundaryExt);
+	void SetReportPrefix(const std::string& pref);
 
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
 	static std::string reportPrefix;
@@ -82,10 +75,9 @@ public:
 	static bool s_run_normal;
 
 private:
-	void Init(const string& dbFilename, bool reportVersions);
+	void Init(const std::string& dbFilename, bool reportVersions);
 
 protected:
-	uint GetPopID(const string& pop);
 
 	///< The name of the database file
 	std::string dbFilename;
@@ -101,17 +93,17 @@ protected:
 	///< The knowedge meta groups
 	Knowledge::GroupCollection* groups;
 	///< the data associated with the user
-	deque<Knowledge::Locus*> dataset;
+	std::deque<Knowledge::Locus*> dataset;
 
 	///< The variation version (to guarantee that the variations file is correct for the database being used)
-	uint varVersion;
+	unsigned int varVersion;
 	///< Filename for variation data-this might not be opened, depending on how the user loads their data
 	std::string variationFilename;
 	///< The list of report filenames generated
 	std::stringstream reportLog;
 
 	///< Length of extension on either side of a gene (not to be mixed with LD extension)
-	uint geneExtensionLength;
+	unsigned int geneExtensionLength;
 
 //Everything from here on down has to do with installing a new handler that
 // will try to get sqlite to give up some of its cache
@@ -121,19 +113,19 @@ public:
 
 private:
 
-	static new_handler currentHandler;
+	static std::new_handler currentHandler;
 };
 
 
 template <class T_cont>
-uint Application::LoadRegionData(T_cont& aliasesNotFound, const vector<string>& aliasList) {
+unsigned int Application::LoadRegionData(T_cont& aliasesNotFound, const std::vector<std::string>& aliasList) {
 
 	regions->Load(aliasList);
 
 	//T_cont::const_iterator pos = aliasesNotFound.end();
 
-	vector<string>::const_iterator itr = aliasList.begin();
-	vector<string>::const_iterator end = aliasList.end();
+	std::vector<std::string>::const_iterator itr = aliasList.begin();
+	std::vector<std::string>::const_iterator end = aliasList.end();
 	while (itr != end) {
 		if (!regions->isValid(*itr))
 			aliasesNotFound.insert(aliasesNotFound.end(), *itr);
@@ -153,7 +145,7 @@ uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups) {
 	groups = new Knowledge::GroupCollectionSQLite(*regions, _db, _info);
 	groups->Load();
 
-	vector<string> unmatchedAliases;
+	std::vector<std::string> unmatchedAliases;
 	typename T1_cont::const_iterator udItr = userDefinedGroups.begin();
 	typename T1_cont::const_iterator udEnd = userDefinedGroups.end();
 
@@ -161,7 +153,6 @@ uint Application::LoadGroupDataByName(T1_cont& userDefinedGroups) {
 		groups->LoadArchive(*udItr, unmatchedAliases);
 		++udItr;
 	}
-
 
 	return groups->size();
 

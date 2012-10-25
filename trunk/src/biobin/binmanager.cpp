@@ -13,6 +13,15 @@
 #include "knowledge/Region.h"
 #include "knowledge/Information.h"
 
+using std::map;
+using std::vector;
+using std::string;
+using std::pair;
+using std::set;
+using std::deque;
+
+using boost::unordered_map;
+
 using Knowledge::RegionCollection;
 using Knowledge::Region;
 using Knowledge::Group;

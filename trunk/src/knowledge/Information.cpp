@@ -10,6 +10,13 @@
 #include <sstream>
 
 using std::stringstream;
+using std::ostream;
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
+using std::pair;
+using boost::unordered_map;
 
 namespace Knowledge{
 map<string, unsigned long> Information::snp_role::s_val_map;

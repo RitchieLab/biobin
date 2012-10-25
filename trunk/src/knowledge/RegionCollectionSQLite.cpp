@@ -18,8 +18,14 @@
 
 #include "Locus.h"
 
+using std::string;
+using std::vector;
+using std::set;
 using std::stringstream;
 using std::ifstream;
+
+using boost::unordered_map;
+using boost::unordered_set;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 

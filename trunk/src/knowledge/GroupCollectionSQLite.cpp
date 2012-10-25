@@ -17,6 +17,11 @@
 using std::stringstream;
 using std::pair;
 using std::deque;
+using std::set;
+using std::string;
+using std::vector;
+using boost::unordered_set;
+using boost::unordered_map;
 
 namespace Knowledge{
 
