@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS= -I ./make/m4
 
 SUBDIRS=src/vcftools src/knowledge src/biobin updater
 
-EXTRA_DIST=CREATED
+EXTRA_DIST=CREATED examples
 
 CLEANFILES=CREATED
 
