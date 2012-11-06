@@ -19,10 +19,6 @@ biobin_SOURCES= \
    PopulationManager.cpp \
    Configuration.h \
    Configuration.cpp
-   
-dist_data_DATA=\
-	$(top_srcdir)/data/example.cfg \
-	$(top_srcdir)/data/example.vcf
 
 EXTRA_DIST=\
 	$(top_srcdir)/doc/manual.doc \
