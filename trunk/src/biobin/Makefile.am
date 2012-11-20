@@ -20,13 +20,8 @@ biobin_SOURCES= \
    Configuration.h \
    Configuration.cpp
 
-EXTRA_DIST=\
-	$(top_srcdir)/doc/manual.doc \
-	$(top_srcdir)/updater/loadPops/buildPopulations.py
-	
-bin_SCRIPTS= \
-	$(top_srcdir)/updater/loadPops/buildPopulations.py
-   
+EXTRA_DIST=$(top_srcdir)/doc/manual.doc 
+ 
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) 
 

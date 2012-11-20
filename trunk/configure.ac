@@ -16,9 +16,9 @@ AC_CONFIG_FILES([Makefile
                  src/biobin/Makefile
                  src/knowledge/Makefile
                  src/vcftools/Makefile
-                 updater/Makefile
-                 updater/loadPops/Makefile
-                 updater/loadPops/ldspline/Makefile
-                 updater/loadPops/ldspline/src/ldspline/Makefile
-                 updater/loadPops/ldspline/src/utility/Makefile])
+                 loki/Makefile
+                 loki/loadPops/Makefile
+                 loki/loadPops/ldspline/Makefile
+                 loki/loadPops/ldspline/src/ldspline/Makefile
+                 loki/loadPops/ldspline/src/utility/Makefile])
 AC_OUTPUT

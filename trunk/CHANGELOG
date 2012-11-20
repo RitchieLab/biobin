@@ -1,0 +1,13 @@
+== 2.0.0 ==
+
+Initial Release
+
+== 2.0.1 ==
+
+- Updated and improved documentation
+
+== 2.0.2 ==
+
+- Moved "updater" to "loki" to make biobin closer in spirit to biofilter
+- Updated method of building the LOKI database
+- Caught errors when building the LOKI database so we don't have to "make clean" all the time

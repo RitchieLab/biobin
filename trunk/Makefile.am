@@ -1,8 +1,8 @@
 ACLOCAL_AMFLAGS= -I ./make/m4
 
-SUBDIRS=src/vcftools src/knowledge src/biobin updater
+SUBDIRS=src/vcftools src/knowledge src/biobin loki
 
-EXTRA_DIST=CREATED examples
+EXTRA_DIST=CREATED examples CHANGELOG
 
 CLEANFILES=CREATED
 
