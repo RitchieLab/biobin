@@ -1,0 +1,14 @@
+ACLOCAL_AMFLAGS= -I ./make/m4
+
+SUBDIRS=src/vcftools src/knowledge src/biobin loki
+
+EXTRA_DIST=CREATED examples CHANGELOG
+
+CLEANFILES=CREATED
+
+dist-hook:
+	chmod u+w $(distdir)/CREATED
+	echo "Distribution date: `date`" > CREATED
+
+# This is here to prevent installation of LOKI during a distcheck
+DISTCHECK_CONFIGURE_FLAGS=--disable-loki
