@@ -103,7 +103,9 @@ void Configuration::initGeneric(){
 		("overall-major-allele",value<Bool>()->default_value(true),
 				"Flag indicating desire to determine the major allele by the overall population instead of control")
 		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
-				"Disease model (additive, dominant, or recessive)");
+				"Disease model (additive, dominant, or recessive)"),
+		("weight-loci", value<Bool>()->default_value(false),
+				"Add weights to the Locus");
 
 	_generic_init = true;
 }
@@ -210,6 +212,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
 	PopulationManager::OverallMajorAllele = vm["overall-major-allele"].as<Bool>();
+	PopulationManager::c_use_weight = vm["weight-loci"].as<Bool>();
 
 
 	if(vm.count("add-groups")){

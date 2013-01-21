@@ -91,6 +91,8 @@ public:
 	static bool RareCaseControl;
 	static bool OverallMajorAllele;
 
+	static bool c_use_weight;
+
 	static float c_min_control_frac;
 
 	static DiseaseModel c_model;
@@ -110,8 +112,10 @@ private:
 	void loadIndividuals();
 	void parsePhenotypeFile(const std::string& filename);
 
-	int getIndivContrib(const Knowledge::Locus& loc, int position) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights=false) const;
 	int getTotalContrib(const Knowledge::Locus& loc) const;
+
+	float calcWeight(const Knowledge::Locus& loc) const;
 
 	float getMAF(const std::vector<int>& allele_count, unsigned int nmcc) const;
 
@@ -123,6 +127,7 @@ private:
 	// _is_control can be passed to the VCF parser
 	std::vector<bool> _is_control;
 	boost::dynamic_bitset<> _control_bitset;
+	int n_controls;
 
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
 
@@ -215,7 +220,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 		os << sep << capacity[0] << sep << capacity[1];
 
 		// print for each person
-		int bin_count = 0;
+		float bin_count = 0;
 		m_itr = _positions.begin();
 		while (m_itr != _positions.end()) {
 			l_itr = (*b_itr)->variantBegin();
@@ -325,7 +330,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 
 	int pos;
 	float status;
-	int bin_count;
+	float bin_count;
 
 	while (m_itr != m_end){
 		b_itr = bins.begin();
@@ -368,17 +373,7 @@ void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, con
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
 
-	int n_cases = 0;
-	int n_controls = 0;
-
-	std::vector<bool>::const_iterator c_itr = _is_control.begin();
-	std::vector<bool>::const_iterator c_end = _is_control.end();
-
-	while(c_itr != c_end){
-		n_controls += *c_itr;
-		n_cases += !(*c_itr);
-		++c_itr;
-	}
+	int n_cases = _is_control.size() - n_controls;
 
 	std::map<std::string, int>::const_iterator m_itr;
 	std::map<std::string, int>::const_iterator m_end = _positions.end();
@@ -402,7 +397,7 @@ void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, con
 			m_itr = _positions.begin();
 			while(m_itr != m_end){
 				case_cont_contrib[!_is_control[(*m_itr).second]] +=
-						getIndivContrib(**v_itr, (*m_itr).second);
+						getIndivContrib(**v_itr, (*m_itr).second, false);
 				++m_itr;
 			}
 			++v_itr;

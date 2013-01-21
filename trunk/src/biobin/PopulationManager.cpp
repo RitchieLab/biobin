@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#include <math.h>
 
 using std::fill;
 using std::vector;
@@ -44,6 +45,7 @@ bool PopulationManager::CompressedVCF = false;
 bool PopulationManager::KeepCommonLoci = true;
 bool PopulationManager::RareCaseControl = true;
 bool PopulationManager::OverallMajorAllele = true;
+bool BioBin::PopulationManager::c_use_weight = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) : vcf(vcf_fn, CompressedVCF){}
 
@@ -110,9 +112,13 @@ void PopulationManager::loadIndividuals(){
 		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in cases are rare.\n";
 	}
 
+	std::vector<bool>::const_iterator c_itr = _is_control.begin();
+	n_controls = 0;
+	while(c_itr != _is_control.end()){
+		n_controls += *c_itr;
+		++c_itr;
+	}
 }
-
-
 
 void PopulationManager::parsePhenotypeFile(const string& filename){
 
@@ -177,8 +183,12 @@ int PopulationManager::genotypeContribution(const Locus& loc) const{
 
 }
 
-int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeights) const{
 	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
+
+	int n_var = 0;
+	static float weight_cache = 1;
+	static const Locus* loc_cache = 0;
 
 	if(it == _genotype_bitset.end()){
 		return 0;
@@ -186,35 +196,56 @@ int PopulationManager::getIndivContrib(const Locus& loc, int pos) const{
 
 	switch(c_model){
 	case ADDITIVE:
-		return (*it).second.first[pos] + (*it).second.second[pos];
+		n_var = (*it).second.first[pos] + (*it).second.second[pos];
 	case DOMINANT:
-		return (*it).second.first[pos] | (*it).second.second[pos];
+		n_var = (*it).second.first[pos] | (*it).second.second[pos];
 	case RECESSIVE:
-		return (*it).second.first[pos] & (*it).second.second[pos];
+		n_var = (*it).second.first[pos] & (*it).second.second[pos];
 	default:
 		return 0;
 	}
+
+	// Cache the weights so we aren't wasting so much effort.
+	if(useWeights && c_use_weight && loc_cache != &loc){
+		loc_cache = &loc;
+		weight_cache = calcWeight(loc);
+	}
+
+	return n_var * weight_cache;
 }
 
 int PopulationManager::getTotalContrib(const Locus& loc) const{
 	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
 
+	int n_var = 0;
+
 	if(it == _genotype_bitset.end()){
 		return 0;
 	}
 
 	switch(c_model){
 	case ADDITIVE:
-		return (*it).second.first.count() + (*it).second.second.count();
+		n_var = (*it).second.first.count() + (*it).second.second.count();
 	case DOMINANT:
-		return ((*it).second.first | (*it).second.second).count();
+		n_var = ((*it).second.first | (*it).second.second).count();
 	case RECESSIVE:
-		return ((*it).second.first & (*it).second.second).count();
+		n_var = ((*it).second.first & (*it).second.second).count();
 	default:
 		return 0;
 	}
 
+	return n_var;
+}
 
+float PopulationManager::calcWeight(const Locus& loc) const{
+	float F = loc.majorAlleleFreq();
+	int N = n_controls;
+
+	// Madsen + Browning Weight
+	// A Groupwise Association Test for Rare Mutations Using a Weighted Sum Statistic
+	// PLOSGenetics, Feb 2009, Vol. 5, Issue 2, e10000384
+	float weight = 1/sqrt(N*(4*N*N*F*(1-F)+2*N+1)/(4*N*N+4*N+4));
+	return weight;
 }
 
 array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
