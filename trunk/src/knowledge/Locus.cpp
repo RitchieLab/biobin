@@ -13,6 +13,8 @@
 using std::new_handler;
 using std::set_new_handler;
 using std::sort;
+using std::find;
+using std::iter_swap;
 using std::string;
 using std::set;
 using std::vector;
@@ -90,6 +92,16 @@ Locus::Locus(const string& chrom_str, uint pos, bool rare, const string& id):
 void Locus::addAllele(const string& allele, float freq){
 	_alleles.push_back(Allele(allele, freq, _alleles.size()));
 	sort(_alleles.begin(), _alleles.end());
+}
+
+void Locus::setMajorAllele(const std::string& majAllele){
+	if (!(_alleles[0] == majAllele)){
+		vector<Allele>::iterator ai = find(++_alleles.begin(), _alleles.end(), majAllele);
+		if(ai != _alleles.end()){
+			iter_swap(ai, _alleles.begin());
+			sort(++_alleles.begin(), _alleles.end());
+		}
+	}
 }
 
 float Locus::majorAlleleFreq() const{

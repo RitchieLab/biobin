@@ -102,10 +102,11 @@ void Configuration::initGeneric(){
 				"Flag indicating determining rarity of variants by both case and control populations")
 		("overall-major-allele",value<Bool>()->default_value(true),
 				"Flag indicating desire to determine the major allele by the overall population instead of control")
-		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
-				"Disease model (additive, dominant, or recessive)"),
 		("weight-loci", value<Bool>()->default_value(false),
-				"Add weights to the Locus");
+						"Add weights to the Locus")
+		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
+				"Disease model (additive, dominant, or recessive)");
+
 
 	_generic_init = true;
 }

@@ -113,6 +113,13 @@ public:
 	}
 
 	/*!
+	 * Sets the major allele, which may be different from the calculated major
+	 * allele (in the case of overall-major-allele)
+	 * \param majAllele The string of the major allele
+	 */
+	void setMajorAllele(const std::string& majAllele);
+
+	/*!
 	 * \brief Return the major allele frequency (that which is most common).
 	 * Returns the most common allele among all those that have been entered
 	 * already.  This is determined by the ordering of the Allele object.

@@ -197,16 +197,20 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 	switch(c_model){
 	case ADDITIVE:
 		n_var = (*it).second.first[pos] + (*it).second.second[pos];
+		break;
 	case DOMINANT:
 		n_var = (*it).second.first[pos] | (*it).second.second[pos];
+		break;
 	case RECESSIVE:
 		n_var = (*it).second.first[pos] & (*it).second.second[pos];
+		break;
 	default:
 		return 0;
 	}
 
 	// Cache the weights so we aren't wasting so much effort.
-	if(useWeights && c_use_weight && loc_cache != &loc){
+	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
+	if(n_var != 0 && useWeights && c_use_weight && loc_cache != &loc){
 		loc_cache = &loc;
 		weight_cache = calcWeight(loc);
 	}
@@ -226,10 +230,13 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 	switch(c_model){
 	case ADDITIVE:
 		n_var = (*it).second.first.count() + (*it).second.second.count();
+		break;
 	case DOMINANT:
 		n_var = ((*it).second.first | (*it).second.second).count();
+		break;
 	case RECESSIVE:
 		n_var = ((*it).second.first & (*it).second.second).count();
+		break;
 	default:
 		return 0;
 	}
@@ -240,11 +247,15 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 float PopulationManager::calcWeight(const Locus& loc) const{
 	float F = loc.majorAlleleFreq();
 	int N = n_controls;
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr = _locus_count.find(&loc);
+	if(l_itr != _locus_count.end()){
+		N = (*l_itr).second[0]/2;
+	}
 
 	// Madsen + Browning Weight
 	// A Groupwise Association Test for Rare Mutations Using a Weighted Sum Statistic
 	// PLOSGenetics, Feb 2009, Vol. 5, Issue 2, e10000384
-	float weight = 1/sqrt(N*(4*N*N*F*(1-F)+2*N+1)/(4*N*N+4*N+4));
+	float weight = 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
 	return weight;
 }
 

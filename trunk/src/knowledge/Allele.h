@@ -57,6 +57,12 @@ public:
 	 * \param other The allele to compare to
 	 */
 	bool operator<(const Allele& other) const;
+
+	/*!
+	 * Equality is tested only on the string data
+	 */
+	bool operator==(const std::string& other) const{return *_data == other;}
+	bool operator!=(const std::string& other) const{return !(*this == other);}
 	//bool operator>(const Allele&) const;
 	//bool operator==(const Allele&) const;
 

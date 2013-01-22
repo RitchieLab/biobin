@@ -112,7 +112,7 @@ private:
 	void loadIndividuals();
 	void parsePhenotypeFile(const std::string& filename);
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights=false) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights=true) const;
 	int getTotalContrib(const Knowledge::Locus& loc) const;
 
 	float calcWeight(const Knowledge::Locus& loc) const;
@@ -226,10 +226,10 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 			l_itr = (*b_itr)->variantBegin();
 			bin_count = 0;
 			while (l_itr != (*b_itr)->variantEnd()) {
-				bin_count += getIndivContrib(**l_itr, (*m_itr).second);
+				bin_count += getIndivContrib(**l_itr, (*m_itr).second, true);
 				++l_itr;
 			}
-			os << sep << bin_count;
+			os << sep << std::setprecision(4) << bin_count;
 			++m_itr;
 		}
 		os << "\n";
@@ -353,10 +353,10 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 			l_end = (*b_itr)->variantEnd();
 			bin_count = 0;
 			while(l_itr != l_end){
-				bin_count += getIndivContrib(**l_itr, pos);
+				bin_count += getIndivContrib(**l_itr, pos, true);
 				++l_itr;
 			}
-			os << sep << bin_count;
+			os << sep << std::setprecision(4) << bin_count;
 			++b_itr;
 		}
 
@@ -372,8 +372,6 @@ void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, con
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
-
-	int n_cases = _is_control.size() - n_controls;
 
 	std::map<std::string, int>::const_iterator m_itr;
 	std::map<std::string, int>::const_iterator m_end = _positions.end();
@@ -554,6 +552,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 			}
 
 			if(loc){
+				string currMajor = "";
+				float currMax = 0;
+				float currFreq = 0;
+
 				loci_out.insert(loci_out.end(), loc);
 				_locus_position.insert(make_pair(loc, i));
 
@@ -561,7 +563,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				float freq = (nm[0] != 0 ? (alleleCounts[0][0] / static_cast<float>(nm[0])) : 0);
 				int nm_sum = nm[0] + nm[1];
 				if (OverallMajorAllele){
-					freq = (nm_sum != 0 ? (alleleCounts[0][0] + alleleCounts[1][0]) / static_cast<float>(nm_sum) : 0);
+					currMax = (nm_sum != 0 ? (alleleCounts[0][0] + alleleCounts[1][0]) / static_cast<float>(nm_sum) : 0);
+					currMajor = entry.get_REF();
 				}
 
 
@@ -569,9 +572,16 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				for (uint n = 1; n<alleleCount; n++){
 					freq = (nm[0] != 0 ? alleleCounts[0][n] / static_cast<float>(nm[0]) : -1);
 					if (OverallMajorAllele){
-						freq = (nm_sum != 0 ? (alleleCounts[0][n] + alleleCounts[1][n]) / static_cast<float>(nm_sum) : -1);
+						currFreq = (nm_sum != 0 ? (alleleCounts[0][n] + alleleCounts[1][n]) / static_cast<float>(nm_sum) : -1);
+						if(currFreq > currMax){
+							currMax = currFreq;
+							currMajor = entry.get_ALT_allele(n-1);
+						}
 					}
 					loc->addAllele(entry.get_ALT_allele(n-1), freq);
+				}
+				if(OverallMajorAllele){
+					loc->setMajorAllele(currMajor);
 				}
 
 				_locus_count.insert(make_pair(loc, nm));
