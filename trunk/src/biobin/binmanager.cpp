@@ -25,6 +25,7 @@ using boost::unordered_map;
 using Knowledge::RegionCollection;
 using Knowledge::Region;
 using Knowledge::Group;
+using Knowledge::Locus;
 using Knowledge::Information;
 using std::make_pair;
 
@@ -153,7 +154,47 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 			}
 		}
 	}
+}
 
+void BinManager::printLocusBinCount(std::ostream& os, float pct) const{
+
+    // A mapping of # of bins / locus -> # of loci
+	map<int, int> countMap;
+
+	unordered_map<Locus*, set<Bin*> >::const_iterator l_bin_itr = _locus_bins.begin();
+	while(l_bin_itr != _locus_bins.end()){
+		++countMap[(*(l_bin_itr++)).second.size()];
+	}
+
+	map<int, int>::const_iterator cm_itr = countMap.begin();
+	map<int, int>::const_iterator cm_last = countMap.end();
+
+	if(cm_itr != cm_last){
+		--cm_last;
+	}
+
+	os << "Number of Bins per locus" << std::endl;
+
+	int thresh = _locus_bins.size() * pct;
+	int currCount = 0;
+	int currMin = 1;
+	while(cm_itr != countMap.end()){
+		if(currCount == 0){
+			currMin = (*cm_itr).first;
+		}
+		currCount += (*cm_itr).second;
+
+		if (currCount > thresh || (*cm_itr).first == 1 || cm_itr == cm_last){
+			os << currMin;
+			if(currMin != (*cm_itr).first){
+				os << "-" << (*cm_itr).first;
+			}
+			os << "\t" << currCount << std::endl;
+
+			currCount = 0;
+		}
+		++cm_itr;
+	}
 }
 
 void BinManager::collapseBins(Information* info, const RegionCollection& reg){

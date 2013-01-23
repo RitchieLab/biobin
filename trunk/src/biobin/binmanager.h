@@ -53,6 +53,7 @@ public:
 	const_iterator end() const {return _bin_list.end();}
 
 	void printBins(std::ostream& os, Knowledge::Locus* locus, const std::string& sep=":") const;
+	void printLocusBinCount(std::ostream& os, float pct=0.1) const;
 
 	static unsigned int IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
 	static unsigned int BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing

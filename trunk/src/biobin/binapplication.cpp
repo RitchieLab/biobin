@@ -51,6 +51,12 @@ void BinApplication::InitBins() {
 			++itr;
 		}
 	}
+
+	std::cerr << std::endl;
+	binData.printLocusBinCount(std::cerr);
+	std::cerr << std::endl;
+
+	// Add output about number of bins
 }
 
 void BinApplication::writeBinData(const string& filename, const string& sep) const{
