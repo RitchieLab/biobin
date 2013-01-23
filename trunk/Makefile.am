@@ -9,6 +9,7 @@ CLEANFILES=CREATED
 dist-hook:
 	chmod u+w $(distdir)/CREATED
 	echo "Distribution date: `date`" > CREATED
+	rm -rf $(distdir)/examples/.svn
 
 # This is here to prevent installation of LOKI during a distcheck
 DISTCHECK_CONFIGURE_FLAGS=--disable-loki
