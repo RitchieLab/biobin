@@ -1,0 +1,511 @@
+/* example data */
+DELETE FROM namespace;
+INSERT INTO namespace (namespace_id, namespace, polyregion) VALUES (1, 'group', 0);
+INSERT INTO namespace (namespace_id, namespace, polyregion) VALUES (2, 'region', 0);
+INSERT INTO namespace (namespace_id, namespace, polyregion) VALUES (3, 'region_mono', 0);
+INSERT INTO namespace (namespace_id, namespace, polyregion) VALUES (4, 'region_poly', 1);
+DELETE FROM source;
+INSERT INTO source (source_id, source) VALUES (1, 'test');
+DELETE FROM type;
+INSERT INTO type (type_id, type) VALUES (1, 'group');
+INSERT INTO type (type_id, type) VALUES (2, 'region');
+DELETE FROM `group`;
+INSERT INTO `group` (group_id, type_id, label, description, source_id)
+SELECT 1, 1, 'g1', 'group1', 1 ;
+DELETE FROM group_name;
+INSERT INTO group_name (group_id, namespace_id, name, source_id)
+SELECT 1, 1, 'g1', 1 ;
+DELETE FROM group_region_name;
+INSERT INTO group_region_name (group_id, member, namespace_id, name, source_id)
+SELECT 1, 1, 3, 'A', 1 UNION ALL
+SELECT 1, 1, 3, 'B', 1 UNION ALL
+SELECT 1, 2, 3, 'C', 1 UNION ALL
+SELECT 1, 2, 3, 'D', 1 UNION ALL
+SELECT 1, 2, 3, 'E', 1 UNION ALL
+SELECT 1, 3, 3, 'F', 1 UNION ALL
+SELECT 1, 3, 3, 'G', 1 UNION ALL
+SELECT 1, 3, 3, 'H', 1 UNION ALL
+SELECT 1, 4, 3, 'I', 1 UNION ALL
+SELECT 1, 4, 3, 'J', 1 UNION ALL
+SELECT 1, 4, 3, 'K', 1 UNION ALL
+SELECT 1, 4, 3, 'L', 1 UNION ALL
+SELECT 1, 4, 3, 'M', 1 UNION ALL
+SELECT 1, 5, 3, 'N', 1 UNION ALL
+SELECT 1, 5, 4, 'O', 1 UNION ALL
+SELECT 1, 5, 3, 'P', 1 UNION ALL
+SELECT 1, 5, 3, 'Q', 1 UNION ALL
+SELECT 1, 6, 4, 'R', 1 UNION ALL
+SELECT 1, 6, 4, 'S', 1 UNION ALL
+SELECT 1, 6, 3, 'T', 1 UNION ALL
+SELECT 1, 7, 4, 'U', 1 UNION ALL
+SELECT 1, 7, 4, 'V', 1 UNION ALL
+SELECT 1, 7, 3, 'W', 1 ;
+DELETE FROM region;
+INSERT INTO region (region_id, type_id, label, description, source_id)
+SELECT 1, 2, 'r1', 'region1', 1 UNION ALL
+SELECT 2, 2, 'r2', 'region2', 1 UNION ALL
+SELECT 3, 2, 'r3', 'region3', 1 UNION ALL
+SELECT 4, 2, 'r4', 'region4', 1 UNION ALL
+SELECT 5, 2, 'r5', 'region5', 1 UNION ALL
+SELECT 6, 2, 'r6', 'region6', 1 UNION ALL
+SELECT 7, 2, 'r7', 'region7', 1 UNION ALL
+SELECT 8, 2, 'r8', 'region8', 1 UNION ALL
+SELECT 9, 2, 'r9', 'region9', 1 UNION ALL
+SELECT 10, 2, 'r10', 'region10', 1 UNION ALL
+SELECT 11, 2, 'r11', 'region11', 1 UNION ALL
+SELECT 12, 2, 'r12', 'region12', 1 UNION ALL
+SELECT 13, 2, 'r13', 'region13', 1 UNION ALL
+SELECT 14, 2, 'r14', 'region14', 1 UNION ALL
+SELECT 15, 2, 'r15', 'region15', 1 UNION ALL
+SELECT 16, 2, 'r16', 'region16', 1 UNION ALL
+SELECT 17, 2, 'r17', 'region17', 1 UNION ALL
+SELECT 18, 2, 'r18', 'region18', 1 UNION ALL
+SELECT 19, 2, 'r19', 'region19', 1 UNION ALL
+SELECT 20, 2, 'r20', 'region20', 1 UNION ALL
+SELECT 21, 2, 'r21', 'region21', 1 UNION ALL
+SELECT 22, 2, 'r22', 'region22', 1 UNION ALL
+SELECT 23, 2, 'r23', 'region23', 1 ;
+DELETE FROM region_name;
+INSERT INTO region_name (region_id, namespace_id, name, source_id)
+SELECT 1, 3, 'A', 1 UNION ALL
+SELECT 1, 3, 'B', 1 UNION ALL
+SELECT 2, 3, 'C', 1 UNION ALL
+SELECT 2, 3, 'D', 1 UNION ALL
+SELECT 3, 3, 'D', 1 UNION ALL
+SELECT 3, 3, 'E', 1 UNION ALL
+SELECT 4, 3, 'E', 1 UNION ALL
+SELECT 5, 3, 'F', 1 UNION ALL
+SELECT 5, 3, 'G', 1 UNION ALL
+SELECT 6, 3, 'G', 1 UNION ALL
+SELECT 6, 3, 'H', 1 UNION ALL
+SELECT 7, 3, 'I', 1 UNION ALL
+SELECT 7, 3, 'J', 1 UNION ALL
+SELECT 8, 3, 'J', 1 UNION ALL
+SELECT 8, 3, 'K', 1 UNION ALL
+SELECT 8, 3, 'L', 1 UNION ALL
+SELECT 9, 3, 'K', 1 UNION ALL
+SELECT 10, 3, 'L', 1 UNION ALL
+SELECT 10, 3, 'M', 1 UNION ALL
+SELECT 11, 3, 'N', 1 UNION ALL
+SELECT 11, 4, 'O', 1 UNION ALL
+SELECT 12, 4, 'O', 1 UNION ALL
+SELECT 13, 4, 'O', 1 UNION ALL
+SELECT 13, 3, 'P', 1 UNION ALL
+SELECT 14, 3, 'P', 1 UNION ALL
+SELECT 14, 3, 'Q', 1 UNION ALL
+SELECT 15, 3, 'Q', 1 UNION ALL
+SELECT 16, 4, 'R', 1 UNION ALL
+SELECT 17, 4, 'R', 1 UNION ALL
+SELECT 16, 4, 'S', 1 UNION ALL
+SELECT 17, 4, 'S', 1 UNION ALL
+SELECT 17, 3, 'T', 1 UNION ALL
+SELECT 18, 3, 'T', 1 UNION ALL
+SELECT 19, 4, 'U', 1 UNION ALL
+SELECT 20, 4, 'U', 1 UNION ALL
+SELECT 21, 4, 'U', 1 UNION ALL
+SELECT 20, 4, 'V', 1 UNION ALL
+SELECT 21, 4, 'V', 1 UNION ALL
+SELECT 22, 4, 'V', 1 UNION ALL
+SELECT 22, 3, 'W', 1 UNION ALL
+SELECT 23, 3, 'W', 1 ;
+
+
+/* a 'poly name' is one whose namespace indicates it may legitimately match multiple gene regions */
+/* a 'poly region' is one which is matched by a poly name */
+/* a 'side name' is a non-poly name which matches a poly region */
+/* a 'side region' is a non-poly region which is matched by a side name */
+/* an 'other name' is a non-poly, non-side name */
+/* an 'other region' is a non-poly, non-side region which is matched by an other name */
+
+
+DROP TABLE _group_region_name_score;
+/* name resolution scores */
+CREATE TEMP TABLE _group_region_name_score (
+  group_id INTERGER NOT NULL,
+  member INTEGER NOT NULL,
+  polynames INTEGER NOT NULL,
+  region_id INTEGER NOT NULL,
+  implication INTEGER NOT NULL,
+  quality INTEGER NOT NULL,
+  PRIMARY KEY (group_id, member, region_id)
+);
+DELETE FROM _group_region_name_score;
+INSERT INTO _group_region_name_score
+/* calculate implication and quality scores for each possible match for each member */
+SELECT
+  group_id,
+  member,
+  polynames,
+  region_id,
+  COUNT(DISTINCT grn_rowid) AS implication,
+  (CASE WHEN polynames > 0 THEN 1000 * COUNT(DISTINCT grn_rowid) ELSE SUM(1000 / region_count) END) AS quality
+FROM (
+  /* count the number of possible matches for each name of each member */
+  SELECT
+    grn._ROWID_ AS grn_rowid,
+    grn.group_id,
+    grn.member,
+    grn.namespace_id,
+    grn.name,
+    polynames,
+    COUNT(DISTINCT rn.region_id) AS region_count
+  FROM (
+    /* count the number of matchable polyregion names for each member */
+    SELECT
+      grn.group_id,
+      grn.member,
+      COUNT(DISTINCT (CASE WHEN n.polyregion > 0 THEN grn._ROWID_ ELSE NULL END)) AS polynames
+    FROM group_region_name AS grn
+    JOIN region_name AS rn USING (namespace_id, name)
+    JOIN namespace AS n USING (namespace_id)
+    GROUP BY grn.group_id, grn.member
+  )
+  JOIN group_region_name AS grn USING (group_id, member)
+  JOIN region_name AS rn USING (namespace_id, name)
+  JOIN namespace AS n USING (namespace_id)
+  WHERE n.polyregion > 0 OR polynames = 0
+  GROUP BY grn.group_id, grn.member, grn.namespace_id, grn.name
+)
+JOIN region_name AS rn USING (namespace_id, name)
+GROUP BY group_id, member, region_id
+;
+
+
+/* pre-assignment member stats */
+SELECT
+  (SELECT COUNT() FROM (SELECT 1 FROM group_region_name GROUP BY group_id, member)) AS member_total,
+  (SELECT COUNT() FROM (SELECT 1 FROM group_region_name LEFT JOIN region_name USING (namespace_id, name) GROUP BY group_id, member HAVING MAX(region_id) IS NULL)) AS member_unmatched,
+  COUNT() AS member_matched,
+  SUM(CASE WHEN match_basic = 1 OR (polynames > 0 AND member_variance = 1) THEN 1 ELSE 0 END) AS basic_resolved,
+  SUM(CASE WHEN match_basic = 1 OR (polynames > 0 AND member_variance = 1) THEN 0 ELSE 1 END) AS basic_ambiguous,
+  SUM(CASE WHEN match_implication = 1 OR (polynames > 0 AND match_implication > 1) THEN 1 ELSE 0 END) AS implication_resolved,
+  SUM(CASE WHEN match_implication = 1 OR (polynames > 0 AND match_implication > 1) THEN 0 ELSE 1 END) AS implication_ambiguous,
+  SUM(CASE WHEN match_quality = 1 OR (polynames > 0 AND match_quality > 1) THEN 1 ELSE 0 END) AS quality_resolved,
+  SUM(CASE WHEN match_quality = 1 OR (polynames > 0 AND match_quality > 1) THEN 0 ELSE 1 END) AS quality_ambiguous
+FROM (
+    /* identify number of matches with the best score for each member */
+    SELECT
+      group_id,
+      member,
+      polynames,
+      COUNT(DISTINCT implication) AS member_variance,
+      member_implication,
+      member_quality,
+      COUNT() match_basic,
+      SUM(CASE WHEN implication >= member_implication THEN 1 ELSE 0 END) AS match_implication,
+      SUM(CASE WHEN quality >= member_quality THEN 1 ELSE 0 END) AS match_quality
+    FROM (
+      /* identify best scores for each member */
+      SELECT
+        group_id,
+        member,
+        polynames,
+        MAX(implication) AS member_implication,
+        MAX(quality) AS member_quality
+      FROM _group_region_name_score
+      GROUP BY group_id, member, polynames
+    )
+    JOIN _group_region_name_score USING (group_id, member, polynames)
+    GROUP BY group_id, member, polynames
+)
+;
+
+
+DELETE FROM group_region;
+/* group-region assignments with confidence scores */
+INSERT INTO group_region
+SELECT
+  group_id,
+  region_id,
+  MAX(specificity) AS specificity,
+  MAX(implication) AS implication,
+  MAX(quality) AS quality
+FROM (
+  /* identify specific matches with the best score for each member */
+  SELECT
+    group_id,
+    member,
+    region_id,
+    (CASE
+      WHEN polynames THEN 100 / member_variance
+      ELSE 100 / match_basic
+    END) AS specificity,
+    (CASE
+      WHEN polynames THEN 100 * implication / member_implication
+      WHEN implication = member_implication THEN 100 / match_implication
+      ELSE 0
+    END) AS implication,
+    (CASE
+      WHEN polynames THEN 100 * quality / member_quality
+      WHEN quality = member_quality THEN 100 / match_quality
+      ELSE 0
+    END) AS quality
+  FROM (
+    /* identify number of matches with the best score for each member */
+    SELECT
+      group_id,
+      member,
+      polynames,
+      COUNT(DISTINCT implication) AS member_variance,
+      member_implication,
+      member_quality,
+      COUNT() match_basic,
+      SUM(CASE WHEN implication >= member_implication THEN 1 ELSE 0 END) AS match_implication,
+      SUM(CASE WHEN quality >= member_quality THEN 1 ELSE 0 END) AS match_quality
+    FROM (
+      /* identify best scores for each member */
+      SELECT
+        group_id,
+        member,
+        polynames,
+        MAX(implication) AS member_implication,
+        MAX(quality) AS member_quality
+      FROM _group_region_name_score
+      GROUP BY group_id, member, polynames
+    )
+    JOIN _group_region_name_score USING (group_id, member, polynames)
+    GROUP BY group_id, member, polynames
+  )
+  JOIN _group_region_name_score USING (group_id, member, polynames)
+  GROUP BY group_id, member, region_id
+)
+GROUP BY group_id, region_id
+;
+
+
+/* group-region placeholders for unmatched members */
+INSERT INTO group_region
+SELECT
+  group_id,
+  0 AS region_id,
+  COUNT() AS specificity,
+  0 AS implication,
+  0 AS quality
+FROM (
+  SELECT group_id
+  FROM group_region_name
+  LEFT JOIN region_name USING (namespace_id, name)
+  GROUP BY group_id, member
+  HAVING MAX(region_id) IS NULL
+)
+GROUP BY group_id
+;
+
+
+/* post-assignment match stats */
+SELECT
+  SUM(CASE WHEN region_id = 0 THEN specificity ELSE 0 END) AS unmatched,
+  SUM(CASE WHEN region_id > 0 AND specificity >= 100 THEN 1 ELSE 0 END) AS basic_strict,
+  SUM(CASE WHEN region_id > 0 AND specificity > 0 THEN 1 ELSE 0 END) AS basic_permissive,
+  SUM(CASE WHEN region_id > 0 AND implication >= 100 THEN 1 ELSE 0 END) AS implication_strict,
+  SUM(CASE WHEN region_id > 0 AND implication > 0 THEN 1 ELSE 0 END) AS implication_permissive,
+  SUM(CASE WHEN region_id > 0 AND quality >= 100 THEN 1 ELSE 0 END) AS quality_strict,
+  SUM(CASE WHEN region_id > 0 AND quality > 0 THEN 1 ELSE 0 END) AS quality_permissive
+FROM group_region
+;
+
+
+/* post-assignment group details */
+SELECT
+  NULL AS mode,
+  NULL AS group_id,
+  'strict' AS strict,
+  'permissive' AS permissive
+UNION ALL
+SELECT * FROM (
+  SELECT
+    'basic' AS mode,
+    group_id,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND specificity >= 100 THEN region_id ELSE NULL END) AS basic_strict,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND specificity > 0 THEN region_id ELSE NULL END) AS basic_permissive
+  FROM group_region
+  GROUP BY group_id
+  UNION ALL
+  SELECT
+    'impl.' AS mode,
+    group_id,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND implication >= 100 THEN region_id ELSE NULL END) AS implication_strict,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND implication > 0 THEN region_id ELSE NULL END) AS implication_permissive
+  FROM group_region
+  GROUP BY group_id
+  UNION ALL
+  SELECT
+    'qual.' AS mode,
+    group_id,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND quality >= 100 THEN region_id ELSE NULL END) AS quality_strict,
+    GROUP_CONCAT(CASE WHEN region_id > 0 AND quality > 0 THEN region_id ELSE NULL END) AS quality_permissive
+  FROM group_region
+  GROUP BY group_id
+)
+WHERE group_id = 1
+;
+
+
+/* strategy comparison examples */
+SELECT
+  g.label,
+  grn.member,
+  n.namespace || (CASE WHEN n.polyregion THEN '*' ELSE '' END) AS namespace,
+  grn.name,
+  rn.region_id
+FROM (
+  SELECT
+    g.group_id,
+    g.label,
+    GROUP_CONCAT(CASE WHEN gr.specificity >= 100 THEN r.label ELSE NULL END) AS basic_strict,
+    GROUP_CONCAT(CASE WHEN gr.specificity > 0 THEN r.label ELSE NULL END) AS basic_permissive,
+    GROUP_CONCAT(CASE WHEN gr.implication >= 100 THEN r.label ELSE NULL END) AS implication_strict,
+    GROUP_CONCAT(CASE WHEN gr.implication > 0 THEN r.label ELSE NULL END) AS implication_permissive,
+    GROUP_CONCAT(CASE WHEN gr.quality >= 100 THEN r.label ELSE NULL END) AS quality_strict,
+    GROUP_CONCAT(CASE WHEN gr.quality > 0 THEN r.label ELSE NULL END) AS quality_permissive
+  FROM `group` AS g
+  JOIN group_region AS gr USING (group_id)
+  JOIN region AS r USING (region_id)
+  GROUP BY g.group_id
+  HAVING
+    (1 AND basic_strict = basic_permissive AND basic_strict = implication_strict AND basic_strict = implication_permissive AND basic_strict = quality_strict AND basic_strict = quality_permissive) OR
+    (0 AND basic_strict != implication_strict) OR
+    (0 AND implication_strict != quality_strict) OR
+    (0 AND basic_permissive != implication_permissive) OR
+    (0 AND implication_permissive != quality_permissive) OR
+    (0 AND basic_strict != basic_permissive) OR
+    (0 AND implication_strict != implication_permissive) OR
+    (0 AND quality_strict != quality_permissive)
+  LIMIT 1
+) AS g
+JOIN group_region_name AS grn USING (group_id)
+JOIN region_name AS rn USING (namespace_id, name)
+JOIN namespace AS n USING (namespace_id)
+;
+
+
+
+SELECT
+  (SELECT source FROM `group` JOIN source USING (source_id) WHERE group_id = g.group_id) AS source,
+  (SELECT GROUP_CONCAT(name) FROM group_name WHERE group_id = g.group_id) AS names,
+  g.group_id,
+  g.member,
+  GROUP_CONCAT(DISTINCT n.namespace || (CASE WHEN n.polyregion THEN '*' ELSE '' END)) AS namespace,
+  grn.name,
+  GROUP_CONCAT(DISTINCT rn.region_id) AS region_id
+FROM (
+    /* identify number of matches with the best score for each member */
+    SELECT
+      group_id,
+      member,
+      polynames,
+      COUNT(DISTINCT implication) AS member_variance,
+      member_implication,
+      member_quality,
+      COUNT() match_basic,
+      SUM(CASE WHEN implication >= member_implication THEN 1 ELSE 0 END) AS match_implication,
+      SUM(CASE WHEN quality >= member_quality THEN 1 ELSE 0 END) AS match_quality
+    FROM (
+      /* identify best scores for each member */
+      SELECT
+        group_id,
+        member,
+        polynames,
+        MAX(implication) AS member_implication,
+        MAX(quality) AS member_quality
+      FROM _group_region_name_score
+      GROUP BY group_id, member, polynames
+    )
+    JOIN _group_region_name_score USING (group_id, member, polynames)
+    GROUP BY group_id, member, polynames
+    HAVING
+      (0 AND polynames = 0 AND match_basic = 1) OR
+      (0 AND polynames = 0 AND match_basic > 1 AND match_implication = 1 AND match_quality > 1) OR
+      (0 AND polynames = 0 AND match_basic > 1 AND match_implication > 1 AND match_quality = 1) OR
+      (0 AND polynames = 0 AND match_basic > 1 AND match_implication = 1 AND match_quality = 1) OR
+      (0 AND polynames = 0 AND match_basic > 1 AND match_implication > 1 AND match_quality > 1) OR
+      (0 AND polynames > 0 AND match_basic > 1 AND member_implication = 1 AND member_variance = 1) OR
+      (0 AND polynames > 0 AND match_basic > 1 AND member_implication > 1 AND member_variance = 1) OR
+      (0 AND polynames > 0 AND match_basic > 1 AND member_implication > 1 AND member_variance > 1) OR
+      (1 AND polynames > 1)
+    LIMIT 10
+) AS g
+JOIN group_region_name AS grn USING (group_id, member)
+JOIN region_name AS rn USING (namespace_id, name)
+JOIN namespace AS n USING (namespace_id)
+GROUP BY g.group_id, g.member, grn.name
+;
+
+
+
+
+
+
+DROP TABLE _region_name_name_score;
+/* region-name-name resolution scores */
+CREATE TEMP TABLE _region_name_name_score (
+  new_namespace_id INTERGER NOT NULL,
+  new_name VARCHAR(256) NOT NULL,
+  region_id INTEGER NOT NULL,
+  implication INTEGER NOT NULL,
+  PRIMARY KEY (new_namespace_id, new_name, region_id)
+);
+DELETE FROM _region_name_name_score;
+INSERT INTO _region_name_name_score
+/* calculate implication score for each possible match for each name */
+SELECT
+  rnn.new_namespace_id,
+  rnn.new_name,
+  rn.region_id,
+  COUNT(1) AS implication
+FROM region_name_name AS rnn
+JOIN region_name AS rn USING (namespace_id, name)
+GROUP BY rnn.new_namespace_id, rnn.new_name, rn.region_id
+;
+
+
+/* identify specific match with the best score for each name */
+SELECT
+  region_id,
+  new_namespace_id,
+  new_name,
+  1 AS derived,
+  0 AS source_id
+FROM (
+  /* identify names with only one best-score match */
+  SELECT
+    new_namespace_id,
+    new_name,
+    name_implication,
+    SUM(CASE WHEN implication >= name_implication THEN 1 ELSE 0 END) AS match_implication
+  FROM (
+    /* identify best score for each name */
+    SELECT
+      new_namespace_id,
+      new_name,
+      MAX(implication) AS name_implication
+    FROM _region_name_name_score
+    GROUP BY new_namespace_id, new_name
+  )
+  JOIN _region_name_name_score USING (new_namespace_id, new_name)
+  GROUP BY new_namespace_id, new_name
+  HAVING match_implication = 1
+)
+JOIN _region_name_name_score USING (new_namespace_id, new_name)
+WHERE implication >= name_implication
+;
+
+
+
+
+==================================================================
+
+snp role duplicates
+
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_001221	3			6				37_3	224514665					224514665	212549749	1			ctgProt
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_172128	2			6				37_3	224514665					224514665	212549750	1			ctgProt
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_172127	2			6				37_3	224514665					224514665	212549751	1			ctgProt
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_172114	1			6				37_3	224514665					224514665	212549752	1			ctgProt
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_172115	2			6				37_3	224514665					224514665	212549754	1			ctgProt
+10000007	NT_016354	19	39100973	39100973	817	CAMK2D	NM_172129	1			6				37_3	224514665					224514665	212549755	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_001221	3			6				37_3	157696476					157696476	212549749	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_172128	2			6				37_3	157696476					157696476	212549750	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_172127	2			6				37_3	157696476					157696476	212549751	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_172114	1			6				37_3	157696476					157696476	212549752	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_172115	2			6				37_3	157696476					157696476	212549754	1			ctgProt
+10000007	NW_001838915	1	39043125	39043125	817	CAMK2D	NM_172129	1			6				37_3	157696476					157696476	212549755	1			ctgProt
