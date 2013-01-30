@@ -7,14 +7,14 @@
 
 #include "task.h"
 
-#include "application.h"
+#include "binapplication.h"
 
 namespace BioBin {
 namespace Task {
 
 bool Task::detailedReport = true;
 
-Task::Task(int t, Application* app) : _task_type(t) {
+Task::Task(int t, BinApplication* app) : _task_type(t) {
 	//app->AddReport(GetFileSuffix(), GetFileExtension(), GetFileDescription());
 }
 

@@ -1,8 +1,6 @@
 bin_PROGRAMS = biobin
 
 biobin_SOURCES= \
-   application.h \
-   application.cpp \
    Bin.h \
    Bin.cpp \
    binapplication.h \

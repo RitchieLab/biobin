@@ -14,7 +14,7 @@
 
 namespace BioBin {
 
-class Application;
+class BinApplication;
 
 namespace Task {
 
@@ -25,7 +25,7 @@ public:
 	 *
 	 * @param type Gene/SNP/Model
 	 */
-	Task(int taskType, BioBin::Application* app);
+	Task(int taskType, BioBin::BinApplication* app);
 
 	virtual ~Task(){}
 	virtual void ExecuteTask() = 0;
@@ -50,23 +50,6 @@ protected:
 }
 
 }
-/*
-namespace std{
-
-template <>
-struct less<BioBin::Task::Task*>{
-	bool operator()(const BioBin::Task::Task* x, const BioBin::Task::Task* y){
-		return (x && y) ? (*x) < (*y) : y < x;
-	}
-};
-}
-*/
-
-//using BioBin::Task::Task;
-
-//typedef std::multimap<Task*, TaskPtrCmp> TaskList;
-//typedef std::multimap<uint, Task*> TaskList;
-//typedef std::pair<uint, Task*> TaskPair;
 
 #endif	/* TASK_H */
 

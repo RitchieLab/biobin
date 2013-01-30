@@ -6,7 +6,7 @@
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
-#include "application.h"
+#include "binapplication.h"
 
 #include "task.h"
 #include "taskfilegeneration.h"
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
 		std::cout << PACKAGE_STRING << "\n";
 		std::cout << "(c) Ritchie Lab, 2012\n";
 		std::cout << "To report bugs, please email " << PACKAGE_BUGREPORT << "\n";
-		BioBin::Application::s_run_normal = false;
+		BioBin::BinApplication::s_run_normal = false;
 	}
 
 	try{
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 		return 3;
 	}
 
-	if(BioBin::Application::s_run_normal){
+	if(BioBin::BinApplication::s_run_normal){
 
 		// TODO: check for existence of the file here!
 		if(BioBin::Main::c_vcf_file.size() == 0){
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
-	if(BioBin::Application::s_run_normal){
+	if(BioBin::BinApplication::s_run_normal){
 		app->initTasks();
 
 		try {

@@ -204,9 +204,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	if(vm.count("vcf-file")){
 		string fn(boost::filesystem::path(vm["vcf-file"].as<string>()).filename().string());
 		if(vm.count("report-prefix")){
-			Application::reportPrefix = vm["report-prefix"].as<string>();
+			BinApplication::reportPrefix = vm["report-prefix"].as<string>();
 		}else{
-			Application::reportPrefix = fn.substr(0,fn.find_first_of('.'));
+			BinApplication::reportPrefix = fn.substr(0,fn.find_first_of('.'));
 		}
 	}
 	PopulationManager::CompressedVCF = vm["compressed-vcf"].as<Bool>();
@@ -223,10 +223,10 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//==========================================
 	// Parsing printing options
 	//==========================================
-	BioBin::Application::c_print_populations = vm.count("print-populations");
-	BioBin::Application::c_print_sources = vm.count("print-sources");
-	if(BioBin::Application::s_run_normal){
-		BioBin::Application::s_run_normal = !(BioBin::Application::c_print_populations || BioBin::Application::c_print_sources);
+	BinApplication::c_print_populations = vm.count("print-populations");
+	BinApplication::c_print_sources = vm.count("print-sources");
+	if(BinApplication::s_run_normal){
+		BinApplication::s_run_normal = !(BinApplication::c_print_populations || BinApplication::c_print_sources);
 	}
 
 	//==========================================
@@ -237,7 +237,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
-	BioBin::BinApplication::c_transpose_bins = vm["transpose-bins"].as<Bool>();
+	BinApplication::c_transpose_bins = vm["transpose-bins"].as<Bool>();
 
 	//===========================================
 	// Parsing binning strategies
@@ -245,10 +245,10 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BinManager::ExpandByExons = vm["bin-expand-roles"].as<Bool>();
 	BinManager::FilterByRole = vm["filter-bin-role"].as<Bool>();
 	BinManager::KeepUnknown = vm["keep-unknown-role"].as<Bool>();
-	BioBin::BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
-	BioBin::BinManager::ExpandByGenes = vm["bin-regions"].as<Bool>();
-	BioBin::BinManager::IncludeIntergenic = vm["bin-interregion"].as<Bool>();
-	if(BioBin::Application::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
+	BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
+	BinManager::ExpandByGenes = vm["bin-regions"].as<Bool>();
+	BinManager::IncludeIntergenic = vm["bin-interregion"].as<Bool>();
+	if(BinApplication::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		if(!BioBin::BinManager::IncludeIntergenic){
 			std::cerr << "ERROR: You must bin by either pathways, regions, or interregion.\n";
 			throw po::validation_error(po::validation_error::invalid_option_value);

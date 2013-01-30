@@ -244,8 +244,6 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 		info->loadRoles(reg);
 	}
 
-	if ()
-
 	map<const Information::snp_role, Bin*> role_bin_list;
 	map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
 
