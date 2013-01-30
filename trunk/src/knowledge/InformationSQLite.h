@@ -50,12 +50,14 @@ public:
 			std::map<int, std::string>& group_types_out);
 	virtual int getZoneSize();
 
-	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg, bool use_cache);
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg);
+	virtual float getSNPWeight(const Locus& loc, const Region& reg);
 
 	virtual void printPopulations(std::ostream& os);
 	virtual void printSources(std::ostream& os);
 
 	virtual void loadRoles(const RegionCollection& reg);
+	virtual void loadWeights(const RegionCollection& reg);
 
 	virtual const std::set<unsigned int>& getSourceIds();
 
@@ -65,11 +67,15 @@ private:
 
 	static std::string _role_region_tbl;
 	static std::string _role_zone_tbl;
+	static std::string _role_snp_tbl;
+	static std::string _weight_region_tbl;
+	static std::string _weight_zone_tbl;
+	static std::string _weight_snp_tbl;
 
 	// blatantly stolen from ldsplineimporter!
 	void getAndDropIndexes(const std::string& tbl_name, std::map<std::string, std::string>& indexes_out);
 	void restoreIndexes(const std::string& tbl_name, const std::map<std::string, std::string>& index_map);
-	void UpdateZones();
+	void UpdateZones(const std::string& tbl_name, const std::string& tbl_zone_name, int zone_size);
 
 	static int parseRegionIndex(void*, int, char**, char**);
 
@@ -105,9 +111,14 @@ private:
 
 	// Prepared statment for getting SNP roles from regions
 	sqlite3_stmt* _region_role_stmt;
+	sqlite3_stmt* _snp_role_stmt;
+
+	sqlite3_stmt* _region_weight_stmt;
+	sqlite3_stmt* _snp_weight_stmt;
 
 	// Zone size used in the temp tables
-	int _tmp_zone_sz;
+	int _tmp_role_zone;
+	int _tmp_weight_zone;
 
 };
 

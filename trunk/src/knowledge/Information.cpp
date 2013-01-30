@@ -31,6 +31,7 @@ const Information::snp_role Information::OTHER("other");
 vector<string> Information::c_source_names;
 vector<string> Information::c_role_files;
 vector<string> Information::c_source_exclude;
+vector<string> Information::c_weight_files;
 set<unsigned int> Information::_s_source_ids;
 
 string Information::getSourceList(){

@@ -68,8 +68,6 @@ public:
 	static bool KeepUnknown;
 	static float mafCutoff; 	///< Max maf to produce result in a bin
 
-	// Carried this over from taskbincollapse, but I'm not sure what it does
-	static unsigned int maxSnpCount;
 private:
 
 	BinManager(const BinManager&);

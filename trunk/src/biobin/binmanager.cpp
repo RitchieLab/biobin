@@ -31,9 +31,9 @@ using std::make_pair;
 
 namespace BioBin {
 
-uint BinManager::IntergenicBinWidth = 50;
-uint BinManager::BinTraverseThreshold = 50;
-uint BinManager::MinBinSize = 1;
+unsigned int BinManager::IntergenicBinWidth = 50;
+unsigned int BinManager::BinTraverseThreshold = 50;
+unsigned int BinManager::MinBinSize = 1;
 bool BinManager::ExpandByGenes = true;
 bool BinManager::UsePathways = true;
 bool BinManager::IncludeIntergenic = true;
@@ -41,7 +41,6 @@ bool BinManager::ExpandByExons = false;
 bool BinManager::FilterByRole = false;
 bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
-uint BinManager::maxSnpCount = 200;
 
 BinManager::BinManager(const PopulationManager& pop_mgr) : _total_variants(0),
 		_pop_mgr(pop_mgr){}
@@ -245,6 +244,8 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 		info->loadRoles(reg);
 	}
 
+	if ()
+
 	map<const Information::snp_role, Bin*> role_bin_list;
 	map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
 
@@ -265,11 +266,11 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 					Group::const_region_iterator r_itr = curr_group->regionBegin();
 					Group::const_region_iterator r_end = curr_group->regionEnd();
 					while(r_itr != r_end){
-						role |= info->getSNPRole(**v_itr, **r_itr, false);
+						role |= info->getSNPRole(**v_itr, **r_itr);
 						++r_itr;
 					}
 				}else{
-					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion(), false);
+					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
 				}
 
 				role_itr = Information::snp_role::begin();

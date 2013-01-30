@@ -45,8 +45,6 @@ bool Configuration::_hidden_init = false;
 
 void Configuration::initGeneric(){
 	_generic.add_options()
-			("include-groups",value<Container<int> >()->composing(),
-					"A list of group IDs to include")
 			("include-group-names", value<Container<string> >()->composing(),
 					"A list of group names to include")
 			("include-group-file", value<Container<string> >()->composing(),
@@ -63,6 +61,8 @@ void Configuration::initGeneric(){
 					"A list of source names to exclude")
 			("role-file", value<Container<string> >()->composing(),
 					"A file containing custom roles")
+			("weight-file", value<Container<string> >()->composing(),
+					"A file containing custom Locus or region weights")
 			("ambiguity", value<GroupCollection::AmbiguityModel>(&GroupCollection::c_ambiguity)->default_value(GroupCollection::RESOLVABLE),
 					"Ambiguity mode (strict, resolvable, permissive)");
 
@@ -156,11 +156,6 @@ void Configuration::parseOptions(const po::variables_map& vm){
 		GroupCollection::c_group_names = vm["include-group-names"].as<Container<string> >();
 	}
 
-	if (vm.count("include-groups")){
-		vector<int> ids = vm["include-groups"].as<Container<int> >();
-		GroupCollection::c_id_list.insert(ids.begin(), ids.end());
-	}
-
 	if (vm.count("include-group-file")){
 		vector<string> files = vm["include-group-file"].as<Container<string> >();
 		// Iterate over each file, adding it to the group names
@@ -189,6 +184,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	}
 	if (vm.count("role-file")){
 		Information::c_role_files = vm["role-file"].as<Container<string> >();
+	}
+	if (vm.count("role-file")){
+		Information::c_weight_files = vm["weight-file"].as<Container<string> >();
 	}
 
 	if (vm.count("include-sources")){

@@ -137,7 +137,21 @@ public:
 	 *
 	 * \return An integer that represents a bitmask of the snp_roles
 	 */
-	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg, bool use_cache=true) = 0;
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg) = 0;
+
+	/*!
+	 * \brief Returns the weight assocated with a variant.
+	 * This function returns the weight that a user has set for the variant.
+	 * The user could set this from a file, or we could associate certain roles
+	 * with weights (chained call to getSNPRole, perhaps, but it may be better
+	 * to create a new function that is getRoleWight)?
+	 *
+	 * \param loc The Locus object in question
+	 * \param reg The associate Region to get the weight for
+	 *
+	 * \return A (non-negative) floating point weight associated with the (Locus, Region) pair
+	 */
+	virtual float getSNPWeight(const Locus& loc, const Region& reg) = 0;
 
 	/*!
 	 * \brief Prints a list of the populations.
@@ -171,6 +185,11 @@ public:
 	virtual void loadRoles(const RegionCollection& reg) = 0;
 
 	/*!
+	 * Load the weights from the files given in the c_weight_files member
+	 */
+	virtual void loadWeights(const RegionCollection& reg) = 0;
+
+	/*!
 	 * \brief Returns a string of IDs compatible with a "where" clause.
 	 * Returns a string of IDs
 	 */
@@ -185,6 +204,7 @@ public:
 	static std::vector<std::string> c_source_names;
 	static std::vector<std::string> c_source_exclude;
 	static std::vector<std::string> c_role_files;
+	static std::vector<std::string> c_weight_files;
 
 protected:
 	static std::set<unsigned int> _s_source_ids;

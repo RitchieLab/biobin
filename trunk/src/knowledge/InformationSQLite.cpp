@@ -35,6 +35,10 @@ namespace Knowledge{
 
 string InformationSQLite::_role_region_tbl = "__tmp_role_region";
 string InformationSQLite::_role_zone_tbl = "__tmp_role_zone";
+string InformationSQLite::_role_snp_tbl = "__tmp_role_snp";
+string InformationSQLite::_weight_region_tbl = "__tmp_weight_region";
+string InformationSQLite::_weight_zone_tbl = "__tmp_weight_zone";
+string InformationSQLite::_weight_snp_tbl = "__tmp_weight_snp";
 
 InformationSQLite::InformationSQLite(const string& filename) : _self_open(true){
 	sqlite3_open(filename.c_str(), &_db);
@@ -109,16 +113,8 @@ void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 	sqlite3_exec(_db, query_str.c_str(), parseGroupTypeQuery, &group_types_out, NULL);
 }
 
-unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg, bool use_cache){
+unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
 	unsigned long ret_val = 0;
-
-	if(use_cache){
-		unordered_map<pair<const Locus*, const Region*>, unsigned long >::const_iterator cache_itr =
-				_role_cache.find(std::make_pair(&loc, &reg));
-		if(cache_itr != _role_cache.end()){
-			return (*cache_itr).second;
-		}
-	}
 
 	map<int, Information::snp_role>::const_iterator db_role = _role_map.end();
 
@@ -151,10 +147,56 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg,
 	}
 	sqlite3_reset(_region_role_stmt);
 
-	if(use_cache){
-		_role_cache.insert(std::make_pair(std::make_pair(&loc, &reg), ret_val));
+	// Look up position role here
+	chr_idx = sqlite3_bind_parameter_index(_snp_role_stmt, ":chr");
+	pos_idx = sqlite3_bind_parameter_index(_snp_role_stmt, ":pos");
+	gid_idx = sqlite3_bind_parameter_index(_snp_role_stmt, ":gid");
+	sqlite3_bind_int(_snp_role_stmt, chr_idx, loc.getChrom());
+	sqlite3_bind_int(_snp_role_stmt, pos_idx, loc.getPos());
+	sqlite3_bind_int(_snp_role_stmt, gid_idx, reg.getID());
+	while(sqlite3_step(_snp_role_stmt)==SQLITE_ROW){
+		int role = sqlite3_column_int(_snp_role_stmt, 0);
+		db_role = _role_map.find(role);
+		if (db_role != _role_map.end()){
+			ret_val |= (*db_role).second;
+		}
 	}
+	sqlite3_reset(_snp_role_stmt);
+
+
 	return ret_val;
+}
+
+float InformationSQLite::getSNPWeight(const Locus& loc, const Region& reg){
+	float retval = 1;
+
+	// Look up region weight here
+	int chr_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":chr");
+	int pos_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":pos");
+	int gid_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":gid");
+	sqlite3_bind_int(_region_weight_stmt, chr_idx, loc.getChrom());
+	sqlite3_bind_int(_region_weight_stmt, pos_idx, loc.getPos());
+	sqlite3_bind_int(_region_weight_stmt, gid_idx, reg.getID());
+	while(sqlite3_step(_region_weight_stmt)==SQLITE_ROW){
+		retval *= sqlite3_column_double(_region_weight_stmt, 0);
+	}
+	sqlite3_reset(_region_weight_stmt);
+
+	// Look up position weight here
+	chr_idx = sqlite3_bind_parameter_index(_snp_weight_stmt, ":chr");
+	pos_idx = sqlite3_bind_parameter_index(_snp_weight_stmt, ":pos");
+	gid_idx = sqlite3_bind_parameter_index(_snp_weight_stmt, ":gid");
+	sqlite3_bind_int(_snp_weight_stmt, chr_idx, loc.getChrom());
+	sqlite3_bind_int(_snp_weight_stmt, pos_idx, loc.getPos());
+	sqlite3_bind_int(_snp_weight_stmt, gid_idx, reg.getID());
+	while(sqlite3_step(_snp_weight_stmt)==SQLITE_ROW){
+		retval *= sqlite3_column_double(_snp_weight_stmt, 0);
+	}
+	sqlite3_reset(_snp_weight_stmt);
+
+
+	return retval;
+
 }
 
 void InformationSQLite::printPopulations(ostream& os){
@@ -172,7 +214,8 @@ void InformationSQLite::printSources(ostream& os){
 
 }
 
-void InformationSQLite::loadRoles(const RegionCollection& reg){
+
+void InformationSQLite::loadRoles(const RegionCollection& reg) {
 	// NOTE: We MUST have loaded the regions already!!
 
 	// A mapping of roled to their ID
@@ -181,29 +224,36 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 	int max_role = 0;
 
 	string max_role_sql = "SELECT max(role_id) FROM role";
-	sqlite3_exec(_db, max_role_sql.c_str(), parseSingleIntQuery, &max_role, NULL);
+	sqlite3_exec(_db, max_role_sql.c_str(), parseSingleIntQuery, &max_role,
+			NULL);
 
 	string insert_sql_null = "INSERT OR IGNORE INTO " + _role_region_tbl + " "
-			"(role_id, chr, posMin, posMax) VALUES (?,?,?,?)";
+		"(value, chr, posMin, posMax) VALUES (?,?,?,?)";
 	string insert_sql_gene = "INSERT OR IGNORE INTO " + _role_region_tbl + " "
-			"(role_id, chr, posMin, posMax, biopolymer_id) VALUES (?,?,?,?,?)";
-
-	string get_gene_sql = "SELECT biopolymer_id from biopolymer_name "
-			"WHERE name=? AND source_id IN " + getSourceList();
-
+		"(value, chr, posMin, posMax, biopolymer_id) VALUES (?,?,?,?,?)";
+	string insert_pos_null = "INSERT OR IGNORE INTO " + _role_snp_tbl + " "
+		"(value, chr, pos) VALUES (?,?,?)";
+	string insert_pos_gene = "INSERT OR IGNORE INTO " + _role_snp_tbl + " "
+		"(value, chr, pos) VALUES (?,?,?)";
 
 	sqlite3_stmt* insert_stmt_gene;
-	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1, &insert_stmt_gene, NULL);
+	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
+			&insert_stmt_gene, NULL);
 	sqlite3_stmt* insert_stmt_null;
-	err_code = sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1, &insert_stmt_null, NULL);
-
-	//sqlite3_stmt* find_gene_stmt;
-	//sqlite3_prepare_v2(_db, get_gene_sql.c_str(), -1, &find_gene_stmt, NULL);
-
+	err_code = sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1,
+			&insert_stmt_null, NULL);
+	sqlite3_stmt* insert_pos_gene_stmt;
+	err_code = sqlite3_prepare_v2(_db, insert_pos_gene.c_str(), -1,
+			&insert_pos_gene_stmt, NULL);
+	sqlite3_stmt* insert_pos_null_stmt;
+	err_code = sqlite3_prepare_v2(_db, insert_pos_null.c_str(), -1,
+			&insert_pos_null_stmt, NULL);
 
 	// Get rid of any indexes in the 2 tables of interest
 	map<string, string> region_idx;
 	getAndDropIndexes(_role_region_tbl, region_idx);
+	map<string, string> pos_idx;
+	getAndDropIndexes(_role_snp_tbl, pos_idx);
 
 	// number of roles must be less than size of a long
 	unsigned int n_roles = 3;
@@ -212,7 +262,7 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 	unsigned long running_total = 0;
 	unsigned long prev_total = 0;
 	unsigned int n_vals = 0;
-	while(fn_itr != c_role_files.end()){
+	while (fn_itr != c_role_files.end()) {
 
 		// for each role file, open it and load it into the db
 
@@ -225,64 +275,101 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 			vector<string> result;
 			while (data_file.good()) {
 				getline(data_file, line);
-				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
-				if((result.size() == 4 || result.size() == 5) && result[0][0] != '#'){
+				split(result, line, is_any_of(" \n\t"),
+						boost::token_compress_on);
+				if ((result.size() == 4 || result.size() == 5) && result[0][0]
+						!= '#') {
 					short chr = Locus::getChrom(result[0]);
 					int posMin = atoi(result[2].c_str());
 					int posMax = atoi(result[3].c_str());
 
-					if(posMin > posMax){
-						std::swap(posMin, posMax);
-					}
-
-					prev_total = running_total;
-					running_total += posMax - posMin;
-					++n_vals;
-					if(running_total < prev_total){
-						std::cerr << "WARNING: Overflow!!" << std::endl;
-					}
-
 					int role_id;
 					role_itr = role_id_map.find(result[1]);
-					if(role_itr == role_id_map.end()){
+					if (role_itr == role_id_map.end()) {
 						role_id = ++max_role;
 						role_id_map[result[1]] = role_id;
-						_role_map.insert(std::make_pair(role_id, getRole(result[1])));
-
-					}else{
+						_role_map.insert(std::make_pair(role_id, getRole(
+								result[1])));
+					} else {
 						role_id = (*role_itr).second;
 					}
 
-					if (result.size() == 4){
-						if(chr != -1 && posMin && posMax){
-							sqlite3_bind_int(insert_stmt_null, 1, role_id);
-							sqlite3_bind_int(insert_stmt_null, 2, chr);
-							sqlite3_bind_int(insert_stmt_null, 3, posMin);
-							sqlite3_bind_int(insert_stmt_null, 4, posMax);
+					if (chr != -1 && posMin && posMax) {
 
-							while(sqlite3_step(insert_stmt_null)==SQLITE_ROW) {}
+						if (posMin == posMax) {
+							if(result.size() == 4){
+								sqlite3_bind_int(insert_pos_null_stmt, 1, role_id);
+								sqlite3_bind_int(insert_pos_null_stmt, 2, chr);
+								sqlite3_bind_int(insert_pos_null_stmt, 3, posMin);
+							} else {
+								// result size must be 5!
+								sqlite3_bind_int(insert_pos_gene_stmt, 1, role_id);
+								sqlite3_bind_int(insert_pos_gene_stmt, 2, chr);
+								sqlite3_bind_int(insert_pos_gene_stmt, 3, posMin);
 
-							sqlite3_reset(insert_stmt_null);
+								// Instead of finding the gene via SQL, we will find it
+								// in the RegionCollection object
+								string alias = result[4];
+								RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
+								while (itr != reg.aliasEnd(alias)) {
+									sqlite3_bind_int(insert_stmt_gene, 4, (*itr)->getID());
+									while (sqlite3_step(insert_stmt_gene)
+											== SQLITE_ROW) {
+									}
+									sqlite3_reset(insert_stmt_gene);
+									++itr;
+								}
+
+							}
+
+						} else {
+							if (posMin > posMax) {
+								std::swap(posMin, posMax);
+							}
+
+							prev_total = running_total;
+							running_total += posMax - posMin;
+							++n_vals;
+							if (running_total < prev_total) {
+								std::cerr << "WARNING: Overflow!!" << std::endl;
+							}
+
+							if (result.size() == 4) {
+								sqlite3_bind_int(insert_stmt_null, 1, role_id);
+								sqlite3_bind_int(insert_stmt_null, 2, chr);
+								sqlite3_bind_int(insert_stmt_null, 3, posMin);
+								sqlite3_bind_int(insert_stmt_null, 4, posMax);
+
+								while (sqlite3_step(insert_stmt_null)
+										== SQLITE_ROW) {
+								}
+
+								sqlite3_reset(insert_stmt_null);
+
+							} else {
+								// result size must be 5!
+								sqlite3_bind_int(insert_stmt_gene, 1, role_id);
+								sqlite3_bind_int(insert_stmt_gene, 2, chr);
+								sqlite3_bind_int(insert_stmt_gene, 3, posMin);
+								sqlite3_bind_int(insert_stmt_gene, 4, posMax);
+
+								// Instead of finding the gene via SQL, we will find it
+								// in the RegionCollection object
+								string alias = result[4];
+								RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
+								while (itr != reg.aliasEnd(alias)) {
+									sqlite3_bind_int(insert_stmt_gene, 5, (*itr)->getID());
+									while (sqlite3_step(insert_stmt_gene)
+											== SQLITE_ROW) {
+									}
+									sqlite3_reset(insert_stmt_gene);
+									++itr;
+								}
+
+							}
 						}
-					}else{
-						// result size must be 5!
-						sqlite3_bind_int(insert_stmt_gene, 1, role_id);
-						sqlite3_bind_int(insert_stmt_gene, 2, chr);
-						sqlite3_bind_int(insert_stmt_gene, 3, posMin);
-						sqlite3_bind_int(insert_stmt_gene, 4, posMax);
-
-						// Instead of finding the gene via SQL, we will find it
-						// in the RegionCollection object
-						string alias = result[4];
-						RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
-						while(itr != reg.aliasEnd(alias)){
-							sqlite3_bind_int(insert_stmt_gene, 5, (*itr)->getID());
-							while(sqlite3_step(insert_stmt_gene) == SQLITE_ROW){}
-							sqlite3_reset(insert_stmt_gene);
-							++itr;
-						}
-
 					}
+
 				}
 			}
 			data_file.close();
@@ -293,9 +380,9 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 	}
 
 	// I want the zone size to be the avg. region size in the temp tables
-	_tmp_zone_sz = running_total / (n_vals);
+	_tmp_role_zone = running_total / (n_vals);
 	int zs_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":zs");
-	sqlite3_bind_int(_region_role_stmt, zs_idx, _tmp_zone_sz);
+	sqlite3_bind_int(_region_role_stmt, zs_idx, _tmp_role_zone);
 
 	// If too many roles, print a warning
 	if(n_roles > sizeof(unsigned long)){
@@ -306,32 +393,200 @@ void InformationSQLite::loadRoles(const RegionCollection& reg){
 
 	// Reload the indexes in the 2 tables of interest
 	restoreIndexes(_role_region_tbl, region_idx);
+	restoreIndexes(_role_snp_tbl, pos_idx);
 	sqlite3_finalize(insert_stmt_gene);
 	sqlite3_finalize(insert_stmt_null);
-	//sqlite3_finalize(find_gene_stmt);
 
 	// Populate the zone table
-	UpdateZones();
+	UpdateZones(_role_region_tbl, _role_zone_tbl, _tmp_role_zone);
 
 }
 
-void InformationSQLite::UpdateZones(){
+void InformationSQLite::loadWeights(const RegionCollection& reg) {
+	// NOTE: We MUST have loaded the regions already!!
+
+	// A mapping of roled to their ID
+	map<string, int> role_id_map;
+	map<string, int>::const_iterator role_itr;
+	int max_role = 0;
+
+	string max_role_sql = "SELECT max(role_id) FROM role";
+	sqlite3_exec(_db, max_role_sql.c_str(), parseSingleIntQuery, &max_role,
+			NULL);
+
+	string insert_sql_null = "INSERT OR IGNORE INTO " + _weight_region_tbl + " "
+		"(value, chr, posMin, posMax) VALUES (?,?,?,?)";
+	string insert_sql_gene = "INSERT OR IGNORE INTO " + _weight_region_tbl + " "
+		"(value, chr, posMin, posMax, biopolymer_id) VALUES (?,?,?,?,?)";
+	string insert_pos_null = "INSERT OR IGNORE INTO " + _weight_snp_tbl + " "
+		"(value, chr, pos) VALUES (?,?,?)";
+	string insert_pos_gene = "INSERT OR IGNORE INTO " + _weight_snp_tbl + " "
+		"(value, chr, pos) VALUES (?,?,?)";
+
+	sqlite3_stmt* insert_stmt_gene;
+	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
+			&insert_stmt_gene, NULL);
+	sqlite3_stmt* insert_stmt_null;
+	err_code = sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1,
+			&insert_stmt_null, NULL);
+	sqlite3_stmt* insert_pos_gene_stmt;
+	err_code = sqlite3_prepare_v2(_db, insert_pos_gene.c_str(), -1,
+			&insert_pos_gene_stmt, NULL);
+	sqlite3_stmt* insert_pos_null_stmt;
+	err_code = sqlite3_prepare_v2(_db, insert_pos_null.c_str(), -1,
+			&insert_pos_null_stmt, NULL);
+
+	// Get rid of any indexes in the 2 tables of interest
+	map<string, string> region_idx;
+	getAndDropIndexes(_weight_region_tbl, region_idx);
+	map<string, string> pos_idx;
+	getAndDropIndexes(_weight_snp_tbl, pos_idx);
+
+	vector<string>::const_iterator fn_itr = c_weight_files.begin();
+	unsigned long running_total = 0;
+	unsigned long prev_total = 0;
+	unsigned int n_vals = 0;
+	while (fn_itr != c_weight_files.end()) {
+
+		// for each role file, open it and load it into the db
+
+		// Find the file and upload it...
+		ifstream data_file((*fn_itr).c_str());
+		if (!data_file.is_open()) {
+			std::cerr << "WARNING: cannot find " << *fn_itr << ", ignoring.\n";
+		} else {
+			string line;
+			vector<string> result;
+			while (data_file.good()) {
+				getline(data_file, line);
+				split(result, line, is_any_of(" \n\t"),
+						boost::token_compress_on);
+				if ((result.size() == 4 || result.size() == 5) && result[0][0]
+						!= '#') {
+					short chr = Locus::getChrom(result[0]);
+					int posMin = atoi(result[2].c_str());
+					int posMax = atoi(result[3].c_str());
+					char* str_end;
+					double weight = strtod(result[1].c_str(), &str_end);
+
+					if (chr != -1 && posMin && posMax && (result[1].c_str() != str_end)) {
+
+						if (posMin == posMax) {
+							if(result.size() == 4){
+								sqlite3_bind_double(insert_pos_null_stmt, 1, weight);
+								sqlite3_bind_int(insert_pos_null_stmt, 2, chr);
+								sqlite3_bind_int(insert_pos_null_stmt, 3, posMin);
+							} else {
+								// result size must be 5!
+								sqlite3_bind_double(insert_pos_gene_stmt, 1, weight);
+								sqlite3_bind_int(insert_pos_gene_stmt, 2, chr);
+								sqlite3_bind_int(insert_pos_gene_stmt, 3, posMin);
+
+								// Instead of finding the gene via SQL, we will find it
+								// in the RegionCollection object
+								string alias = result[4];
+								RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
+								while (itr != reg.aliasEnd(alias)) {
+									sqlite3_bind_int(insert_stmt_gene, 4, (*itr)->getID());
+									while (sqlite3_step(insert_stmt_gene)
+											== SQLITE_ROW) {
+									}
+									sqlite3_reset(insert_stmt_gene);
+									++itr;
+								}
+
+							}
+
+						} else {
+							if (posMin > posMax) {
+								std::swap(posMin, posMax);
+							}
+
+							prev_total = running_total;
+							running_total += posMax - posMin;
+							++n_vals;
+							if (running_total < prev_total) {
+								std::cerr << "WARNING: Overflow!!" << std::endl;
+							}
+
+							if (result.size() == 4) {
+								sqlite3_bind_double(insert_stmt_null, 1, weight);
+								sqlite3_bind_int(insert_stmt_null, 2, chr);
+								sqlite3_bind_int(insert_stmt_null, 3, posMin);
+								sqlite3_bind_int(insert_stmt_null, 4, posMax);
+
+								while (sqlite3_step(insert_stmt_null)
+										== SQLITE_ROW) {
+								}
+
+								sqlite3_reset(insert_stmt_null);
+
+							} else {
+								// result size must be 5!
+								sqlite3_bind_double(insert_stmt_gene, 1, weight);
+								sqlite3_bind_int(insert_stmt_gene, 2, chr);
+								sqlite3_bind_int(insert_stmt_gene, 3, posMin);
+								sqlite3_bind_int(insert_stmt_gene, 4, posMax);
+
+								// Instead of finding the gene via SQL, we will find it
+								// in the RegionCollection object
+								string alias = result[4];
+								RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
+								while (itr != reg.aliasEnd(alias)) {
+									sqlite3_bind_int(insert_stmt_gene, 5, (*itr)->getID());
+									while (sqlite3_step(insert_stmt_gene)
+											== SQLITE_ROW) {
+									}
+									sqlite3_reset(insert_stmt_gene);
+									++itr;
+								}
+
+							}
+						}
+					}
+
+				}
+			}
+			data_file.close();
+		}
+
+		++fn_itr;
+
+	}
+
+	// I want the zone size to be the avg. region size in the temp tables
+	_tmp_weight_zone = running_total / (n_vals);
+	int zs_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":zs");
+	sqlite3_bind_int(_region_weight_stmt, zs_idx, _tmp_weight_zone);
+
+	// Reload the indexes in the 2 tables of interest
+	restoreIndexes(_weight_region_tbl, region_idx);
+	restoreIndexes(_weight_snp_tbl, pos_idx);
+	sqlite3_finalize(insert_stmt_gene);
+	sqlite3_finalize(insert_stmt_null);
+
+	// Populate the zone table
+	UpdateZones(_weight_region_tbl, _weight_zone_tbl, _tmp_weight_zone);
+
+}
+
+void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zone_name, int zone_size){
 	// See loki_updater.py for the algorithm here
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter
 
 	// Get the zone size
-	int zone_size=_tmp_zone_sz;
+	//int zone_size=_tmp_role_zone;
 	//getZoneSize();
 
 	// Reverse any regions that are backwards
-	string region_reverse_sql = "UPDATE " + _role_region_tbl +
+	string region_reverse_sql = "UPDATE " + tbl_name +
 			"SET posMin = posMax, posMax = posMin WHERE posMin > posMax";
 	sqlite3_exec(_db, region_reverse_sql.c_str(), NULL, NULL, NULL);
 
 	// Find the minimum and maximum zone sizes
 	int minPos, maxPos = 0;
-	string min_pos_sql = "SELECT MIN(posMin) FROM " + _role_region_tbl;
-	string max_pos_sql = "SELECT MAX(posMax) FROM " + _role_region_tbl;
+	string min_pos_sql = "SELECT MIN(posMin) FROM " + tbl_name;
+	string max_pos_sql = "SELECT MAX(posMax) FROM " + tbl_name;
 
 	sqlite3_exec(_db, min_pos_sql.c_str(), &parseSingleIntQuery, &minPos, NULL);
 	sqlite3_exec(_db, max_pos_sql.c_str(), &parseSingleIntQuery, &maxPos, NULL);
@@ -358,17 +613,17 @@ void InformationSQLite::UpdateZones(){
 
 	// drop the indexes on zone table
 	map<string, string> index_map;
-	getAndDropIndexes(_role_zone_tbl,index_map);
+	getAndDropIndexes(tbl_zone_name,index_map);
 
 	// Get rid of the entire region zone table
-	string zone_del_sql = "DELETE FROM " + _role_zone_tbl;
+	string zone_del_sql = "DELETE FROM " + tbl_zone_name;
 	sqlite3_exec(_db, zone_del_sql.c_str(), NULL, NULL, NULL);
 
 	// OK, now we're ready to do some insertin'!
 	stringstream zone_ins_str;
-	zone_ins_str << "INSERT OR IGNORE INTO " + _role_zone_tbl + " (role_region_id,chr,zone) "
+	zone_ins_str << "INSERT OR IGNORE INTO " + tbl_zone_name + " (role_region_id,chr,zone) "
 			<< "SELECT rb.role_region_id, rb.chr, z.zone "
-			<< "FROM " << _role_region_tbl << " AS rb JOIN " << tmp_zone_tbl << " AS z "
+			<< "FROM " << tbl_name << " AS rb JOIN " << tmp_zone_tbl << " AS z "
 			<< "ON z.zone >= rb.posMin / " << zone_size << " "
 			<< "AND z.zone <= rb.posMax / " << zone_size << " ";
 
@@ -378,7 +633,7 @@ void InformationSQLite::UpdateZones(){
 	string tmp_tbl_drop = "DROP TABLE " + tmp_zone_tbl;
 	sqlite3_exec(_db, tmp_tbl_drop.c_str(), NULL, NULL, NULL);
 
-	restoreIndexes(_role_zone_tbl, index_map);
+	restoreIndexes(tbl_zone_name, index_map);
 }
 
 void InformationSQLite::prepRoleStmt(){
@@ -444,13 +699,37 @@ void InformationSQLite::prepRoleStmt(){
 
 	// Prep the SQL statement for the region
 	stringstream region_role_sql_str;
-	region_role_sql_str << "SELECT role_id FROM " << _role_zone_tbl << " AS z "
-			<< "INNER JOIN " << _role_region_tbl << " AS r USING (role_region_id) "
+	region_role_sql_str << "SELECT value FROM " << _role_zone_tbl << " AS z "
+			<< "INNER JOIN " << _role_region_tbl << " AS r USING (value_region_id) "
 			<< "WHERE z.chr=:chr AND z.zone=:pos/:zs "
 			<< "AND posMin<=:pos AND posMax>=:pos AND "
 			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
 
 	sqlite3_prepare_v2(_db, region_role_sql_str.str().c_str(), -1, &_region_role_stmt, NULL);
+
+	stringstream snp_role_sql_str;
+	snp_role_sql_str << "SELECT value FROM " << _role_snp_tbl
+			<< "WHERE chr=:chr AND pos=:pos AND "
+			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
+
+	sqlite3_prepare_v2(_db, snp_role_sql_str.str().c_str(), -1, &_snp_role_stmt, NULL);
+
+	// Prep the SQL statement for the region
+	stringstream region_weight_sql_str;
+	region_weight_sql_str << "SELECT value FROM " << _weight_zone_tbl << " AS z "
+			<< "INNER JOIN " << _weight_region_tbl << " AS r USING (value_region_id) "
+			<< "WHERE z.chr=:chr AND z.zone=:pos/:zs "
+			<< "AND posMin<=:pos AND posMax>=:pos AND "
+			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
+
+	sqlite3_prepare_v2(_db, region_weight_sql_str.str().c_str(), -1, &_region_weight_stmt, NULL);
+
+	stringstream snp_weight_sql_str;
+	snp_weight_sql_str << "SELECT value FROM " << _weight_snp_tbl
+			<< "WHERE chr=:chr AND pos=:pos AND "
+			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
+
+	sqlite3_prepare_v2(_db, snp_weight_sql_str.str().c_str(), -1, &_snp_weight_stmt, NULL);
 
 }
 
@@ -632,8 +911,8 @@ void InformationSQLite::prepRoleTables(){
 	vector<string> sql_stmts;
 	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _role_region_tbl +
 			"("
-			"role_region_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-			"role_id TINYINT NOT NULL,"
+			"value_region_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+			"value TINYINT NOT NULL,"
 			"chr TINYINT NOT NULL,"
 			"posMin BIGINT NOT NULL,"
 			"posMax BIGINT NOT NULL,"
@@ -641,12 +920,52 @@ void InformationSQLite::prepRoleTables(){
 			")");
 	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _role_zone_tbl +
 			"("
-			"role_region_id INTEGER NOT NULL,"
+			"value_region_id INTEGER NOT NULL,"
 			"chr TINYINT NOT NULL,"
 			"zone INTEGER NOT NULL"
 			")");
 
-	sql_stmts.push_back("CREATE INDEX '" + _role_zone_tbl + "__zone' ON " + _role_zone_tbl + " (chr,zone,role_region_id)");
+	sql_stmts.push_back("CREATE INDEX '" + _role_zone_tbl + "__zone' ON " + _role_zone_tbl + " (chr,zone,value_region_id)");
+
+	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _role_snp_tbl +
+			"("
+			"value_snp_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+			"value TINYINT NOT NULL,"
+			"chr TINYINT NOT NULL,"
+			"pos BIGINT NOT NULL,"
+			"biopolymer_id INTEGER"
+			")");
+
+	sql_stmts.push_back("CREATE INDEX '" + _role_snp_tbl + "__chr_pos' ON " + _role_snp_tbl + " (chr,pos)");
+
+	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _weight_region_tbl +
+			"("
+			"value_region_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+			"value FLOAT NOT NULL,"
+			"chr TINYINT NOT NULL,"
+			"posMin BIGINT NOT NULL,"
+			"posMax BIGINT NOT NULL,"
+			"biopolymer_id INTEGER"
+			")");
+	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _weight_zone_tbl +
+			"("
+			"value_region_id INTEGER NOT NULL,"
+			"chr TINYINT NOT NULL,"
+			"zone INTEGER NOT NULL"
+			")");
+
+	sql_stmts.push_back("CREATE INDEX '" + _weight_zone_tbl + "__zone' ON " + _weight_zone_tbl + " (chr,zone,value_region_id)");
+
+	sql_stmts.push_back("CREATE TEMPORARY TABLE " + _weight_snp_tbl +
+			"("
+			"value_snp_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+			"value FLOAT NOT NULL,"
+			"chr TINYINT NOT NULL,"
+			"pos BIGINT NOT NULL,"
+			"biopolymer_id INTEGER"
+			")");
+
+	sql_stmts.push_back("CREATE INDEX '" + _weight_snp_tbl + "__chr_pos' ON " + _weight_snp_tbl + " (chr,pos)");
 
 	vector<string>::const_iterator sql_itr = sql_stmts.begin();
 	while(sql_itr != sql_stmts.end()){

@@ -296,8 +296,6 @@ float PopulationManager::getMAF(const vector<int>& allele_count, uint nmcc) cons
 			ret_val = (*(++ordered_allele_count.rbegin())) / ((float) nmcc);
 		}
 		return ret_val;
-//		return ordered_allele_count.size() > 1 ?
-//				(*(++ordered_allele_count.rbegin())) / ((float) nmcc) : 0;
 	}
 }
 
