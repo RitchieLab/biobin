@@ -106,9 +106,9 @@ void BinApplication::InitBins() {
 void BinApplication::writeBinData(const string& filename, const string& sep) const{
 	std::ofstream file(filename.c_str());
 	if(c_transpose_bins){
-		_pop_mgr.printBinsTranspose(file, binData, sep);
+		_pop_mgr.printBinsTranspose(file, binData, *_info, sep);
 	}else{
-		_pop_mgr.printBins(file, binData, sep);
+		_pop_mgr.printBins(file, binData, *_info, sep);
 	}
 	file.close();
 }

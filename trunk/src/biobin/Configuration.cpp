@@ -213,7 +213,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
 	PopulationManager::OverallMajorAllele = vm["overall-major-allele"].as<Bool>();
-	PopulationManager::c_use_weight = vm["weight-loci"].as<Bool>();
+	PopulationManager::c_use_calc_weight = vm["weight-loci"].as<Bool>();
 
 
 	if(vm.count("add-groups")){

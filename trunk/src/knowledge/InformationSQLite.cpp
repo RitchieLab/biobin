@@ -113,7 +113,7 @@ void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 	sqlite3_exec(_db, query_str.c_str(), parseGroupTypeQuery, &group_types_out, NULL);
 }
 
-unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg){
+unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg) const{
 	unsigned long ret_val = 0;
 
 	map<int, Information::snp_role>::const_iterator db_role = _role_map.end();
@@ -167,8 +167,11 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg)
 	return ret_val;
 }
 
-float InformationSQLite::getSNPWeight(const Locus& loc, const Region& reg){
+float InformationSQLite::getSNPWeight(const Locus& loc, const Region* const reg) const{
 	float retval = 1;
+
+	// If no region was given, only get weight for unconstrained regions
+	int region_id = (reg == NULL) ? -1 : reg->getID();
 
 	// Look up region weight here
 	int chr_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":chr");
@@ -176,7 +179,7 @@ float InformationSQLite::getSNPWeight(const Locus& loc, const Region& reg){
 	int gid_idx = sqlite3_bind_parameter_index(_region_weight_stmt, ":gid");
 	sqlite3_bind_int(_region_weight_stmt, chr_idx, loc.getChrom());
 	sqlite3_bind_int(_region_weight_stmt, pos_idx, loc.getPos());
-	sqlite3_bind_int(_region_weight_stmt, gid_idx, reg.getID());
+	sqlite3_bind_int(_region_weight_stmt, gid_idx, region_id);
 	while(sqlite3_step(_region_weight_stmt)==SQLITE_ROW){
 		retval *= sqlite3_column_double(_region_weight_stmt, 0);
 	}
@@ -188,7 +191,7 @@ float InformationSQLite::getSNPWeight(const Locus& loc, const Region& reg){
 	gid_idx = sqlite3_bind_parameter_index(_snp_weight_stmt, ":gid");
 	sqlite3_bind_int(_snp_weight_stmt, chr_idx, loc.getChrom());
 	sqlite3_bind_int(_snp_weight_stmt, pos_idx, loc.getPos());
-	sqlite3_bind_int(_snp_weight_stmt, gid_idx, reg.getID());
+	sqlite3_bind_int(_snp_weight_stmt, gid_idx, region_id);
 	while(sqlite3_step(_snp_weight_stmt)==SQLITE_ROW){
 		retval *= sqlite3_column_double(_snp_weight_stmt, 0);
 	}

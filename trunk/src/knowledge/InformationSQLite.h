@@ -50,8 +50,8 @@ public:
 			std::map<int, std::string>& group_types_out);
 	virtual int getZoneSize();
 
-	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg);
-	virtual float getSNPWeight(const Locus& loc, const Region& reg);
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg) const;
+	virtual float getSNPWeight(const Locus& loc, const Region* const reg) const;
 
 	virtual void printPopulations(std::ostream& os);
 	virtual void printSources(std::ostream& os);

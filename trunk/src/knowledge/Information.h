@@ -137,7 +137,7 @@ public:
 	 *
 	 * \return An integer that represents a bitmask of the snp_roles
 	 */
-	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg) = 0;
+	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg) const = 0;
 
 	/*!
 	 * \brief Returns the weight assocated with a variant.
@@ -151,7 +151,7 @@ public:
 	 *
 	 * \return A (non-negative) floating point weight associated with the (Locus, Region) pair
 	 */
-	virtual float getSNPWeight(const Locus& loc, const Region& reg) = 0;
+	virtual float getSNPWeight(const Locus& loc, const Region* const reg) const = 0;
 
 	/*!
 	 * \brief Prints a list of the populations.

@@ -14,6 +14,8 @@
 #include <boost/program_options.hpp>
 #include <math.h>
 
+#include <iostream>
+
 using std::fill;
 using std::vector;
 using std::string;
@@ -24,6 +26,8 @@ using boost::unordered_map;
 using boost::dynamic_bitset;
 
 using Knowledge::Locus;
+using Knowledge::Region;
+using Knowledge::Information;
 
 using boost::program_options::validation_error;
 using boost::algorithm::split;
@@ -45,7 +49,8 @@ bool PopulationManager::CompressedVCF = false;
 bool PopulationManager::KeepCommonLoci = true;
 bool PopulationManager::RareCaseControl = true;
 bool PopulationManager::OverallMajorAllele = true;
-bool BioBin::PopulationManager::c_use_weight = false;
+bool PopulationManager::c_use_calc_weight = false;
+bool PopulationManager::_use_custom_weight = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) : vcf(vcf_fn, CompressedVCF){}
 
@@ -183,7 +188,7 @@ int PopulationManager::genotypeContribution(const Locus& loc) const{
 
 }
 
-float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeights) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeights, const Information* const info, const Region* const reg) const{
 	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
 
 	int n_var = 0;
@@ -210,9 +215,14 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 
 	// Cache the weights so we aren't wasting so much effort.
 	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
-	if(n_var != 0 && useWeights && c_use_weight && loc_cache != &loc){
-		loc_cache = &loc;
-		weight_cache = calcWeight(loc);
+	if(n_var != 0 && useWeights){
+		if(c_use_calc_weight && loc_cache != &loc){
+			loc_cache = &loc;
+			weight_cache = calcWeight(loc);
+		}
+		if(_use_custom_weight && info){
+			weight_cache *= getCustomWeight(loc, *info, reg);
+		}
 	}
 
 	return n_var * weight_cache;
@@ -257,6 +267,20 @@ float PopulationManager::calcWeight(const Locus& loc) const{
 	// PLOSGenetics, Feb 2009, Vol. 5, Issue 2, e10000384
 	float weight = 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
 	return weight;
+}
+
+float PopulationManager::getCustomWeight(const Locus& loc, const Information& info, const Region* const reg) const{
+	static float weight_cache = 1;
+	static const Locus* loc_cache = 0;
+	static const Region* reg_cache = 0;
+
+	if(&loc != loc_cache || reg != reg_cache){
+		loc_cache = &loc;
+		reg_cache = reg;
+		weight_cache = info.getSNPWeight(loc, reg);
+	}
+
+	return weight_cache;
 }
 
 array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {

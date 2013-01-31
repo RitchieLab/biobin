@@ -22,6 +22,8 @@
 
 #include "knowledge/Locus.h"
 #include "knowledge/liftover/Converter.h"
+#include "knowledge/Information.h"
+#include "knowledge/Region.h"
 
 #include "vcftools/vcf_file.h"
 
@@ -72,9 +74,9 @@ public:
 
 	// Printing functions
 	template <class Bin_cont>
-	void printBins(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
+	void printBins(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep=",") const;
 	template <class Bin_cont>
-	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
+	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep=",") const;
 	template <class Bin_cont>
 	void printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
 	template <class Locus_cont>
@@ -91,7 +93,8 @@ public:
 	static bool RareCaseControl;
 	static bool OverallMajorAllele;
 
-	static bool c_use_weight;
+	static bool c_use_calc_weight;
+	static bool _use_custom_weight;
 
 	static float c_min_control_frac;
 
@@ -112,10 +115,11 @@ private:
 	void loadIndividuals();
 	void parsePhenotypeFile(const std::string& filename);
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights=true) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
 	int getTotalContrib(const Knowledge::Locus& loc) const;
 
 	float calcWeight(const Knowledge::Locus& loc) const;
+	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
 
 	float getMAF(const std::vector<int>& allele_count, unsigned int nmcc) const;
 
@@ -140,7 +144,10 @@ private:
 };
 
 template <class Bin_cont>
-void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep) const{
+
+	_use_custom_weight = (info.c_weight_files.size() > 0);
+
 	std::string sep_repl = getEscapeString(sep);
 
 	// Print 1st line
@@ -226,7 +233,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 			l_itr = (*b_itr)->variantBegin();
 			bin_count = 0;
 			while (l_itr != (*b_itr)->variantEnd()) {
-				bin_count += getIndivContrib(**l_itr, (*m_itr).second, true);
+				bin_count += getIndivContrib(**l_itr, (*m_itr).second, true, &info, (*b_itr)->getRegion());
 				++l_itr;
 			}
 			os << sep << std::setprecision(4) << bin_count;
@@ -238,8 +245,10 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 }
 
 template <class Bin_cont>
-void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep) const{
 	std::string sep_repl = getEscapeString(sep);
+
+	_use_custom_weight = (info.c_weight_files.size() > 0);
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	typename Bin_cont::const_iterator b_end = bins.end();
@@ -353,7 +362,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 			l_end = (*b_itr)->variantEnd();
 			bin_count = 0;
 			while(l_itr != l_end){
-				bin_count += getIndivContrib(**l_itr, pos, true);
+				bin_count += getIndivContrib(**l_itr, pos, true, &info, (*b_itr)->getRegion());
 				++l_itr;
 			}
 			os << sep << std::setprecision(4) << bin_count;
@@ -368,6 +377,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 
 template <class Bin_cont>
 void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
+
 	std::string sep_repl = getEscapeString(sep);
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
