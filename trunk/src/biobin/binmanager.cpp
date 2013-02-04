@@ -158,26 +158,29 @@ void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
 void BinManager::printLocusBinCount(std::ostream& os, float pct) const{
 
     // A mapping of # of bins / locus -> # of loci
-	map<int, int> countMap;
+	map<unsigned int, unsigned int> countMap;
+
+	countMap[0] = 0;
 
 	unordered_map<Locus*, set<Bin*> >::const_iterator l_bin_itr = _locus_bins.begin();
 	while(l_bin_itr != _locus_bins.end()){
 		++countMap[(*(l_bin_itr++)).second.size()];
 	}
 
-	map<int, int>::const_iterator cm_itr = countMap.begin();
-	map<int, int>::const_iterator cm_last = countMap.end();
+	map<unsigned int, unsigned int>::const_iterator cm_itr = countMap.begin();
+	map<unsigned int, unsigned int>::const_iterator cm_last = countMap.end();
 
-	if(cm_itr != cm_last){
-		--cm_last;
-	}
+	// I can do this, because I know that there is at least 1 entry: 0
+	--cm_last;
 
 	os << "Number of Bins per locus" << std::endl;
 
-	int thresh = _locus_bins.size() * pct;
-	int currCount = 0;
-	int currMin = 1;
-	while(cm_itr != countMap.end()){
+	unsigned int thresh = (_locus_bins.size() - countMap[0]) * pct;
+	unsigned int currCount = 0;
+	unsigned int currMin = 1;
+
+	// skip over the first entry, which is 0
+	while(++cm_itr != countMap.end()){
 		if(currCount == 0){
 			currMin = (*cm_itr).first;
 		}
@@ -192,7 +195,6 @@ void BinManager::printLocusBinCount(std::ostream& os, float pct) const{
 
 			currCount = 0;
 		}
-		++cm_itr;
 	}
 }
 
@@ -238,6 +240,7 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 
 	//expand by role
 	b_itr = _bin_list.begin();
+
 	set<Bin*> new_bins;
 
 	if (ExpandByExons){
@@ -250,36 +253,42 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 	Information::snp_role::const_iterator role_itr = Information::snp_role::begin();
 	Information::snp_role::const_iterator role_end = Information::snp_role::end();
 	// once we hit intergenic bins, we can't break it down by role any more!
-	while(ExpandByExons && b_itr != _bin_list.end() && !(*b_itr)->isIntergenic()){
-		if((uint)(*b_itr)->getSize() >= BinTraverseThreshold){
+	while (ExpandByExons && b_itr != _bin_list.end()
+			&& !(*b_itr)->isIntergenic()) {
+
+		if ((uint) (*b_itr)->getSize() >= BinTraverseThreshold) {
 
 			role_bin_list.clear();
 
 			v_itr = (*b_itr)->variantBegin();
 			v_end = (*b_itr)->variantEnd();
-			while (v_itr != v_end){
+			while (v_itr != v_end) {
 				unsigned long role = 0;
-				if((*b_itr)->isGroup()){
+				if ((*b_itr)->isGroup()) {
 					Group* curr_group = (*b_itr)->getGroup();
-					Group::const_region_iterator r_itr = curr_group->regionBegin();
-					Group::const_region_iterator r_end = curr_group->regionEnd();
-					while(r_itr != r_end){
+					Group::const_region_iterator r_itr =
+							curr_group->regionBegin();
+					Group::const_region_iterator r_end =
+							curr_group->regionEnd();
+					while (r_itr != r_end) {
 						role |= info->getSNPRole(**v_itr, **r_itr);
 						++r_itr;
 					}
-				}else{
+				} else {
 					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
 				}
 
 				role_itr = Information::snp_role::begin();
-				while(role_itr != role_end){
-					if ((!FilterByRole || !KeepUnknown) && (role & *role_itr)){
+				while (role && role_itr != role_end) {
+					if ((!FilterByRole || !KeepUnknown) && (role & *role_itr)) {
 						Bin* new_bin = 0;
 						role_bin_itr = role_bin_list.find(*role_itr);
-						if(role_bin_itr == role_bin_list.end()){
-							new_bin = (role_bin_list[*role_itr] = new Bin(**b_itr));
-							new_bin->addExtraData("_" + static_cast<string>(*role_itr));
-						}else{
+						if (role_bin_itr == role_bin_list.end()) {
+							new_bin = (role_bin_list[*role_itr] = new Bin(
+									**b_itr));
+							new_bin->addExtraData("_"
+									+ static_cast<string> (*role_itr));
+						} else {
 							new_bin = (*role_bin_itr).second;
 						}
 
@@ -290,41 +299,40 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 				}
 
 				// If there was a role, remove it from the current bin
-				if (role){
+				if (role) {
 					_locus_bins[*v_itr].erase(*b_itr);
 					v_itr = (*b_itr)->erase(v_itr);
-				}else{
+				} else {
 					++v_itr;
 				}
-
 
 			}
 
 			// Again, if we filter, this will be empty and correct!
 			bool unk = false;
 			role_bin_itr = role_bin_list.begin();
-			while(role_bin_itr != role_bin_list.end()){
+			while (role_bin_itr != role_bin_list.end()) {
 				new_bins.insert((*role_bin_itr).second);
 				unk = true;
 				++role_bin_itr;
 			}
 
-			if(unk){
+			if (unk) {
 				(*b_itr)->addExtraData("_unk");
 			}
 
 			// If we're dropping the unknown, erase this bin
-			if(FilterByRole && !KeepUnknown){
+			if (FilterByRole && !KeepUnknown) {
 				eraseBin(b_itr);
+			} else{
+				++b_itr;
 			}
+		} else{// end if expanding
+			++b_itr;
 		}
-		++b_itr;
 	}
 
-	info->clearCache();
-
 	_bin_list.insert(new_bins.begin(), new_bins.end());
-
 
 	//OK, now we go through and clean up all of the bins that are too small!
 	b_itr = _bin_list.begin();

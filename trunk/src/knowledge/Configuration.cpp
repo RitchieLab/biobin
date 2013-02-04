@@ -185,7 +185,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	if (vm.count("role-file")){
 		Information::c_role_files = vm["role-file"].as<Container<string> >();
 	}
-	if (vm.count("role-file")){
+	if (vm.count("weight-file")){
 		Information::c_weight_files = vm["weight-file"].as<Container<string> >();
 	}
 

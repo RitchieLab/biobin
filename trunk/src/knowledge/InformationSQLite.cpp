@@ -154,7 +154,7 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg)
 	sqlite3_bind_int(_snp_role_stmt, chr_idx, loc.getChrom());
 	sqlite3_bind_int(_snp_role_stmt, pos_idx, loc.getPos());
 	sqlite3_bind_int(_snp_role_stmt, gid_idx, reg.getID());
-	while(sqlite3_step(_snp_role_stmt)==SQLITE_ROW){
+	while(SQLITE_ROW==sqlite3_step(_snp_role_stmt)){
 		int role = sqlite3_column_int(_snp_role_stmt, 0);
 		db_role = _role_map.find(role);
 		if (db_role != _role_map.end()){
@@ -234,10 +234,10 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 		"(value, chr, posMin, posMax) VALUES (?,?,?,?)";
 	string insert_sql_gene = "INSERT OR IGNORE INTO " + _role_region_tbl + " "
 		"(value, chr, posMin, posMax, biopolymer_id) VALUES (?,?,?,?,?)";
-	string insert_pos_null = "INSERT OR IGNORE INTO " + _role_snp_tbl + " "
+	string insert_pos_null = "INSERT INTO " + _role_snp_tbl + " "
 		"(value, chr, pos) VALUES (?,?,?)";
-	string insert_pos_gene = "INSERT OR IGNORE INTO " + _role_snp_tbl + " "
-		"(value, chr, pos) VALUES (?,?,?)";
+	string insert_pos_gene = "INSERT INTO " + _role_snp_tbl + " "
+		"(value, chr, pos, biopolymer_id) VALUES (?,?,?,?)";
 
 	sqlite3_stmt* insert_stmt_gene;
 	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
@@ -304,6 +304,10 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 								sqlite3_bind_int(insert_pos_null_stmt, 1, role_id);
 								sqlite3_bind_int(insert_pos_null_stmt, 2, chr);
 								sqlite3_bind_int(insert_pos_null_stmt, 3, posMin);
+								sqlite3_step(insert_pos_null_stmt);
+
+								while ((err_code = sqlite3_step(insert_pos_null_stmt)) == SQLITE_ROW) {}
+								sqlite3_reset(insert_pos_null_stmt);
 							} else {
 								// result size must be 5!
 								sqlite3_bind_int(insert_pos_gene_stmt, 1, role_id);
@@ -315,11 +319,11 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 								string alias = result[4];
 								RegionCollection::const_region_iterator itr = reg.aliasBegin(alias);
 								while (itr != reg.aliasEnd(alias)) {
-									sqlite3_bind_int(insert_stmt_gene, 4, (*itr)->getID());
-									while (sqlite3_step(insert_stmt_gene)
+									sqlite3_bind_int(insert_pos_gene_stmt, 4, (*itr)->getID());
+									while (sqlite3_step(insert_pos_gene_stmt)
 											== SQLITE_ROW) {
 									}
-									sqlite3_reset(insert_stmt_gene);
+									sqlite3_reset(insert_pos_gene_stmt);
 									++itr;
 								}
 
@@ -383,7 +387,7 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 	}
 
 	// I want the zone size to be the avg. region size in the temp tables
-	_tmp_role_zone = running_total / (n_vals);
+	_tmp_role_zone = n_vals == 0 ? 1 : (running_total / (n_vals));
 	int zs_idx = sqlite3_bind_parameter_index(_region_role_stmt, ":zs");
 	sqlite3_bind_int(_region_role_stmt, zs_idx, _tmp_role_zone);
 
@@ -402,7 +406,6 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 	// Populate the zone table
 	UpdateZones(_role_region_tbl, _role_zone_tbl, _tmp_role_zone);
-
 }
 
 void InformationSQLite::loadWeights(const RegionCollection& reg) {
@@ -424,7 +427,7 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 	string insert_pos_null = "INSERT OR IGNORE INTO " + _weight_snp_tbl + " "
 		"(value, chr, pos) VALUES (?,?,?)";
 	string insert_pos_gene = "INSERT OR IGNORE INTO " + _weight_snp_tbl + " "
-		"(value, chr, pos) VALUES (?,?,?)";
+		"(value, chr, pos, biopolymer_id) VALUES (?,?,?,?)";
 
 	sqlite3_stmt* insert_stmt_gene;
 	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
@@ -479,6 +482,8 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 								sqlite3_bind_double(insert_pos_null_stmt, 1, weight);
 								sqlite3_bind_int(insert_pos_null_stmt, 2, chr);
 								sqlite3_bind_int(insert_pos_null_stmt, 3, posMin);
+								while (sqlite3_step(insert_pos_null_stmt)== SQLITE_ROW) {}
+								sqlite3_reset(insert_pos_null_stmt);
 							} else {
 								// result size must be 5!
 								sqlite3_bind_double(insert_pos_gene_stmt, 1, weight);
@@ -712,7 +717,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	stringstream snp_role_sql_str;
 	snp_role_sql_str << "SELECT value FROM " << _role_snp_tbl
-			<< "WHERE chr=:chr AND pos=:pos AND "
+			<< " WHERE chr=:chr AND pos=:pos AND "
 			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
 
 	sqlite3_prepare_v2(_db, snp_role_sql_str.str().c_str(), -1, &_snp_role_stmt, NULL);
@@ -729,7 +734,7 @@ void InformationSQLite::prepRoleStmt(){
 
 	stringstream snp_weight_sql_str;
 	snp_weight_sql_str << "SELECT value FROM " << _weight_snp_tbl
-			<< "WHERE chr=:chr AND pos=:pos AND "
+			<< " WHERE chr=:chr AND pos=:pos AND "
 			<< "(biopolymer_id IS NULL OR biopolymer_id=:gid)";
 
 	sqlite3_prepare_v2(_db, snp_weight_sql_str.str().c_str(), -1, &_snp_weight_stmt, NULL);
@@ -852,13 +857,12 @@ int InformationSQLite::parseGroupTypeQuery(void* obj, int n_cols,
 
 int InformationSQLite::printQueryResult(void* obj, int n_cols, char** col_vals, char** col_names){
 
-	ostream & os = *static_cast<ostream *>(obj);
+	ostream & os = *(static_cast<ostream*>(obj));
 	os << col_vals[0];
 	for (int i = 1; i < n_cols; i++){
 		os << "\t" << col_vals[i];
 	}
-	os << "\n";
-
+	os << std::endl;
 	return 0;
 }
 
@@ -971,8 +975,11 @@ void InformationSQLite::prepRoleTables(){
 	sql_stmts.push_back("CREATE INDEX '" + _weight_snp_tbl + "__chr_pos' ON " + _weight_snp_tbl + " (chr,pos)");
 
 	vector<string>::const_iterator sql_itr = sql_stmts.begin();
+	int err_code = 0;
+	string curr_str;
 	while(sql_itr != sql_stmts.end()){
-		sqlite3_exec(_db, (*sql_itr).c_str(), NULL, NULL, NULL);
+		curr_str = *sql_itr;
+		err_code = sqlite3_exec(_db, (*sql_itr).c_str(), NULL, NULL, NULL);
 		++sql_itr;
 	}
 
