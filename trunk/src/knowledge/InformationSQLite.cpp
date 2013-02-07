@@ -405,12 +405,6 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 	// Populate the zone table
 	UpdateZones(_role_region_tbl, _role_zone_tbl, _tmp_role_zone);
 
-
-	std::cout<< "Zone size: " << _tmp_role_zone << std::endl;
-	std::cout << "regions" << std::endl;
-	sqlite3_exec(_db, ("SELECT * FROM " + _role_region_tbl).c_str(), printQueryResult, &std::cout, NULL);
-	std::cout << std::endl << "zones" << std::endl;
-	sqlite3_exec(_db, ("SELECT * FROM " + _role_zone_tbl).c_str(), printQueryResult, &std::cout, NULL);
 }
 
 void InformationSQLite::loadWeights(const RegionCollection& reg) {
@@ -580,12 +574,6 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 
 	// Populate the zone table
 	UpdateZones(_weight_region_tbl, _weight_zone_tbl, _tmp_weight_zone);
-
-	std::cout<< "Zone size: " << _tmp_weight_zone << std::endl;
-	std::cout << "regions" << std::endl;
-	sqlite3_exec(_db, ("SELECT * FROM " + _weight_region_tbl).c_str(), printQueryResult, &std::cout, NULL);
-	std::cout << std::endl << "zones" << std::endl;
-	sqlite3_exec(_db, ("SELECT * FROM " + _weight_zone_tbl).c_str(), printQueryResult, &std::cout, NULL);
 
 }
 
