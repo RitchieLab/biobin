@@ -192,11 +192,10 @@ float InformationSQLite::getSNPWeight(const Locus& loc, const Region* const reg)
 	sqlite3_bind_int(_snp_weight_stmt, chr_idx, loc.getChrom());
 	sqlite3_bind_int(_snp_weight_stmt, pos_idx, loc.getPos());
 	sqlite3_bind_int(_snp_weight_stmt, gid_idx, region_id);
-	while(sqlite3_step(_snp_weight_stmt)==SQLITE_ROW){
+	while(SQLITE_ROW==sqlite3_step(_snp_weight_stmt)){
 		retval *= sqlite3_column_double(_snp_weight_stmt, 0);
 	}
 	sqlite3_reset(_snp_weight_stmt);
-
 
 	return retval;
 
@@ -216,7 +215,6 @@ void InformationSQLite::printSources(ostream& os){
 	sqlite3_exec(_db, src_sql.c_str(), printQueryResult, &os, NULL);
 
 }
-
 
 void InformationSQLite::loadRoles(const RegionCollection& reg) {
 	// NOTE: We MUST have loaded the regions already!!
@@ -406,6 +404,13 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 	// Populate the zone table
 	UpdateZones(_role_region_tbl, _role_zone_tbl, _tmp_role_zone);
+
+
+	std::cout<< "Zone size: " << _tmp_role_zone << std::endl;
+	std::cout << "regions" << std::endl;
+	sqlite3_exec(_db, ("SELECT * FROM " + _role_region_tbl).c_str(), printQueryResult, &std::cout, NULL);
+	std::cout << std::endl << "zones" << std::endl;
+	sqlite3_exec(_db, ("SELECT * FROM " + _role_zone_tbl).c_str(), printQueryResult, &std::cout, NULL);
 }
 
 void InformationSQLite::loadWeights(const RegionCollection& reg) {
@@ -518,10 +523,10 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 							}
 
 							if (result.size() == 4) {
-								sqlite3_bind_double(insert_stmt_null, 1, weight);
-								sqlite3_bind_int(insert_stmt_null, 2, chr);
-								sqlite3_bind_int(insert_stmt_null, 3, posMin);
-								sqlite3_bind_int(insert_stmt_null, 4, posMax);
+								int err_code = sqlite3_bind_double(insert_stmt_null, 1, weight);
+								err_code = sqlite3_bind_int(insert_stmt_null, 2, chr);
+								err_code = sqlite3_bind_int(insert_stmt_null, 3, posMin);
+								err_code = sqlite3_bind_int(insert_stmt_null, 4, posMax);
 
 								while (sqlite3_step(insert_stmt_null)
 										== SQLITE_ROW) {
@@ -576,20 +581,17 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 	// Populate the zone table
 	UpdateZones(_weight_region_tbl, _weight_zone_tbl, _tmp_weight_zone);
 
+	std::cout<< "Zone size: " << _tmp_weight_zone << std::endl;
+	std::cout << "regions" << std::endl;
+	sqlite3_exec(_db, ("SELECT * FROM " + _weight_region_tbl).c_str(), printQueryResult, &std::cout, NULL);
+	std::cout << std::endl << "zones" << std::endl;
+	sqlite3_exec(_db, ("SELECT * FROM " + _weight_zone_tbl).c_str(), printQueryResult, &std::cout, NULL);
+
 }
 
 void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zone_name, int zone_size){
 	// See loki_updater.py for the algorithm here
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter
-
-	// Get the zone size
-	//int zone_size=_tmp_role_zone;
-	//getZoneSize();
-
-	// Reverse any regions that are backwards
-	string region_reverse_sql = "UPDATE " + tbl_name +
-			"SET posMin = posMax, posMax = posMin WHERE posMin > posMax";
-	sqlite3_exec(_db, region_reverse_sql.c_str(), NULL, NULL, NULL);
 
 	// Find the minimum and maximum zone sizes
 	int minPos, maxPos = 0;
@@ -600,7 +602,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	sqlite3_exec(_db, max_pos_sql.c_str(), &parseSingleIntQuery, &maxPos, NULL);
 
 	minPos = minPos / zone_size;
-	maxPos = maxPos / zone_size;
+	maxPos = maxPos / zone_size + 1;
 
 	// Insert all zones needed into a temporary table
 	string tmp_zone_tbl = "__zone_tmp";
@@ -629,11 +631,11 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 
 	// OK, now we're ready to do some insertin'!
 	stringstream zone_ins_str;
-	zone_ins_str << "INSERT OR IGNORE INTO " + tbl_zone_name + " (role_region_id,chr,zone) "
-			<< "SELECT rb.role_region_id, rb.chr, z.zone "
-			<< "FROM " << tbl_name << " AS rb JOIN " << tmp_zone_tbl << " AS z "
-			<< "ON z.zone >= rb.posMin / " << zone_size << " "
-			<< "AND z.zone <= rb.posMax / " << zone_size << " ";
+	zone_ins_str << "INSERT OR IGNORE INTO " + tbl_zone_name + " (value_region_id,chr,zone) "
+			<< "SELECT t.value_region_id, t.chr, z.zone "
+			<< "FROM " << tbl_name << " AS t JOIN " << tmp_zone_tbl << " AS z "
+			<< "ON z.zone >= t.posMin / " << zone_size << " "
+			<< "AND z.zone <= t.posMax / " << zone_size << " ";
 
 	string zone_ins_sql = zone_ins_str.str();
 	sqlite3_exec(_db, zone_ins_sql.c_str(), NULL, NULL, NULL);
@@ -860,7 +862,10 @@ int InformationSQLite::printQueryResult(void* obj, int n_cols, char** col_vals, 
 	ostream & os = *(static_cast<ostream*>(obj));
 	os << col_vals[0];
 	for (int i = 1; i < n_cols; i++){
-		os << "\t" << col_vals[i];
+		os << "\t";
+		if(col_vals[i]){
+			os << col_vals[i];
+		}
 	}
 	os << std::endl;
 	return 0;

@@ -194,6 +194,7 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 	int n_var = 0;
 	static float weight_cache = 1;
 	static const Locus* loc_cache = 0;
+	float custom_weight = 1;
 
 	if(it == _genotype_bitset.end()){
 		return 0;
@@ -216,16 +217,17 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 	// Cache the weights so we aren't wasting so much effort.
 	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
 	if(n_var != 0 && useWeights){
+		if(_use_custom_weight && info){
+			custom_weight = getCustomWeight(loc, *info, reg);
+		}
 		if(c_use_calc_weight && loc_cache != &loc){
 			loc_cache = &loc;
 			weight_cache = calcWeight(loc);
 		}
-		if(_use_custom_weight && info){
-			weight_cache *= getCustomWeight(loc, *info, reg);
-		}
+
 	}
 
-	return n_var * weight_cache;
+	return n_var * weight_cache * custom_weight;
 }
 
 int PopulationManager::getTotalContrib(const Locus& loc) const{

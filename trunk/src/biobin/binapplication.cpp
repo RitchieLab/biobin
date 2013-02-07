@@ -77,6 +77,8 @@ BinApplication::~BinApplication(){
 
 void BinApplication::InitBins() {
 	
+	_info->loadWeights(*regions);
+
 	binData.InitBins(*regions, dataset, _info);
 
 	std::cerr<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
