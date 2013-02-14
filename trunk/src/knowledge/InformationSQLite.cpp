@@ -296,7 +296,6 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 					}
 
 					if (chr != -1 && posMin && posMax) {
-
 						if (posMin == posMax) {
 							if(result.size() == 4){
 								sqlite3_bind_int(insert_pos_null_stmt, 1, role_id);
@@ -373,6 +372,8 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 							}
 						}
+					} else {
+						std:: cerr << "WARNING: Improperly formatted role file\n";
 					}
 
 				}

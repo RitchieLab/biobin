@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include <iostream>
+#include <limits>
 
 using std::fill;
 using std::vector;
@@ -44,6 +45,8 @@ vector<string> PopulationManager::c_phenotype_files;
 float PopulationManager::c_min_control_frac = 0.125;
 PopulationManager::DiseaseModel PopulationManager::c_model =
 		PopulationManager::ADDITIVE;
+PopulationManager::WeightModel PopulationManager::c_weight_type =
+		PopulationManager::MAX;
 
 bool PopulationManager::CompressedVCF = false;
 bool PopulationManager::KeepCommonLoci = true;
@@ -256,18 +259,72 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 	return n_var;
 }
 
-float PopulationManager::calcWeight(const Locus& loc) const{
-	float F = loc.majorAlleleFreq();
-	int N = n_controls;
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr = _locus_count.find(&loc);
-	if(l_itr != _locus_count.end()){
-		N = (*l_itr).second[0]/2;
-	}
-
+float PopulationManager::calcBrowningWeight(int N, int M) const{
 	// Madsen + Browning Weight
 	// A Groupwise Association Test for Rare Mutations Using a Weighted Sum Statistic
 	// PLOSGenetics, Feb 2009, Vol. 5, Issue 2, e10000384
-	float weight = 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
+
+	return (2*N+2)/sqrt(N*(M+1)*(2*N-M+1));
+
+	// If given the frequency as opposed to the number of mutations:
+	//return 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
+}
+
+float PopulationManager::calcWeight(const Locus& loc) const{
+	// *_a = Affected (cases), *_u = Unaffected (controls)
+	// N_* = Number (population), F_* = Frequency
+	int N_a, N_u, N;
+	int M_a, M_u, M;
+	float w_a = std::numeric_limits<float>::quiet_NaN();
+	float w_u = 1;
+
+	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr = _locus_count.find(&loc);
+	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
+
+	if(l_itr == _locus_count.end() || it == _genotype_bitset.end()){
+		return 1;
+	}
+
+	N_u = (*l_itr).second[0]/2;
+	N_a = (*l_itr).second[1]/2;
+	N = N_u + N_a;
+
+	M_u = ((*it).second.first & _control_bitset).count() +
+			((*it).second.second & _control_bitset).count();
+	M_a = ((*it).second.first & (~_control_bitset)).count() +
+			((*it).second.second & (~_control_bitset)).count();
+	M = M_u + M_a;
+
+	float weight = 1;
+	if(c_weight_type != OVERALL){
+		if(N_u){
+			w_u = calcBrowningWeight(N_u, M_u);
+		}
+		if(c_weight_type != CONTROL && N_a){
+			w_a = calcBrowningWeight(N_a, M_a);
+		}
+
+		switch(c_weight_type){
+		// NOTE: since w_a may be NaN, and all comparisons with NaN are by
+		// definition false, thenw_a MUST be returned ONLY when the expression
+		// evaluates to true, because that means that w_a CANNOT be NaN in that case
+		case MAX:
+			weight = (N_u > 0 && w_u < w_a) || (N_u == 0 && w_a == w_a) ? w_a : w_u;
+			break;
+		case MIN:
+			weight = (N_u > 0 && w_u > w_a) || (N_u == 0 && w_a == w_a) ? w_a : w_u;
+			break;
+		case CONTROL:
+			weight = w_u;
+			break;
+		default:
+			// WE SHOULD NOT BE HERE
+			weight = 1;
+		}
+	} else if(N){ // c_weight_type == OVERALL
+		weight = calcBrowningWeight(N, M);
+	}
+
 	return weight;
 }
 
@@ -365,6 +422,44 @@ std::istream& operator>>(std::istream& in, BioBin::PopulationManager::DiseaseMod
 }
 
 ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m){
+	o << (const char*) m;
+	return o;
+}
+
+std::istream& operator>>(std::istream& in, BioBin::PopulationManager::WeightModel& model_out)
+{
+    std::string token;
+    in >> token;
+    if(token.size() > 0){
+    	char s = token[0];
+    	if(s == 'm' || s == 'M'){
+    		if(token.size() > 1){
+    			char s1 = token[1];
+    			if(s1 == 'i' || s1 == 'I'){
+    				model_out = BioBin::PopulationManager::MIN;
+    			}else if (s1 == 'a' || s1 == 'A'){
+    				model_out = BioBin::PopulationManager::MAX;
+    			}else{
+    				throw validation_error(validation_error::invalid_option_value);
+    			}
+    		}else{
+    			throw validation_error(validation_error::invalid_option_value);
+    		}
+    	}else if(s == 'c' || s == 'C'){
+    		model_out = BioBin::PopulationManager::CONTROL;
+    	}else if(s == 'o' || s == 'O'){
+    		model_out = BioBin::PopulationManager::OVERALL;
+    	}else{
+    		throw validation_error(validation_error::invalid_option_value);
+    	}
+    }else{
+    	throw validation_error(validation_error::invalid_option_value);
+    }
+//    else throw boost::program_options::validation_error("Invalid unit");
+    return in;
+}
+
+ostream& operator<<(ostream& o, const BioBin::PopulationManager::WeightModel& m){
 	o << (const char*) m;
 	return o;
 }

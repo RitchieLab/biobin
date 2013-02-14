@@ -62,6 +62,34 @@ public:
 		DiseaseModel_ENUM _data;
 	};
 
+	// A list of the available weighting models.  These affect the calculation
+	// of the way the Madsen + Browning weight is calculated
+	enum Weight_ENUM { MAX, MIN, CONTROL, OVERALL };
+
+	class WeightModel{
+	public:
+		WeightModel() : _data(MAX){}
+		WeightModel(const Weight_ENUM& d):_data(d){}
+		operator const char*() const{
+			switch(_data){
+			case BioBin::PopulationManager::MAX:
+				return "max";
+			case BioBin::PopulationManager::MIN:
+				return "min";
+			case BioBin::PopulationManager::CONTROL:
+				return "control";
+			case BioBin::PopulationManager::OVERALL:
+				return "overall";
+			default:
+				return "unknown";
+			}
+		}
+		operator int() const{return _data;}
+
+	private:
+		Weight_ENUM _data;
+	};
+
 	explicit PopulationManager(const std::string& vcf_file);
 
 	template <class T_cont>
@@ -99,6 +127,7 @@ public:
 	static float c_min_control_frac;
 
 	static DiseaseModel c_model;
+	static WeightModel c_weight_type;
 
 	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
 
@@ -117,7 +146,7 @@ private:
 
 	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
 	int getTotalContrib(const Knowledge::Locus& loc) const;
-
+	float calcBrowningWeight(int N, int M) const;
 	float calcWeight(const Knowledge::Locus& loc) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
 
@@ -532,6 +561,12 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				++alleleCounts[!_control_bitset[j]][genotype.second];
 			}
 
+			if((genotype.first==-1)^(genotype.second==-1)){
+				std::cerr << "WARNING: Genotype partially missing at chromosome "
+						<< entry.get_CHROM() <<", position " << entry.get_POS()
+						<< std::endl;
+			}
+
 			nm[!_control_bitset[j]] += (genotype.first != -1);
 			nm[!_control_bitset[j]] += (genotype.second != -1);
 
@@ -617,6 +652,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 namespace std{
 istream& operator>>(istream& in, BioBin::PopulationManager::DiseaseModel& model_out);
 ostream& operator<<(ostream& o, const BioBin::PopulationManager::DiseaseModel& m);
+istream& operator>>(istream& in, BioBin::PopulationManager::WeightModel& model_out);
+ostream& operator<<(ostream& o, const BioBin::PopulationManager::WeightModel& m);
 }
 
 #endif /* POPULATIONMANAGER_H_ */
