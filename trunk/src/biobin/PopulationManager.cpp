@@ -106,6 +106,7 @@ void PopulationManager::loadIndividuals(){
 				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
 		_is_control = vector<bool>(size, true);
 		_control_bitset.set();
+		control = total;
 	}else if(1-(control / (float) total) < c_min_control_frac){
 		std::cerr << "WARNING: Number of cases is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
@@ -362,8 +363,8 @@ array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
 		++b_itr;
 	}
 
-	capacity[0] /= (bin.getVariantSize() * (1 + c_model != ADDITIVE));
-	capacity[1] /= (bin.getVariantSize() * (1 + c_model != ADDITIVE));
+	capacity[0] /= (1 + c_model != ADDITIVE);
+	capacity[1] /= (1 + c_model != ADDITIVE);
 
 	return capacity;
 }

@@ -59,7 +59,7 @@ BinApplication::~BinApplication(){
 	sqlite3_close(_db);
 
 	if (!errorExit){
-		std::cerr<<GetReportLog()<<"\n";
+		std::cout<<GetReportLog()<<"\n";
 	}
 
 	delete _info;
@@ -81,26 +81,26 @@ void BinApplication::InitBins() {
 
 	binData.InitBins(*regions, dataset, _info);
 
-	std::cerr<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+	std::cout<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
 				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"
 				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
 				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
 
-	std::cerr<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n\n";
+	std::cout<<"\n   * Rare variants are those whose minor alleles sum is below: "<<BinManager::mafCutoff<<"\n\n";
 
 	if (binData.numBins() > 0 && binData.numBins() < 500) {
-		std::cerr<<"\n\nBin Name\tVariant Count\n";
+		std::cout<<"\n\nBin Name\tVariant Count\n";
 		BinManager::const_iterator itr = binData.begin();
 		BinManager::const_iterator end = binData.end();
 		while(itr != end){
-			std::cerr << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+			std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
 			++itr;
 		}
 	}
 
-	std::cerr << std::endl;
-	binData.printLocusBinCount(std::cerr);
-	std::cerr << std::endl;
+	std::cout << std::endl;
+	binData.printLocusBinCount(std::cout);
+	std::cout << std::endl;
 
 	// Add output about number of bins
 }

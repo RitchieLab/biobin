@@ -24,7 +24,7 @@ GenerateFiles::GenerateFiles(BinApplication* app) :
 }
 
 void GenerateFiles::ExecuteTask() {
-	std::cerr << "Executing Dataset File Generation\n";
+	std::cout << "Executing Dataset File Generation\n";
 
 	if (WriteBinData) {
 		std::string filename = _app->AddReport("bins", "csv", "Bin Counts");
