@@ -30,7 +30,7 @@ public:
 
 	private:
 		static bool fromString(const std::string& s){
-			return (s[0] == 'Y' || s[0] == 'y');
+			return (s[0] == 'Y' || s[0] == 'y' || s[0] == 'T' || s[0] == 't');
 		}
 
 		bool _data;

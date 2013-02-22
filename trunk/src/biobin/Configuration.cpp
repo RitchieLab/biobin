@@ -104,7 +104,7 @@ void Configuration::initGeneric(){
 				"Flag indicating desire to determine the major allele by the overall population instead of control")
 		("weight-loci", value<Bool>()->default_value(false),
 						"Add weights to the Locus")
-		("weight-model",value<PopulationManager::WeightModel>(&PopulationManager::c_weight_type)->default_value(PopulationManager::MAX),
+		("weight-model",value<PopulationManager::WeightModel>(&PopulationManager::c_weight_type)->default_value(PopulationManager::MIN),
 						"Method of determining weight for Loci (maximum, minimum, control, or overall)")
 		("disease-model",value<PopulationManager::DiseaseModel>(&PopulationManager::c_model)->default_value(PopulationManager::ADDITIVE),
 				"Disease model (additive, dominant, or recessive)");

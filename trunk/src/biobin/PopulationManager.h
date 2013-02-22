@@ -73,9 +73,9 @@ public:
 		operator const char*() const{
 			switch(_data){
 			case BioBin::PopulationManager::MAX:
-				return "max";
+				return "maximum";
 			case BioBin::PopulationManager::MIN:
-				return "min";
+				return "minimum";
 			case BioBin::PopulationManager::CONTROL:
 				return "control";
 			case BioBin::PopulationManager::OVERALL:
