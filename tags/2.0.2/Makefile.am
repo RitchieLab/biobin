@@ -12,3 +12,4 @@ dist-hook:
 
 # This is here to prevent installation of LOKI during a distcheck
 DISTCHECK_CONFIGURE_FLAGS=--disable-loki
+
