@@ -7,7 +7,7 @@
 
 #include "PopulationManager.h"
 
-#include "binmanager.h"
+#include "binapplication.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -55,10 +55,14 @@ bool PopulationManager::OverallMajorAllele = true;
 bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::_use_custom_weight = false;
 
-PopulationManager::PopulationManager(const string& vcf_fn) : vcf(vcf_fn, CompressedVCF){}
+PopulationManager::PopulationManager(const string& vcf_fn) : vcf(NULL){
+	if(BinApplication::s_run_normal){
+		vcf = new VCF::vcf_file(vcf_fn, CompressedVCF);
+	}
+}
 
 void PopulationManager::loadIndividuals(){
-	const vector<string>& indivs = vcf.indv;
+	const vector<string>& indivs = vcf->indv;
 	//importer.getIndividualIDs();
 
 	int size = indivs.size();

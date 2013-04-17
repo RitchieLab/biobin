@@ -91,6 +91,7 @@ public:
 	};
 
 	explicit PopulationManager(const std::string& vcf_file);
+	~PopulationManager(){delete vcf;}
 
 	template <class T_cont>
 	void loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv);
@@ -169,7 +170,7 @@ private:
 
 	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> > _locus_count;
 
-	mutable VCF::vcf_file vcf;
+	VCF::vcf_file* vcf;
 };
 
 template <class Bin_cont>
@@ -521,7 +522,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 	loadIndividuals();
 	int size = _is_control.size();
 	std::set<std::string> unknownChromosomes;
-	unsigned int totalSiteCount	= vcf.N_entries;
+	unsigned int totalSiteCount	= vcf->N_entries;
 
 	// Predefine everything so that the loop below can be as tight as possible
 	std::vector<std::pair<int, int> > genotype_pairs;
@@ -534,10 +535,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 	boost::array<std::vector<int>, 2> alleleCounts;
 	std::pair<boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator, bool> gen_pair;
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator gen_itr;
-	VCF::vcf_entry entry(vcf.N_indv);
+	VCF::vcf_entry entry(vcf->N_indv);
 
 	for (unsigned int i=0; i<totalSiteCount; i++) {
-		vcf.get_vcf_entry(i, line);
+		vcf->get_vcf_entry(i, line);
 		entry.reset(line);
 		entry.parse_basic_entry(true);
 
@@ -551,7 +552,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		alleleCounts[1].resize(alleleCount);
 		fill(alleleCounts[1].begin(), alleleCounts[1].end(), 0);
 
-		for (unsigned int j=0; j<vcf.N_indv; j++) {
+		for (unsigned int j=0; j<vcf->N_indv; j++) {
 			entry.get_indv_GENOTYPE_ids(j, genotype);
 
 			if(genotype.first != -1){
@@ -576,7 +577,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		}
 
 		// To deal with the default parameter, we really just want to use
-		// vcf.include_indivs, but NOOOO C++ has to be a pain
+		// vcf->include_indivs, but NOOOO C++ has to be a pain
 
 		bool is_rare = (getMAF(alleleCounts[0], nm[0]) < BinManager::mafCutoff) ||
 				(RareCaseControl && nm[1] > 0 && getMAF(alleleCounts[1], nm[1]) < BinManager::mafCutoff);
@@ -636,7 +637,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 										boost::dynamic_bitset<>(size))));
 				gen_itr = gen_pair.first;
 
-				for (unsigned int j=0; j<vcf.N_indv; ++j) {
+				for (unsigned int j=0; j<vcf->N_indv; ++j) {
 
 					//MOVE THIS!!
 					(*gen_itr).second.first[j] = genotype_pairs[j].first != -1 && static_cast<unsigned short>(genotype_pairs[j].first) != loc->getMajorPos();

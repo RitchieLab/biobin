@@ -51,7 +51,7 @@ void Main::initTasks(){
 
 void Main::RunCommands() {
 
-	VCF::LOG.open("vcf-responses.log");
+	//VCF::LOG.open("vcf-responses.log");
 
 	//app.Init(c_knowledge_file, true);
 
