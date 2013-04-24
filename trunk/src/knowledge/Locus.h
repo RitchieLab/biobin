@@ -319,6 +319,8 @@ private:
 
 	// index into list of chromosomes
 	short _chrom;
+	//flag determining rarity
+	bool _is_rare;
 	// Position on the chromosome
 	unsigned int _pos;
 	// Identifier of this Locus (could be a RSID or anything)
@@ -328,9 +330,6 @@ private:
 	// IN this case, the final element will be the largest, so
 	// *(_alleles.rbegin()) is the major allele
 	std::vector<Allele> _alleles;
-
-	//flag determining rarity
-	bool _is_rare;
 
 	// Vector of a list of chromosomes
 	static const std::vector<std::string> _chrom_list;

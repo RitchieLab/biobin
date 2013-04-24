@@ -72,7 +72,7 @@ void Locus::operator delete(void* deadObj, size_t size) {
 }
 
 Locus::Locus(short chrom, uint pos, bool rare, const string& id):
-		_chrom(chrom), _pos(pos), _id(id), _is_rare(rare){
+		_chrom(chrom), _is_rare(rare), _pos(pos), _id(id){
 	if (id.size() == 0 || _id == "."){
 		createID();
 	}
@@ -81,7 +81,7 @@ Locus::Locus(short chrom, uint pos, bool rare, const string& id):
 }
 
 Locus::Locus(const string& chrom_str, uint pos, bool rare, const string& id):
-		_pos(pos), _id(id), _is_rare(rare){
+		_is_rare(rare), _pos(pos), _id(id){
 	_chrom = getChrom(chrom_str);
 	if (_id.size() == 0 || _id == "."){
 		createID();
