@@ -9,9 +9,10 @@
 #define KNOWLEDGE_ALLELE_H
 
 #include <string>
-#include <set>
 #include <ostream>
 #include <stdlib.h>
+#include <deque>
+#include <map>
 
 
 
@@ -35,9 +36,7 @@ public:
 	 * \param freq The frequency of this allele
 	 * \param pos The position of the allele in the given input file
 	 */
-	Allele(const std::string& data, float freq, unsigned int pos) :
-			_data(&(*(s_string_pool.insert(data).first))), _freq(freq), _pos(pos) {
-	}
+	Allele(const std::string& data, float freq, unsigned short pos);
 
 	/*!
 	 * Destructor for the allele.  Currently a noop.
@@ -61,7 +60,7 @@ public:
 	/*!
 	 * Equality is tested only on the string data
 	 */
-	bool operator==(const std::string& other) const{return *_data == other;}
+	bool operator==(const std::string& other) const{return s_string_pool[_data_idx] == other;}
 	bool operator!=(const std::string& other) const{return !(*this == other);}
 	//bool operator>(const Allele&) const;
 	//bool operator==(const Allele&) const;
@@ -76,7 +75,7 @@ public:
 	 * Returns the data of the allele.
 	 * \return The data associated with this specific allele.
 	 */
-	const std::string& getData() const { return *_data;}
+	const std::string& getData() const { return s_string_pool[_data_idx];}
 	// Returns the position of the allele (0 is reference typically)
 	unsigned short getPos() const {return _pos;}
 
@@ -91,11 +90,19 @@ public:
 
 private:
 
-	const std::string* _data;
 	float _freq;
 	unsigned short _pos;
+	unsigned short _data_idx;
 
-	static std::set<std::string> s_string_pool;
+	class str_cmp{
+	public:
+		bool operator()(const std::string* const &x, const std::string* const &y){
+			return (y != 0 && x != 0) ? (*x) < (*y) : x < y;
+		}
+	};
+
+	static std::deque<std::string> s_string_pool;
+	static std::map<const std::string*, unsigned short, str_cmp> s_string_map;
 };
 
 }
