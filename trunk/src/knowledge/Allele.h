@@ -62,8 +62,6 @@ public:
 	 */
 	bool operator==(const std::string& other) const{return s_string_pool[_data_idx] == other;}
 	bool operator!=(const std::string& other) const{return !(*this == other);}
-	//bool operator>(const Allele&) const;
-	//bool operator==(const Allele&) const;
 
 	/*!
 	 * Returns the frequency associated with this allele.
@@ -94,15 +92,8 @@ private:
 	unsigned short _pos;
 	unsigned short _data_idx;
 
-	class str_cmp{
-	public:
-		bool operator()(const std::string* const &x, const std::string* const &y){
-			return (y != 0 && x != 0) ? (*x) < (*y) : x < y;
-		}
-	};
-
 	static std::deque<std::string> s_string_pool;
-	static std::map<const std::string*, unsigned short, str_cmp> s_string_map;
+	static std::map<const std::string, unsigned short> s_string_map;
 };
 
 }
