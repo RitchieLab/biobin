@@ -29,7 +29,7 @@ public:
 		explicit Container<T>(const std::string& str){std::stringstream ss(str);ss >> (*this);}
 		Container<T>(){}
 		operator std::vector<T>() const {return _data;}
-		void push_back(T val){ _data.push_back(val);}
+		void push_back(const T& val){ _data.push_back(val);}
 	private:
 		std::vector<T> _data;
 	};
@@ -101,7 +101,8 @@ std::istream& operator>>(std::istream& in, Knowledge::Configuration::Container<T
 	boost::tokenizer<boost::escaped_list_separator<char> > tok(in_s);
 	for(boost::tokenizer<boost::escaped_list_separator<char> >::iterator beg=tok.begin(); beg!=tok.end();++beg){
 		try{
-			 d_out.push_back(boost::lexical_cast<T>(*beg));
+			T obj(boost::lexical_cast<T>(*beg));
+			d_out.push_back(obj);
 		}catch(boost::bad_lexical_cast& e){
 	    	throw boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value);
 		}
