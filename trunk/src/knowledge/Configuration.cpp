@@ -19,6 +19,8 @@
 #include "GroupCollection.h"
 #include "Information.h"
 
+#include <set>
+
 namespace po = boost::program_options;
 
 using std::stringstream;

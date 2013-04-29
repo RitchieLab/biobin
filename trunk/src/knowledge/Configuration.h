@@ -72,6 +72,27 @@ private:
 
 };
 
+/** Validates sequences. Allows multiple values per option occurrence
+   and multiple occurrences. */
+template<class T>
+void validate(boost::any& v,
+              const std::vector< std::string >& s,
+              Knowledge::Configuration::Container<T>*,
+              int)
+{
+    if (v.empty()) {
+        v = boost::any(Knowledge::Configuration::Container<T>());
+    }
+    Knowledge::Configuration::Container<T>* tv = boost::any_cast< Knowledge::Configuration::Container<T> >(&v);
+    assert(NULL != tv);
+    for (unsigned i = 0; i < s.size(); ++i)
+    {
+    	std::stringstream ss(s[i]);
+    	ss >> (*tv);
+    }
+}
+
+
 }
 
 namespace std{
