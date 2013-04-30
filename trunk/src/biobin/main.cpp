@@ -210,6 +210,17 @@ int main(int argc, char *argv[]) {
 			std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
 			exit(1);
 		}
+
+		boost::filesystem::path report_path=boost::filesystem::absolute(BioBin::BinApplication::reportPrefix).parent_path();
+
+		if( !boost::filesystem::is_directory(report_path) ){
+			std::cerr<<"WARNING: report-prefix path does not exist, attempting to create" << std::endl;
+			boost::system::error_code ec;
+			if(!boost::filesystem::create_directories(report_path, ec)){
+				std::cerr << "ERROR: could not create directory given in report-prefix" << std::endl;
+				exit(1);
+			}
+		}
 	}
 
 	BioBin::Main *app = new BioBin::Main();					///<The application object
