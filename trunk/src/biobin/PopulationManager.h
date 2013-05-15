@@ -579,10 +579,20 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		// To deal with the default parameter, we really just want to use
 		// vcf->include_indivs, but NOOOO C++ has to be a pain
 
-		bool is_rare = (getMAF(alleleCounts[0], nm[0]) < BinManager::mafCutoff) ||
-				(RareCaseControl && nm[1] > 0 && getMAF(alleleCounts[1], nm[1]) < BinManager::mafCutoff);
+		float controlMAF = getMAF(alleleCounts[0], nm[0]);
+		float caseMAF = getMAF(alleleCounts[1], nm[1]);
 
-		if(KeepCommonLoci || is_rare ){
+		bool is_rare = ( controlMAF < BinManager::mafCutoff) ||
+				(RareCaseControl && nm[1] > 0 && caseMAF < BinManager::mafCutoff);
+
+		// If the minimum bin size is > 0 and this locus has no minor alleles,
+		// just keep going!
+
+		// Note that if the MAF is < 0, we have no data for that population, so
+		// it could contribute nothing to the analysis
+		bool drop_loci = controlMAF <= 0 && caseMAF <= 0 && BinManager::MinBinSize > 0;
+
+		if(KeepCommonLoci || (is_rare && !drop_loci) ){
 			Knowledge::Locus* loc = new Knowledge::Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
 
 			if(conv){
