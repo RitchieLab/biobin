@@ -36,7 +36,7 @@ libknowledge_la_SOURCES=\
 	detail/any_iterator_wrapper.hpp
 	
 	
-AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS)
+AM_CPPFLAGS=-I$(top_srcdir)/src $(SQLITE_CFLAGS) $(BOOST_CPPFLAGS)
 AM_LDFLAGS=$(BOOST_LDFLAGS) 
 
 libknowledge_la_LIBADD=$(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(SQLITE_LIBS)
