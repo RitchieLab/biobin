@@ -116,7 +116,6 @@ std::ostream& operator<<(std::ostream& o, const Knowledge::Configuration::Contai
 template <class T>
 std::istream& operator>>(std::istream& in, Knowledge::Configuration::Container<T>& d_out){
 	std::string in_s;
-	std::string sep = ",";
 	in >> in_s;
 	// Now, split up the string
 	boost::tokenizer<boost::escaped_list_separator<char> > tok(in_s);
