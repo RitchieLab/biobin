@@ -1,0 +1,48 @@
+CHANGELOG
+
+2.0.1b3 (2013-05-02)
+- updated pfam loader to 2.1 to handle the new release's file format
+- fixed loki-build option --temp-directory to apply to SQLite temp files
+
+2.0.1b2 (2013-03-21)
+- fixed loki-build option --archive to skip re-archive if --cache-only is used
+- fixed a bug in the stack trace output in the event of an error during update
+
+2.0.1b1 (2013-03-14)
+- fixed a bug in the updater which would mask the original error if the error-
+  handler itself caused an additional error
+
+2.0.1a1 (2013-03-05)
+- added a source file metadata check to skip updates when the source loader
+  code and all data files are unchanged since the last update
+- new loki-build option --force-update to skip the metadata check
+- separated the optimization and finalization of knowledge database files; the
+  updater always optimizes at the end, but finalizes only by request
+- new loki-build option --no-optimize to skip the automatic optimization step
+- fixed a bug in the UCSC ECR loader that increased the minimum region size
+
+2.0.0 (2013-02-14)
+- all loader versions normalized for 2.0 release
+
+2.0.0rc2 (2013-01-25)
+- added special identifier type '=' to lookup by *_id numbers
+
+2.0.0rc1 (2013-01-23)
+- improved dbSNP update speed on network filesystems by up to 20x
+- reduced the temporary storage requirements for building LD profiles by ~6x
+  per population; without --keep-data, peak storage is ~10gb + 10gb per pop
+
+2.0.0b4 (2012-12-11)
+- errors during source updates are now caught and reported, allowing the update
+  process to continue with the other sources rather than crashing immediately
+- loki-build now skips finalization if any sources encounter errors
+
+2.0.0b3 (2012-11-29)
+- fixed a bug in the reporting of ambiguous gene and group identifiers
+
+2.0.0b2 (2012-10-29)
+- fixed a bug in LD profile lookups
+
+2.0.0b1 (2012-10-16)
+- first public release
+
