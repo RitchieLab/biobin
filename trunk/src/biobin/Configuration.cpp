@@ -80,7 +80,7 @@ void Configuration::initGeneric(){
 		("interregion-bin-length,i",value<unsigned int>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
 		("interregion-bin-step",value<unsigned int>(),
-				"Number of kilobases to step for intergenic bins (default = interregion-bin-length)")
+				"Sliding distance for intergenic bins, in kilobases (default = interregion-bin-length)")
 		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-loci",value<Bool>()->default_value(true),
 				"Flag indicating desire to write locus report")
