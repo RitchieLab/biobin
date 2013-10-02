@@ -56,6 +56,7 @@ public:
 	void printLocusBinCount(std::ostream& os, float pct=0.1) const;
 
 	static unsigned int IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
+	static unsigned int IntergenicBinStep;				///< The size of the step to take for intergenic sliding-window analysis
 	static unsigned int BinTraverseThreshold;			///< The number of SNPs to determine whether we continue traversing
 	static unsigned int MinBinSize;							///< How small do we tolerate bins to be before we ignore the bin altogether
 	static bool UsePathways;						///< Do we want to use pathways in the analysis?

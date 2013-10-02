@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include "PopulationManager.h"
+#include "binmanager.h"
 
 using std::stringstream;
 using std::set;
@@ -33,7 +34,10 @@ Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
 		_is_group(false), _is_intergenic(true),	_chrom(chrom), _cached(false),
 		_pop_mgr(pop_mgr) {
 	stringstream ss;
-	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << "-" << bin;
+	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << ":"
+			<< bin*BinManager::IntergenicBinStep << "K-"
+			<< bin*BinManager::IntergenicBinStep + bin*BinManager::IntergenicBinWidth
+			<< "K";
 	_name = ss.str();
 	_member.bin_no = bin;
 }

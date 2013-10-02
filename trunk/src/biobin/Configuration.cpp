@@ -77,8 +77,10 @@ void Configuration::initGeneric(){
 				"Flag indicating not to include genes in the analysis")
 		("bin-interregion",value<Bool>()->default_value(true),
 				"Flag indicating not to include intergenic bins in the analysis")
-		("interregion-bin-length,i",value<uint>(&BinManager::IntergenicBinWidth)->default_value(50),
+		("interregion-bin-length,i",value<unsigned int>(&BinManager::IntergenicBinWidth)->default_value(50),
 				"Number of kilobases intergenic bins can hold")
+		("interregion-bin-step",value<unsigned int>(),
+				"Number of kilobases to step for intergenic bins (default = interregion-bin-length)")
 		("report-prefix",value<string>(), "A prefix to give to all of the reports")
 		("report-loci",value<Bool>()->default_value(true),
 				"Flag indicating desire to write locus report")
@@ -250,6 +252,11 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
 	BinManager::ExpandByGenes = vm["bin-regions"].as<Bool>();
 	BinManager::IncludeIntergenic = vm["bin-interregion"].as<Bool>();
+
+	BinManager::IntergenicBinStep = vm.count("interregion-bin-step") ?
+				vm["interregion-bin-step"].as<unsigned int>() :
+				BinManager::IntergenicBinWidth;
+
 	if(BinApplication::s_run_normal && !BioBin::BinManager::UsePathways && !BioBin::BinManager::ExpandByGenes){
 		if(!BioBin::BinManager::IncludeIntergenic){
 			std::cerr << "ERROR: You must bin by either pathways, regions, or interregion.\n";

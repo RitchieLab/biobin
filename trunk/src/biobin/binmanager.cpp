@@ -32,6 +32,7 @@ using std::make_pair;
 namespace BioBin {
 
 unsigned int BinManager::IntergenicBinWidth = 50;
+unsigned int BinManager::IntergenicBinStep = BinManager::IntergenicBinWidth;
 unsigned int BinManager::BinTraverseThreshold = 50;
 unsigned int BinManager::MinBinSize = 1;
 bool BinManager::ExpandByGenes = true;
@@ -81,20 +82,32 @@ void BinManager::InitBins(
 			Bin* curr_bin;
 			if ((r_itr == r_end || (!UsePathways && !ExpandByGenes)) && IncludeIntergenic){
 				//Add to intergenic
-				pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinWidth*1000));
-				map<pair<short, int>, Bin*>::const_iterator i_bin =
-						_intergenic_bins.find(key);
 
-				if (i_bin == _intergenic_bins.end()){
-					// OK, this bin is nonexistent
-					curr_bin = new Bin(_pop_mgr, key.first, key.second);
-					_intergenic_bins.insert(make_pair(key, curr_bin));
-					_bin_list.insert(curr_bin);
-				}else{
-					curr_bin = (*i_bin).second;
+				// The algorithm is as follows:
+				// 1) find the bin # that we would find if we were just stepping
+				//    by the StepSize (non-overlapping)
+				// 2) if the position is within the bin (bin# + witdh) < position),
+				//    then add the position to the intergenic bin in question
+				// 3) decrement the bin # and go to step (2)
+				int bin_no = l.getPos() / (IntergenicBinStep*1000);
+				while((bin_no*IntergenicBinStep + IntergenicBinWidth)*1000 >= l.getPos()){
+					pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinStep*1000));
+					map<pair<short, int>, Bin*>::const_iterator i_bin =
+							_intergenic_bins.find(key);
+
+					if (i_bin == _intergenic_bins.end()){
+						// OK, this bin is nonexistent
+						curr_bin = new Bin(_pop_mgr, key.first, key.second);
+						_intergenic_bins.insert(make_pair(key, curr_bin));
+						_bin_list.insert(curr_bin);
+					}else{
+						curr_bin = (*i_bin).second;
+					}
+					curr_bin->addLocus(&l);
+					_locus_bins[&l].insert(curr_bin);
+
+					--bin_no;
 				}
-				curr_bin->addLocus(&l);
-				_locus_bins[&l].insert(curr_bin);
 			}
 
 			while (r_itr != r_end){
