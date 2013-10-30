@@ -53,6 +53,8 @@ void Configuration::initGeneric(){
 		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05, "0.05"),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
+		("maf-threshold", value<float>(&BinManager::mafThreshold)->default_value(0, "0"),
+				"The minimum minor allele frequency to consider eligible for bin inclusion")
 		("keep-common-loci,k",value<Bool>()->default_value(true),
 				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
 		("add-group", value<vector<string> >()->composing(),

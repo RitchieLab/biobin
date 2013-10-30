@@ -42,6 +42,7 @@ bool BinManager::ExpandByExons = false;
 bool BinManager::FilterByRole = false;
 bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
+float BinManager::mafThreshold = 0;
 
 BinManager::BinManager(const PopulationManager& pop_mgr) : _total_variants(0),
 		_pop_mgr(pop_mgr){}
