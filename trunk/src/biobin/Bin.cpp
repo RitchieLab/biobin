@@ -36,7 +36,7 @@ Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
 	stringstream ss;
 	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << ":"
 			<< bin*BinManager::IntergenicBinStep << "K-"
-			<< bin*BinManager::IntergenicBinStep + bin*BinManager::IntergenicBinWidth
+			<< bin*BinManager::IntergenicBinStep + BinManager::IntergenicBinWidth
 			<< "K";
 	_name = ss.str();
 	_member.bin_no = bin;

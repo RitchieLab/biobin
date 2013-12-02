@@ -111,7 +111,7 @@ void PopulationManager::loadIndividuals(){
 		_is_control = vector<bool>(size, true);
 		_control_bitset.set();
 		control = total;
-	}else if(1-(control / (float) total) < c_min_control_frac){
+	}else if(1-(control / (float) total) < c_min_control_frac && (control / total != 1)){
 		std::cerr << "WARNING: Number of cases is less than " <<
 				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
 				" for cases may be unreliable\n";

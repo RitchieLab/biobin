@@ -92,7 +92,7 @@ void BinManager::InitBins(
 				// 3) decrement the bin # and go to step (2)
 				int bin_no = l.getPos() / (IntergenicBinStep*1000);
 				while((bin_no*IntergenicBinStep + IntergenicBinWidth)*1000 >= l.getPos()){
-					pair<short, int> key = make_pair(l.getChrom(), l.getPos() / (IntergenicBinStep*1000));
+					pair<short, int> key = make_pair(l.getChrom(), bin_no);
 					map<pair<short, int>, Bin*>::const_iterator i_bin =
 							_intergenic_bins.find(key);
 

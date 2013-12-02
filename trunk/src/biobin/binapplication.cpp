@@ -86,7 +86,7 @@ void BinApplication::InitBins() {
 				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
 				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
 
-	std::cout<<"\n   * Rare variants are those whose minor alleles sum is below: "
+	std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
 			 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
 
 	if (binData.numBins() > 0 && binData.numBins() < 500) {
