@@ -223,7 +223,7 @@ istream& operator>>(istream& in,
 	return in;
 }
 ostream& operator<<(ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m){
-	o << (const char*) m << endl;
+	o << (const char*) m ;
 	return o;
 
 }

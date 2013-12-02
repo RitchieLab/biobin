@@ -108,7 +108,7 @@ std::ostream& operator<<(std::ostream& o, const Knowledge::Configuration::Contai
 		}
 		o << data[i];
 	}
-	o << "\n";
+	//o << "\n";
 
 	return o;
 }
