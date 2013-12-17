@@ -10,10 +10,6 @@
 
 #include "binapplication.h"
 
-using std::set;
-using std::vector;
-using std::string;
-
 namespace BioBin {
 
 namespace Task{
@@ -65,14 +61,14 @@ public:
 	void initTasks();
 
 	//! The name of the VCF file containing info on variants
-	static string c_vcf_file;
+	static std::string c_vcf_file;
 	//! The name of the SQLite LOKI database
-	static string c_knowledge_file;
+	static std::string c_knowledge_file;
 	//! The build of the genome that the VCF file is based on
-	static string c_genome_build;
+	static std::string c_genome_build;
 
 	//! A vector of custom groups to use
-	static vector<string> c_custom_groups;
+	static std::vector<std::string> c_custom_groups;
 
 
 private:
@@ -83,7 +79,7 @@ private:
 	
 	BinApplication app;					///< The application that does all of the work
 
-	multimap<int,Task::Task*> _task_list;
+	std::multimap<int,Task::Task*> _task_list;
 
 };
 

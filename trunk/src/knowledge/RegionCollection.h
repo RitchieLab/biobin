@@ -273,6 +273,9 @@ public:
 	//! A vector of strngs containing custom regions
 	static std::vector<std::string> c_region_files;
 
+	//! A vector of regions to filter on
+	static std::vector<std::string> c_region_filter;
+
 protected:
 	/*!
 	 * Inserts the given region into the id and alias maps

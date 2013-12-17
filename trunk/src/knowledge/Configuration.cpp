@@ -50,7 +50,11 @@ void Configuration::initGeneric(){
 			("include-group-names", value<Container<string> >()->composing(),
 					"A list of group names to include")
 			("include-group-file", value<Container<string> >()->composing(),
-					"A file containg a group definition")
+					"A file containing group names to include")
+			("include-region-names", value<Container<string> >()->composing(),
+					"A list of region (gene) names to include")
+			("include-region-file", value<Container<string> >()->composing(),
+					"A file containing region (gene) names to include")
 			("population,P", value<string>(&RegionCollection::pop_str)->default_value(""),
 					"The population to base the gene boundaries on")
 			("region-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),
@@ -174,6 +178,33 @@ void Configuration::parseOptions(const po::variables_map& vm){
 					getline(data_file, line);
 					split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 					GroupCollection::c_group_names.insert(GroupCollection::c_group_names.end(), result.begin(), result.end());
+				}
+				data_file.close();
+			}
+			++f_itr;
+		}
+	}
+
+	if (vm.count("include-region-names")){
+		RegionCollection::c_region_filter = vm["include-region-names"].as<Container<string> >();
+	}
+
+	if (vm.count("include-region-file")){
+		vector<string> files = vm["include-region-file"].as<Container<string> >();
+		// Iterate over each file, adding it to the group names
+		vector<string>::const_iterator f_itr = files.begin();
+		vector<string>::const_iterator f_end = files.end();
+		while(f_itr != f_end){
+			ifstream data_file((*f_itr).c_str());
+			if (!data_file.is_open()){
+				std::cerr<<"WARNING: cannot find " << (*f_itr) <<", ignoring.";
+			} else {
+				string line;
+				vector<string> result;
+				while(data_file.good()){
+					getline(data_file, line);
+					split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
+					RegionCollection::c_region_filter.insert(RegionCollection::c_region_filter.end(), result.begin(), result.end());
 				}
 				data_file.close();
 			}

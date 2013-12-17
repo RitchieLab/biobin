@@ -324,7 +324,7 @@ namespace IteratorTypeErasure
       //
       // If the next line does not compile, you are trying to decrement
       // an iterator whose category does not allow decrementing.
-      return m_pointer_to_impl->decrement();
+      m_pointer_to_impl->decrement();
     }
 
     void advance(Difference n)

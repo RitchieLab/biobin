@@ -257,18 +257,21 @@ void RegionCollectionSQLite::updateZones(){
 uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		const vector<string>& alias_list){
 
+	vector<string> aliases = alias_list;
+	aliases.insert(aliases.end(), c_region_filter.begin(), c_region_filter.end());
+
 	loadFiles();
 
 	// First things first, get a list of all of the ids associated with aliases
 	unordered_set<uint> id_list(ids);
-	if (alias_list.size() > 0){
+	if (aliases.size() > 0){
 		stringstream alias_stream;
-		vector<string>::const_iterator a_itr = alias_list.begin();
+		vector<string>::const_iterator a_itr = aliases.begin();
 
 		alias_stream << "SELECT biopolymer_id FROM biopolymer_name WHERE biopolymer_name IN ('"
 				<< *a_itr << "'";
 
-		while(++a_itr != alias_list.end()){
+		while(++a_itr != aliases.end()){
 			alias_stream << ",'" << *a_itr << "'";
 		}
 

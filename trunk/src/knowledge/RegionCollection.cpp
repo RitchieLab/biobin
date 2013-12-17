@@ -30,6 +30,7 @@ string RegionCollection::pop_str = "NO-LD";
 int RegionCollection::gene_expansion = 0;
 
 vector<string> RegionCollection::c_region_files;
+vector<string> RegionCollection::c_region_filter;
 
 RegionCollection::~RegionCollection(){
 	// Go through the map of id->Region* and delete all of the regions
