@@ -5,6 +5,7 @@ Features:
 - Added ability to accept locus weights by region
 - Added sliding-window intergenic bins
 - Added a minimum MAF threshold to consider for binning.
+- Added ability to filter genes/regions in consideration for binning.
 
 == 2.0.3 ==
 
