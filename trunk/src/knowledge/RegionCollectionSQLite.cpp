@@ -268,7 +268,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		stringstream alias_stream;
 		vector<string>::const_iterator a_itr = aliases.begin();
 
-		alias_stream << "SELECT biopolymer_id FROM biopolymer_name WHERE biopolymer_name IN ('"
+		alias_stream << "SELECT biopolymer_id FROM biopolymer_name WHERE name IN ('"
 				<< *a_itr << "'";
 
 		while(++a_itr != aliases.end()){
