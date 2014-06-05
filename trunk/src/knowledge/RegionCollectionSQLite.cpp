@@ -15,8 +15,9 @@
 
 #include <boost/algorithm/string.hpp>
 
-
+#include "liftover/ConverterSQLite.h"
 #include "Locus.h"
+#include "biobin/main.h"
 
 using std::string;
 using std::vector;
@@ -119,6 +120,9 @@ void RegionCollectionSQLite::loadFiles(){
 
 void RegionCollectionSQLite::loadFile(const string& fn){
 
+	Knowledge::Liftover::ConverterSQLite cnv(BioBin::Main::c_genome_build, db);
+	int n_chains = cnv.Load();
+
 	string insert_bound_sql = "INSERT OR IGNORE INTO " + _s_tmp_bound_tbl + " "
 			"(region_id, chr, posMin, posMax) VALUES (?,?,?,?)";
 
@@ -154,6 +158,14 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 				short chr = Locus::getChrom(result[0]);
 				int posMin = atoi(result[2].c_str());
 				int posMax = atoi(result[3].c_str());
+
+				// TODO: convert chr posMin and posMax here
+				if(n_chains > 0){
+					pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+					chr = newReg.first;
+					posMin = newReg.second.first;
+					posMax = newReg.second.second;
+				}
 
 				if(chr != -1 && posMin && posMax){
 					int region_id = -1;

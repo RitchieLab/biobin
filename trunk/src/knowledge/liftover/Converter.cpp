@@ -24,7 +24,7 @@ namespace Liftover {
 const float Converter::MIN_MAPPING_FRACTION = 0.95;
 
 const pair <short, pair<int,int> > Converter::FAILED_REGION =
-		make_pair(-1,make_pair(-1,-1));
+		make_pair(-1,make_pair(0,0));
 
 Converter::Converter(const string& orig) :
 		_origBuild(orig){}

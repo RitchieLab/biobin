@@ -9,6 +9,9 @@
 #include "Locus.h"
 #include "Region.h"
 #include "RegionCollection.h"
+#include "liftover/ConverterSQLite.h"
+
+#include "biobin/main.h"
 
 #include <sstream>
 #include <stdlib.h>
@@ -219,6 +222,9 @@ void InformationSQLite::printSources(ostream& os){
 void InformationSQLite::loadRoles(const RegionCollection& reg) {
 	// NOTE: We MUST have loaded the regions already!!
 
+	Liftover::ConverterSQLite cnv(BioBin::Main::c_genome_build,_db);
+	int n_chain = cnv.Load();
+
 	// A mapping of roled to their ID
 	map<string, int> role_id_map;
 	map<string, int>::const_iterator role_itr;
@@ -283,6 +289,14 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 					short chr = Locus::getChrom(result[0]);
 					int posMin = atoi(result[2].c_str());
 					int posMax = atoi(result[3].c_str());
+
+					// TODO: liftover here
+					if(n_chain){
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						chr = newReg.first;
+						posMin = newReg.second.first;
+						posMax = newReg.second.second;
+					}
 
 					int role_id;
 					role_itr = role_id_map.find(result[1]);
@@ -409,6 +423,10 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 }
 
 void InformationSQLite::loadWeights(const RegionCollection& reg) {
+
+	Liftover::ConverterSQLite cnv(BioBin::Main::c_genome_build,_db);
+	int n_chain = cnv.Load();
+
 	// NOTE: We MUST have loaded the regions already!!
 
 	// A mapping of roled to their ID
@@ -472,6 +490,15 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 					short chr = Locus::getChrom(result[0]);
 					int posMin = atoi(result[2].c_str());
 					int posMax = atoi(result[3].c_str());
+
+					// TODO: liftover here
+					if(n_chain){
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						chr = newReg.first;
+						posMin = newReg.second.first;
+						posMax = newReg.second.second;
+					}
+
 					char* str_end;
 					double weight = strtod(result[1].c_str(), &str_end);
 
