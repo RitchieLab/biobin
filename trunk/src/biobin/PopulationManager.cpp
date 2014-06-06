@@ -22,7 +22,7 @@ using std::vector;
 using std::string;
 using std::map;
 using std::ostream;
-using boost::array;
+//using boost::array;
 using boost::unordered_map;
 using boost::dynamic_bitset;
 
@@ -176,7 +176,7 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 float PopulationManager::getCaseAF(const Locus& loc) const{
 	float ret_val = -1;
 
-	unordered_map<const Locus*, array<unsigned short, 2> >::const_iterator count_itr = _locus_count.find(&loc);
+	unordered_map<const Locus*, boost::array<unsigned short, 2> >::const_iterator count_itr = _locus_count.find(&loc);
 	if (count_itr != _locus_count.end() && (*count_itr).second[1] != 0){
 		unordered_map<const Locus*, bitset_pair>::const_iterator bitset_itr = _genotype_bitset.find(&loc);
 		if(bitset_itr != _genotype_bitset.end()){
@@ -283,7 +283,7 @@ float PopulationManager::calcWeight(const Locus& loc) const{
 	float w_a = std::numeric_limits<float>::quiet_NaN();
 	float w_u = 1;
 
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr = _locus_count.find(&loc);
+	unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator l_itr = _locus_count.find(&loc);
 	unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator it = _genotype_bitset.find(&loc);
 
 	if(l_itr == _locus_count.end() || it == _genotype_bitset.end()){
@@ -347,16 +347,16 @@ float PopulationManager::getCustomWeight(const Locus& loc, const Information& in
 	return weight_cache;
 }
 
-array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
+boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
 
 	Bin::const_locus_iterator b_itr = bin.variantBegin();
 	Bin::const_locus_iterator b_end = bin.variantEnd();
-	array<unsigned int, 2> capacity;
+	boost::array<unsigned int, 2> capacity;
 	capacity[0] = 0;
 	capacity[1] = 0;
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_end =
+	unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator l_end =
 			_locus_count.end();
-	unordered_map<const Knowledge::Locus*, array<unsigned short, 2> >::const_iterator l_itr;
+	unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator l_itr;
 	while (b_itr != b_end) {
 
 		l_itr = _locus_count.find(*b_itr);

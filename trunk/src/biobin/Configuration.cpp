@@ -165,9 +165,9 @@ void Configuration::printConfig(std::ostream& os){
 	os << "# Biobin configuration options\n";
 	os << "############################\n\n";
 
-	vector<shared_ptr<po::option_description> >::const_iterator itr =
+	vector<boost::shared_ptr<po::option_description> >::const_iterator itr =
 			conf_options.options().begin();
-	vector<shared_ptr<po::option_description> >::const_iterator end =
+	vector<boost::shared_ptr<po::option_description> >::const_iterator end =
 				conf_options.options().end();
 
 	boost::any dummy;

@@ -8,6 +8,7 @@
 
 #include "vcf_file.h"
 
+
 /**
  * Ritchie labs - I've moved these into a vcf namespace to clean up global - E. Torstenson
  */
@@ -30,7 +31,7 @@ void vcf_file::return_site_union(vcf_file &file2, map<pair<string, int>, pair<in
 			CHROM = e.get_CHROM();
 			POS = e.get_POS();
 
-			CHROMPOS_to_filepos_pair[make_pair<string,int>(CHROM, POS)] = make_pair<int,int>(s, -1);
+			CHROMPOS_to_filepos_pair[make_pair(CHROM, POS)] = make_pair(s, -1);
 		}
 	}
 	for (s=0; s<file2.N_entries; s++)
@@ -44,13 +45,13 @@ void vcf_file::return_site_union(vcf_file &file2, map<pair<string, int>, pair<in
 			CHROM = e.get_CHROM();
 			POS = e.get_POS();
 
-			if (CHROMPOS_to_filepos_pair.find(make_pair<string,int>(CHROM, POS)) != CHROMPOS_to_filepos_pair.end())
+			if (CHROMPOS_to_filepos_pair.find(make_pair(CHROM, POS)) != CHROMPOS_to_filepos_pair.end())
 			{
-				CHROMPOS_to_filepos_pair[make_pair<string,int>(CHROM, POS)].second = s;
+				CHROMPOS_to_filepos_pair[make_pair(CHROM, POS)].second = s;
 			}
 			else
 			{
-				CHROMPOS_to_filepos_pair[make_pair<string,int>(CHROM, POS)] = make_pair<int,int>(-1, s);
+				CHROMPOS_to_filepos_pair[make_pair(CHROM, POS)] = make_pair(-1, s);
 			}
 		}
 	}
@@ -61,7 +62,7 @@ void vcf_file::return_indv_union(vcf_file &file2, map<string, pair< int, int> > 
 {
 	for (unsigned int ui=0; ui<N_indv; ui++)
 		if (include_indv[ui] == true)
-			combined_individuals[indv[ui]] = make_pair<int,int>(ui, -1);
+			combined_individuals[indv[ui]] = make_pair(ui, -1);
 
 	for (unsigned int ui=0; ui<file2.N_indv; ui++)
 		if (file2.include_indv[ui] == true)
@@ -69,7 +70,7 @@ void vcf_file::return_indv_union(vcf_file &file2, map<string, pair< int, int> > 
 			if (combined_individuals.find(file2.indv[ui]) != combined_individuals.end())
 				combined_individuals[file2.indv[ui]].second = ui;
 			else
-				combined_individuals[file2.indv[ui]] = make_pair<int,int>(-1, ui);
+				combined_individuals[file2.indv[ui]] = make_pair(-1, ui);
 		}
 }
 
@@ -785,9 +786,9 @@ void vcf_file::output_switch_error(const string &output_file_prefix, vcf_file &d
 						if ((phase1 == '|') && (phase2 == '|'))
 						{	// Calculate Phasing error (switch error)
 							N_phased_het_sites[indv_count]++;
-							file1_hap1 = make_pair<string,string>(prev_geno_file1[indv_count].first, genotype1.first);
-							file1_hap2 = make_pair<string,string>(prev_geno_file1[indv_count].second, genotype1.second);
-							file2_hap1 = make_pair<string,string>(prev_geno_file2[indv_count].first, genotype2.first);
+							file1_hap1 = make_pair(prev_geno_file1[indv_count].first, genotype1.first);
+							file1_hap2 = make_pair(prev_geno_file1[indv_count].second, genotype1.second);
+							file2_hap1 = make_pair(prev_geno_file2[indv_count].first, genotype2.first);
 
 							if ((file2_hap1 != file1_hap1) && (file2_hap1 != file1_hap2))
 							{	// Must be a switch error
