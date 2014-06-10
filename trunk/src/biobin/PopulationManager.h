@@ -582,8 +582,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 		float controlMAF = getMAF(alleleCounts[0], nm[0]);
 		float caseMAF = getMAF(alleleCounts[1], nm[1]);
 
-		bool is_rare = ( controlMAF < BinManager::mafCutoff && controlMAF > BinManager::mafThreshold) ||
-				(RareCaseControl && nm[1] > 0 && caseMAF < BinManager::mafCutoff && caseMAF > BinManager::mafThreshold);
+		bool is_rare = ( controlMAF <= BinManager::mafCutoff && controlMAF >= BinManager::mafThreshold) ||
+				(RareCaseControl && nm[1] >= 0 && caseMAF <= BinManager::mafCutoff && caseMAF >= BinManager::mafThreshold);
 
 		// If the minimum bin size is > 0 and this locus has no minor alleles,
 		// just keep going!

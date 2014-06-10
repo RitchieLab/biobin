@@ -98,7 +98,7 @@ void Configuration::initGeneric(){
 				"Transpose the Bin report (bins on rows)")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
 				"Genomic build of input data")
-		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control),
+		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control)->default_value(0, "0"),
 				"Phenotype control value")
 		("min-control-frac", value<float>(&PopulationManager::c_min_control_frac)->default_value(0.125,"0.125"),
 				"Minimum fraction of population needed for control cases")
