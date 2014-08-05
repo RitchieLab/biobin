@@ -7,6 +7,9 @@ Features:
 - Added a minimum MAF threshold to consider for binning.
 - Added ability to filter genes/regions in consideration for binning.
 
+Bug Fixes:
+- Corrected bug in LOKI that produced incorrect annotations caused by upgrade to build 38
+
 == 2.0.3 ==
 
 - Fixed bug for using correct include paths for BOOST libraries
