@@ -1,0 +1,29 @@
+== 2.1.0 ==
+
+Features:
+- Added weighting of individual loci in the collapsing methods
+- Added ability to accept locus weights by region
+- Added sliding-window intergenic bins
+- Added a minimum MAF threshold to consider for binning.
+- Added ability to filter genes/regions in consideration for binning.
+
+Bug Fixes:
+- Corrected bug in LOKI that produced incorrect annotations caused by upgrade to build 38
+
+== 2.0.3 ==
+
+- Fixed bug for using correct include paths for BOOST libraries
+
+== 2.0.2 ==
+
+- Moved "updater" to "loki" to make biobin closer in spirit to biofilter
+- Updated method of building the LOKI database
+- Caught errors when building the LOKI database so we don't have to "make clean" all the time
+
+== 2.0.1 ==
+
+- Updated and improved documentation
+
+== 2.0.0 ==
+
+Initial Release
