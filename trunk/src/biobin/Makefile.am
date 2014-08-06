@@ -18,7 +18,7 @@ biobin_SOURCES= \
    Configuration.h \
    Configuration.cpp
 
-EXTRA_DIST=$(top_srcdir)/doc/manual.doc 
+EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) 
