@@ -147,7 +147,7 @@ private:
 
 	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
 	int getTotalContrib(const Knowledge::Locus& loc) const;
-	float calcBrowningWeight(int N, int M) const;
+	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
 

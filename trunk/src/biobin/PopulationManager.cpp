@@ -264,7 +264,7 @@ int PopulationManager::getTotalContrib(const Locus& loc) const{
 	return n_var;
 }
 
-float PopulationManager::calcBrowningWeight(int N, int M) const{
+float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) const{
 	// Madsen + Browning Weight
 	// A Groupwise Association Test for Rare Mutations Using a Weighted Sum Statistic
 	// PLOSGenetics, Feb 2009, Vol. 5, Issue 2, e10000384
