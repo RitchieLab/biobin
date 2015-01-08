@@ -257,15 +257,12 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 
 	bool g1 = (*it).second.first[pos];
 	bool g2 = (*it).second.second[pos];
-	unsigned short n_alleles = (g1 && g2) ? 0 : 2*g1 + g2;
+	n_var = (g1 && g2) ? 0 : 2*g1 + g2;
 
-	switch (c_model) {
-	case ADDITIVE:
-		n_var += n_alleles > 1;
-	case DOMINANT:
-		n_var += n_alleles == 2;
-	case RECESSIVE:
-		n_var += n_alleles > 1;
+	if(c_model == DOMINANT){
+		n_var = n_var > 0;
+	} else if (c_model == RECESSIVE){
+		n_var = n_var > 1;
 	}
 
 	// Cache the weights so we aren't wasting so much effort.
@@ -419,8 +416,8 @@ boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const 
 		++b_itr;
 	}
 
-	capacity[0] *= (1 + c_model == ADDITIVE);
-	capacity[1] *= (1 + c_model == ADDITIVE);
+	capacity[0] *= (1 + (c_model == ADDITIVE));
+	capacity[1] *= (1 + (c_model == ADDITIVE));
 
 	return capacity;
 }
