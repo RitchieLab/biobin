@@ -71,7 +71,7 @@ void BinManager::InitBins(
 		Knowledge::Locus& l = **l_itr;
 
 
-		if (l.isRare()) {
+		if (_pop_mgr.isRare(l,mafThreshold, mafCutoff)) {
 			++_rare_variants;
 
 			// First, find all of the regions that contain this locus

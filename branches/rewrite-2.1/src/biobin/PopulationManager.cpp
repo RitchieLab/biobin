@@ -62,6 +62,24 @@ PopulationManager::PopulationManager(const string& vcf_fn) : _vcf_fn(vcf_fn){
 	//}
 }
 
+bool PopulationManager::isRare(const Locus& locus, float lower, float upper) const{
+	bool rare = false;
+	float currmaf;
+
+	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr = _genotypes.find(&locus);
+	if(g_itr != _genotypes.end()){
+		currmaf = getMAF((*g_itr).second, &_control_bitset);
+		rare = currmaf < upper && currmaf > lower;
+
+		if(!rare && RareCaseControl){
+			currmaf = getMAF((*g_itr).second, &_case_bitset);
+			rare = currmaf < upper && currmaf > lower;
+		}
+	}
+
+	return rare;
+}
+
 unsigned int PopulationManager::readVCFHeader(std::istream& v){
 	unsigned int lineno = 0;
 	bool header_read = false;
@@ -117,12 +135,14 @@ void PopulationManager::loadIndividuals(){
 	// Now, we go through and determine who is a case and who is a control
 	map<string, int>::const_iterator p_itr = _positions.begin();
 	map<string, int>::const_iterator p_end = _positions.end();
-	map<string, float>::const_iterator pheno_itr;
+	map<string, float>::const_iterator pheno_itr = _phenotypes.begin();
 	map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
 	n_controls = 0;
-	int ncase = 0;
+	n_cases = 0;
 	while(p_itr != p_end){
-		pheno_itr = _phenotypes.find((*p_itr).first);
+		if(pheno_itr != pheno_not_found && (*pheno_itr).first != (*p_itr).first){
+			pheno_itr = _phenotypes.find((*p_itr).first);
+		}
 
 		if (pheno_itr != pheno_not_found){
 			if((*pheno_itr).second == c_phenotype_control){
@@ -130,14 +150,15 @@ void PopulationManager::loadIndividuals(){
 				++n_controls;
 				_control_bitset.set((*p_itr).second);
 			}else{
-				++ncase;
+				++n_cases;
 				_case_bitset[(*p_itr).second] = !std::isnan((*pheno_itr).second);
 			}
 		}
 		++p_itr;
+		++pheno_itr;
 	}
 
-	int total = n_controls + ncase;
+	unsigned int total = n_controls + n_cases;
 
 	// If we don't have enough controls, print a warning and make everyone a control
 	if ((n_controls / (float) total) < c_min_control_frac){
@@ -155,7 +176,7 @@ void PopulationManager::loadIndividuals(){
 	if (1 / static_cast<float>(2 *n_controls) > BinManager::mafCutoff){
 		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in controls are rare.\n";
 	}
-	if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(ncase)) > BinManager::mafCutoff){
+	if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(n_cases)) > BinManager::mafCutoff){
 		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in cases are rare.\n";
 	}
 
@@ -202,20 +223,13 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 }
 
 float PopulationManager::getCaseAF(const Locus& loc) const{
-	float ret_val = std::numeric_limits<float>::quiet_NaN();
-
 	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
+
 	if(itr != _genotypes.end()){
-		dynamic_bitset<> cases = _case_bitset & ~((*itr).second.first & (*itr).second.second);
-
-		double n_case = cases.count();
-		double n_alleles = 2*(cases & (*itr).second.first).count() + (cases & (*itr).second.second).count();
-
-		ret_val = (n_case == 0) ? ret_val : n_alleles / n_case;
-
+		return getMAF((*itr).second, &_case_bitset);
+	} else {
+		return std::numeric_limits<float>::quiet_NaN();
 	}
-
-	return ret_val;
 }
 
 unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
@@ -272,7 +286,7 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 
 unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss)  const{
 
-	boost::dynamic_bitset<> nonmissing = geno.first & geno.second;
+	boost::dynamic_bitset<> nonmissing = ~(geno.first & geno.second);
 	if(nonmiss != 0){
 		nonmissing &= *nonmiss;
 	}
@@ -289,6 +303,15 @@ unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const b
 	default:
 		return 0;
 	}
+}
+
+float PopulationManager::getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss) const{
+	boost::dynamic_bitset<> nonmissing = ~(geno.first & geno.second);
+	if(nonmiss != 0){
+		nonmissing &= *nonmiss;
+	}
+
+	return (2 * (nonmissing & geno.first).count() + (nonmissing & geno.second).count()) / static_cast<float>(2*nonmissing.count());
 }
 
 float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) const{

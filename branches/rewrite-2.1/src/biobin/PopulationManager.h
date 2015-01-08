@@ -104,6 +104,8 @@ public:
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
 
+	bool isRare(const Knowledge::Locus& locus, float lower, float upper) const;
+
 	// Printing functions
 	template <class Bin_cont>
 	void printBins(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep=",") const;
@@ -151,6 +153,7 @@ private:
 
 	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
 	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
+	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
@@ -162,7 +165,8 @@ private:
 
 	boost::dynamic_bitset<> _control_bitset;
 	boost::dynamic_bitset<> _case_bitset;
-	int n_controls;
+	unsigned int n_controls;
+	unsigned int n_cases;
 
 	//boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
 
@@ -577,6 +581,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 					if(getTotalContrib(curr_geno) == 0){
 						delete loc;
 					} else {
+						loci_out.insert(loci_out.end(), loc);
 						_genotypes.insert(std::make_pair(loc, curr_geno));
 					}
 				}
