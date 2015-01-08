@@ -76,7 +76,6 @@ Locus::Locus(short chrom, uint pos, const string& id):
 	if (id.size() == 0 || _id == "."){
 		createID();
 	}
-	_alleles.reserve(2);
 
 }
 
@@ -86,7 +85,6 @@ Locus::Locus(const string& chrom_str, uint pos, const string& id):
 	if (_id.size() == 0 || _id == "."){
 		createID();
 	}
-	_alleles.reserve(2);
 }
 
 /*void Locus::addAllele(const string& allele, float freq){
@@ -95,7 +93,7 @@ Locus::Locus(const string& chrom_str, uint pos, const string& id):
 }
 */
 
-void Locus::setMajorAllele(const std::string& majAllele){
+/*void Locus::setMajorAllele(const std::string& majAllele){
 	if (!(_alleles[0] == majAllele)){
 		vector<Allele>::iterator ai = find(++_alleles.begin(), _alleles.end(), majAllele);
 		if(ai != _alleles.end()){
@@ -104,20 +102,21 @@ void Locus::setMajorAllele(const std::string& majAllele){
 		}
 	}
 }
+*/
 
 bool Locus::operator <(const Locus& other) const{
 	return other._chrom==_chrom ? other._pos > _pos : other._chrom > _chrom;
 }
 
-bool Locus::isMinor(const string& allele) const{
+/*bool Locus::isMinor(const string& allele) const{
 	return !(allele == _alleles.begin()->getData());
 }
-
+*/
 uint Locus::distance(const Locus& other) const{
 	return other._chrom == _chrom ? abs(other._pos - _pos) : -1;
 }
 
-short Locus::encodeGenotype(uint a1, uint a2) const{
+/*short Locus::encodeGenotype(uint a1, uint a2) const{
 	if (a1 == (uint)-1 || a2 == (uint)-1){
 		return -1;
 	}
@@ -132,7 +131,7 @@ pair<uint, uint> Locus::decodeGenotype(short encoded_type) const{
 	}
 	return to_return;
 }
-
+*/
 
 const string& Locus::getChromStr(short chrom){
 	if (chrom < 0 || (uint) chrom > _chrom_list.size()){
@@ -176,13 +175,10 @@ void Locus::createID(){
 	_id = ss.str();
 }
 
-void Locus::print(ostream& o, const string& sep, bool printAlleles) const{
+void Locus::print(ostream& o, const string& sep) const{
 	o << getChromStr() << sep << _pos << sep << _id;
-	if (printAlleles){
-		this->printAlleles(o,sep);
-	}
 }
-
+/*
 void Locus::printAlleles(ostream& o, const string& sep) const{
 	vector<Allele>::const_iterator itr = _alleles.begin();
 	if (itr != _alleles.end()){
@@ -192,7 +188,7 @@ void Locus::printAlleles(ostream& o, const string& sep) const{
 		o << sep << *itr;
 	}
 }
-
+*/
 }
 
 ostream& operator<<(ostream& o, const Knowledge::Locus& l){

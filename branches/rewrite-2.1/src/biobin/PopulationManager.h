@@ -493,7 +493,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				// initialize the call count so I can easily determine the major allele
 				call_count.clear();
 				call_count.resize(alleles.size(), 0);
-				loc->addAllelesStr(alleles.begin(), alleles.end());
 
 				// parse the format string
 				format_list.clear();

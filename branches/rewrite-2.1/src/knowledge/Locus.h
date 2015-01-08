@@ -39,7 +39,7 @@ public:
 	static void* operator new(size_t size);
 	static void operator delete(void* deadObj, size_t size);
 
-	typedef std::vector<Allele>::const_iterator const_allele_iterator;
+	//typedef std::vector<Allele>::const_iterator const_allele_iterator;
 
 	/*!
 	 * \brief Constructs a Locus object using the chromosome string.
@@ -91,34 +91,34 @@ public:
 	 * \param begin An iterator pointing to the beginning of the allele list
 	 * \param end An iterator pointing to the end of the allele list
 	 */
-	template<class Allele_itr>
-	void addAlleles(Allele_itr begin, const Allele_itr& end);
+	//template<class Allele_itr>
+	//void addAlleles(Allele_itr begin, const Allele_itr& end);
 
-	template<class Str_itr>
-	void addAllelesStr(Str_itr begin, const Str_itr& end);
+	//template<class Str_itr>
+	//void addAllelesStr(Str_itr begin, const Str_itr& end);
 	/*!
 	 * Returns an iterator to the beginning of the list of alleles.  Used when
 	 * copying Loci, especially in a liftOver situation.
 	 * \return An iterator pointing to the beginning of the allele List
 	 */
-	const_allele_iterator beginAlleles() const {
+	/*const_allele_iterator beginAlleles() const {
 		return _alleles.begin();
-	}
+	}*/
 	/*!
 	 * Returns an iterator to the end of the list of alleles.  Used when
 	 * copying Loci, especially in a liftOver situation.
 	 * \return An iterator pointing to the end of the allele List
 	 */
-	const_allele_iterator endAlleles() const {
+	/*const_allele_iterator endAlleles() const {
 		return _alleles.end();
-	}
+	}*/
 
 	/*!
 	 * Sets the major allele, which may be different from the calculated major
 	 * allele (in the case of overall-major-allele)
 	 * \param majAllele The string of the major allele
 	 */
-	void setMajorAllele(const std::string& majAllele);
+	//void setMajorAllele(const std::string& majAllele);
 
 	/*!
 	 * Return the ID of this Locus (passed in or auto-generated).
@@ -168,9 +168,9 @@ public:
 	 *
 	 * \return The alternate number of the major allele.
 	 */
-	unsigned short getMajorPos() const {
+	/*unsigned short getMajorPos() const {
 		return (*_alleles.begin()).getPos();
-	}
+	}*/
 
 	/*!
 	 * \brief Determine if the given allele is a minor allele or not
@@ -183,7 +183,7 @@ public:
 	 *
 	 * \return A boolean that is false <==> the given allele is the major allele
 	 */
-	bool isMinor(const std::string& allele) const;
+	//bool isMinor(const std::string& allele) const;
 
 	/*!
 	 * \brief Returns the distance to another Locus.
@@ -221,7 +221,7 @@ public:
 	 *
 	 * \return The encoded genotype
 	 */
-	short encodeGenotype(unsigned int a1, unsigned int a2) const;
+	//short encodeGenotype(unsigned int a1, unsigned int a2) const;
 
 	/*!
 	 * \brief Decodes the genotype into a pair of values.
@@ -235,19 +235,18 @@ public:
 	 *
 	 * \return A pair of integers representing the allele numbers.
 	 */
-	std::pair<unsigned int, unsigned int> decodeGenotype(short encoded_type) const;
+	//std::pair<unsigned int, unsigned int> decodeGenotype(short encoded_type) const;
 
 	/*!
 	 * \brief A function to print a Locus.
 	 * This function prints a
 	 */
-	void print(std::ostream& o, const std::string& sep = ",",
-			bool printAlleles = false) const;
+	void print(std::ostream& o, const std::string& sep = ",") const;
 
 	/*!
 	 * \brief a function to print the alleles
 	 */
-	void printAlleles(std::ostream& o, const std::string& sep = "|") const;
+	//void printAlleles(std::ostream& o, const std::string& sep = "|") const;
 
 	/*!
 	 * \brief Converts a chromosome index into a chromosome string
@@ -288,7 +287,7 @@ private:
 	// index into list of chromosomes
 	short _chrom;
 	//flag determining rarity
-	bool _is_rare;
+	//bool _is_rare;
 	// Position on the chromosome
 	unsigned int _pos;
 	// Identifier of this Locus (could be a RSID or anything)
@@ -297,7 +296,7 @@ private:
 	// A set of alleles for this Locus
 	// IN this case, the final element will be the largest, so
 	// *(_alleles.rbegin()) is the major allele
-	std::vector<Allele> _alleles;
+	//std::vector<Allele> _alleles;
 
 	// Vector of a list of chromosomes
 	static const std::vector<std::string> _chrom_list;
@@ -306,7 +305,7 @@ private:
 	static boost::pool<> s_locus_pool;
 
 };
-
+/*
 template<class Allele_itr>
 void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
 	while (begin != end) {
@@ -323,6 +322,7 @@ void Locus::addAllelesStr(Str_itr begin, const Str_itr& end){
 		++begin;
 	}
 }
+*/
 
 }
 
