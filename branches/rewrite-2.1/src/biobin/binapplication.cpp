@@ -141,8 +141,6 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locusFile << sep;
 	printEscapedString(locusFile, "Case Allele Freq.", sep, sep_repl);
 	locusFile << sep;
-	printEscapedString(locusFile, "Rare", sep, sep_repl);
-	locusFile << sep;
 	printEscapedString(locusFile, "Gene(s)", sep, sep_repl);
 	locusFile << sep;
 	printEscapedString(locusFile, "Bin Name(s)", sep, sep_repl);
@@ -164,8 +162,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		(*itr)->printAlleles(allele_str, "|");
 		printEscapedString(locusFile, allele_str.str(), sep, sep_repl);
 
-		locusFile << sep << _pop_mgr.getCaseAF(**itr) << sep
-				<< static_cast<int>((*itr)->isRare()) << sep;
+		locusFile << sep << _pop_mgr.getCaseAF(**itr) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
 				regions->locusBegin(*itr);

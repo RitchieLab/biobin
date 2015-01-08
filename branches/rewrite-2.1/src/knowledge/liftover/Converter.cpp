@@ -77,7 +77,7 @@ Locus* Converter::convertLocus(const Locus& old_loc) const {
 		return 0;
 	} else {
 		Locus* converted = new Locus(new_region.first, new_region.second.first,
-				old_loc.isRare(), old_loc.getID());
+				old_loc.getID());
 		converted->addAlleles(old_loc.beginAlleles(), old_loc.endAlleles());
 
 		return converted;

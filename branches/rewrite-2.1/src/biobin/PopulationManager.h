@@ -474,7 +474,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 			if(filter == "." || filter == "PASS"){
 
 				// construct a locus object and lift over, if necessary
-				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,true,id);
+				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id);
 				if(conv){
 					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
 					if (! new_loc){

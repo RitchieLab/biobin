@@ -52,8 +52,7 @@ public:
 	 * \param pos The position on the chromosome of this locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(const std::string& chrom_str, uint pos, bool rare = false,
-			const std::string& id = "");
+	Locus(const std::string& chrom_str, uint pos, const std::string& id = "");
 
 	/*!
 	 * \brief Constructs a locus object using the chromosome index.
@@ -67,7 +66,7 @@ public:
 	 * \param pos The position on the chromosome of the locus
 	 * \param id The unique ID string of this locus (optional)
 	 */
-	Locus(short chrom, uint pos, bool rare = false, const std::string& id = "");
+	Locus(short chrom, uint pos, const std::string& id = "");
 
 	/*!
 	 * \brief Add an associated allele to this particular Locus.
@@ -120,17 +119,6 @@ public:
 	 * \param majAllele The string of the major allele
 	 */
 	void setMajorAllele(const std::string& majAllele);
-
-	/*!
-	 * \brief Returns the rarity status of the Locus.
-	 * This returns whether or not this locus is considered rare accoring to the
-	 * input parameter during creation of the Locus.  Note that even Loci with
-	 * a high minor allele frequency can be considered rare because in the case
-	 * population, the minor allele frequency could be low.
-	 */
-	bool isRare() const {
-		return _is_rare;
-	}
 
 	/*!
 	 * Return the ID of this Locus (passed in or auto-generated).

@@ -69,11 +69,11 @@ bool PopulationManager::isRare(const Locus& locus, float lower, float upper) con
 	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr = _genotypes.find(&locus);
 	if(g_itr != _genotypes.end()){
 		currmaf = getMAF((*g_itr).second, &_control_bitset);
-		rare = currmaf < upper && currmaf > lower;
+		rare = currmaf <= upper && currmaf >= lower;
 
 		if(!rare && RareCaseControl){
 			currmaf = getMAF((*g_itr).second, &_case_bitset);
-			rare = currmaf < upper && currmaf > lower;
+			rare = currmaf <= upper && currmaf >= lower;
 		}
 	}
 
