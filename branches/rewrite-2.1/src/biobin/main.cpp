@@ -19,6 +19,11 @@
 namespace po=boost::program_options;
 
 using po::value;
+using std::string;
+using std::vector;
+using std::multimap;
+using std::ifstream;
+
 
 /**
  * The VCF Tools require this, but I don't want to use their main...

@@ -16,7 +16,9 @@ biobin_SOURCES= \
    PopulationManager.h \
    PopulationManager.cpp \
    Configuration.h \
-   Configuration.cpp
+   Configuration.cpp \
+   util/ICompressedFile.h \
+   util/ICompressedFile.cpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  
@@ -30,5 +32,6 @@ biobin_LDADD=\
 	$(BOOST_REGEX_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-	$(BOOST_PROGRAM_OPTIONS_LIB) 
+	$(BOOST_PROGRAM_OPTIONS_LIB) \
+	$(BOOST_IOSTREAMS_LIB) 
 

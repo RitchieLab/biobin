@@ -21,6 +21,8 @@ using std::set;
 using std::deque;
 using std::new_handler;
 using std::set_new_handler;
+using std::stringstream;
+using std::ostream;
 
 using boost::unordered_map;
 
@@ -116,11 +118,12 @@ void BinApplication::writeBinData(const string& filename, const string& sep) con
 	file.close();
 }
 
-void BinApplication::writeGenotypeData(const string& filename, const string& sep) const{
+/*void BinApplication::writeGenotypeData(const string& filename, const string& sep) const{
 	std::ofstream file(filename.c_str());
 	_pop_mgr.printGenotypes(file, dataset, sep);
 	file.close();
 }
+*/
 
 void BinApplication::writeLoci(const string& filename, const string& sep) const{
 
@@ -188,7 +191,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locusFile.close();
 }
 
-void BinApplication::writeAFData(const string& filename, const string& sep) const{
+/*void BinApplication::writeAFData(const string& filename, const string& sep) const{
 	string sep_repl = getEscapeString(sep);
 
 	std::ofstream freqFile(filename.c_str());
@@ -213,7 +216,7 @@ void BinApplication::writeAFData(const string& filename, const string& sep) cons
 	while(itr != dataset.end()){
 		printEscapedString(freqFile, (*itr)->getID(), sep, sep_repl);
 
-		freqFile << sep << 1 - (*itr)->majorAlleleFreq() << sep
+		freqFile << sep << _pop_mgr.getControlAF(**itr) << sep
 				<< _pop_mgr.getCaseAF(**itr) << sep
 				<< static_cast<int>((*itr)->isRare()) << sep;
 
@@ -236,6 +239,7 @@ void BinApplication::writeBinFreqData(const string& filename, const string& sep)
 	freqFile.close();
 
 }
+*/
 
 void BinApplication::printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const{
 	os << boost::algorithm::replace_all_copy(toPrint, toRepl, replStr);

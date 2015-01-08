@@ -82,7 +82,7 @@ public:
 	 * \param allele The data of the given allele
 	 * \param freq The frequency of the allele to add.
 	 */
-	void addAllele(const std::string& allele, float freq);
+	//void addAllele(const std::string& allele, float freq);
 
 	/*!
 	 * \brief Adds a list of alleles to this locus.
@@ -95,6 +95,8 @@ public:
 	template<class Allele_itr>
 	void addAlleles(Allele_itr begin, const Allele_itr& end);
 
+	template<class Str_itr>
+	void addAllelesStr(Str_itr begin, const Str_itr& end);
 	/*!
 	 * Returns an iterator to the beginning of the list of alleles.  Used when
 	 * copying Loci, especially in a liftOver situation.
@@ -118,28 +120,6 @@ public:
 	 * \param majAllele The string of the major allele
 	 */
 	void setMajorAllele(const std::string& majAllele);
-
-	/*!
-	 * \brief Return the major allele frequency (that which is most common).
-	 * Returns the most common allele among all those that have been entered
-	 * already.  This is determined by the ordering of the Allele object.
-	 *
-	 * \return the major allele frequency.
-	 */
-	float majorAlleleFreq() const;
-
-	/*!
-	 * \brief Return the minor allele frequency (sum of all other alleles)
-	 * Returns the minor allele frequency.  In the case of a biallelic Locus,
-	 * this is simply the frequency of the allele that is present in the
-	 * minority of the population.  In the case of the multi-allelic genes, this
-	 * is the sum of all other alleles other than the major allele, or
-	 * 1-majorAlleleFreq().  Note that it is possible that the minor allele
-	 * frequency could be greater than 1/2 in the case of multi-allelic genes.
-	 *
-	 * \return The minor allele frequency.
-	 */
-	float minorAlleleFreq() const;
 
 	/*!
 	 * \brief Returns the rarity status of the Locus.
@@ -343,6 +323,15 @@ template<class Allele_itr>
 void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
 	while (begin != end) {
 		_alleles.push_back(*begin);
+		++begin;
+	}
+}
+
+template<class Str_itr>
+void Locus::addAllelesStr(Str_itr begin, const Str_itr& end){
+	unsigned short i=0;
+	while (begin != end) {
+		_alleles.push_back(Allele(*begin, i++));
 		++begin;
 	}
 }

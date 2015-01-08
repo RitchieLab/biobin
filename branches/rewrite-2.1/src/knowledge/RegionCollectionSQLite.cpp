@@ -24,6 +24,7 @@ using std::vector;
 using std::set;
 using std::stringstream;
 using std::ifstream;
+using std::pair;
 
 using boost::unordered_map;
 using boost::unordered_set;
@@ -161,7 +162,7 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 
 				// TODO: convert chr posMin and posMax here
 				if(n_chains > 0){
-					pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+					std::pair<short, std::pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
 					chr = newReg.first;
 					posMin = newReg.second.first;
 					posMax = newReg.second.second;

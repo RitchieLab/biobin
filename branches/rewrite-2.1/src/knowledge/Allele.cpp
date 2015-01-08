@@ -19,7 +19,7 @@ deque<string> Allele::s_string_pool;
 map<const string, unsigned short> Allele::s_string_map;
 
 
-Allele::Allele(const string& data, float freq, unsigned short pos):	_freq(freq), _pos(pos) {
+Allele::Allele(const string& data, unsigned short pos):	_pos(pos) {
 	map<const string, unsigned short>::const_iterator itr = s_string_map.find(data);
 	if(itr != s_string_map.end()){
 		_data_idx = (*itr).second;
@@ -41,13 +41,12 @@ Allele::Allele(const string& data, float freq, unsigned short pos):	_freq(freq),
 
 }
 
-// I want to oder them from largest to smallest alele frequency
 bool Allele::operator<(const Allele& other) const{
-	return (_freq==other._freq ? s_string_pool[_data_idx] < s_string_pool[other._data_idx] : _freq > other._freq);
+	return (_data_idx < other._data_idx);
 }
 
 void Allele::print(ostream& o, const string& sep) const{
-	o << s_string_pool[_data_idx] << sep << _freq;
+	o << s_string_pool[_data_idx];
 }
 
 }

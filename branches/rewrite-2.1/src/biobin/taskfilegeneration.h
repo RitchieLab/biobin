@@ -25,10 +25,10 @@ public:
 	virtual void ExecuteTask();
 
 	static bool WriteBinData;
-	static bool WriteGenotypeData;
+//	static bool WriteGenotypeData;
 	static bool WriteLociData;
-	static bool WriteAFData;
-	static bool WriteBinFreqData;
+//	static bool WriteAFData;
+//	static bool WriteBinFreqData;
 	static std::string OutputDelimiter;
 protected:
 	BinApplication* _app;

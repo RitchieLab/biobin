@@ -13,10 +13,10 @@ namespace BioBin {
 namespace Task {
 
 bool GenerateFiles::WriteBinData = true;
-bool GenerateFiles::WriteGenotypeData = true;
+//bool GenerateFiles::WriteGenotypeData = true;
 bool GenerateFiles::WriteLociData = true;
-bool GenerateFiles::WriteAFData = true;
-bool GenerateFiles::WriteBinFreqData = true;
+//bool GenerateFiles::WriteAFData = true;
+//bool GenerateFiles::WriteBinFreqData = true;
 std::string GenerateFiles::OutputDelimiter = ",";
 
 GenerateFiles::GenerateFiles(BinApplication* app) :
@@ -30,17 +30,18 @@ void GenerateFiles::ExecuteTask() {
 		std::string filename = _app->AddReport("bins", "csv", "Bin Counts");
 		_app->writeBinData(filename,OutputDelimiter);
 	}
-	if (WriteGenotypeData) {
+/*	if (WriteGenotypeData) {
 		std::string filename = _app->AddReport("genotypes", "csv",
 				"Genotype Data");
 		_app->writeGenotypeData(filename,OutputDelimiter);
 	}
+*/
 	if (WriteLociData){
 		std::string filename = _app->AddReport("locus", "csv",
 				"Locus Data");
 		_app->writeLoci(filename,OutputDelimiter);
 	}
-	if (WriteAFData){
+/*	if (WriteAFData){
 		std::string filename = _app->AddReport("AllFreq", "csv",
 				"Case vs. Control Allele Freq.");
 		_app->writeAFData(filename,OutputDelimiter);
@@ -50,6 +51,7 @@ void GenerateFiles::ExecuteTask() {
 						"Case vs. Control Bin Freq.");
 		_app->writeBinFreqData(filename,OutputDelimiter);
 	}
+*/
 }
 
 }

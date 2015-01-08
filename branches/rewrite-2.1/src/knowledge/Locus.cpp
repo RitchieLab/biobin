@@ -89,10 +89,11 @@ Locus::Locus(const string& chrom_str, uint pos, bool rare, const string& id):
 	_alleles.reserve(2);
 }
 
-void Locus::addAllele(const string& allele, float freq){
+/*void Locus::addAllele(const string& allele, float freq){
 	_alleles.push_back(Allele(allele, freq, _alleles.size()));
 	sort(_alleles.begin(), _alleles.end());
 }
+*/
 
 void Locus::setMajorAllele(const std::string& majAllele){
 	if (!(_alleles[0] == majAllele)){
@@ -101,18 +102,6 @@ void Locus::setMajorAllele(const std::string& majAllele){
 			iter_swap(ai, _alleles.begin());
 			sort(++_alleles.begin(), _alleles.end());
 		}
-	}
-}
-
-float Locus::majorAlleleFreq() const{
-	return _alleles.begin()->getFreq();
-}
-
-float Locus::minorAlleleFreq() const{
-	if (_alleles.size() > 1){
-		return (++_alleles.begin())->getFreq();
-	}else{
-		return 1-majorAlleleFreq();
 	}
 }
 

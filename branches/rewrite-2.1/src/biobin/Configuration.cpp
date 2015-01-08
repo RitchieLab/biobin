@@ -50,13 +50,13 @@ void Configuration::initGeneric(){
 		("settings-db,D", value<string>(&Main::c_knowledge_file)->default_value("knowledge.bio"),
 				"The location of the database")
 		("vcf-file,V",value<string>(&Main::c_vcf_file), "The file containing VCF information")
-		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
+//		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05, "0.05"),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("maf-threshold", value<float>(&BinManager::mafThreshold)->default_value(0, "0"),
 				"The minimum minor allele frequency to consider eligible for bin inclusion")
-		("keep-common-loci,k",value<Bool>()->default_value(true),
-				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
+//		("keep-common-loci,k",value<Bool>()->default_value(true),
+//				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
 		("add-group", value<vector<string> >()->composing(),
 				"A list of filenames containing a group collection definition")
 		("output-delimiter,d",value<string>(&Task::GenerateFiles::OutputDelimiter)->default_value(","),
@@ -88,12 +88,12 @@ void Configuration::initGeneric(){
 				"Flag indicating desire to write locus report")
 		("report-bins",value<Bool>()->default_value(true),
 				"Flag indicating desire to write bin report")
-		("report-genotypes",value<Bool>()->default_value(false),
-				"Flag indicating desire to write genotype report")
-		("report-locus-freq",value<Bool>()->default_value(false),
-				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
-		("report-bin-freq",value<Bool>()->default_value(false),
-				"Flag indicating desire to write Bin Case v. Control Frequency report")
+//		("report-genotypes",value<Bool>()->default_value(false),
+//				"Flag indicating desire to write genotype report")
+//		("report-locus-freq",value<Bool>()->default_value(false),
+//				"Flag indicating desire to write Case v. Control Minor Allele Freq. report")
+//		("report-bin-freq",value<Bool>()->default_value(false),
+//				"Flag indicating desire to write Bin Case v. Control Frequency report")
 		("transpose-bins", value<Bool>()->default_value(false),
 				"Transpose the Bin report (bins on rows)")
 		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
@@ -104,8 +104,6 @@ void Configuration::initGeneric(){
 				"Minimum fraction of population needed for control cases")
 		("rare-case-control", value<Bool>()->default_value(true),
 				"Flag indicating determining rarity of variants by both case and control populations")
-		("overall-major-allele",value<Bool>()->default_value(true),
-				"Flag indicating desire to determine the major allele by the overall population instead of control")
 		("weight-loci", value<Bool>()->default_value(false),
 						"Add weights to the Locus")
 		("weight-model",value<PopulationManager::WeightModel>(&PopulationManager::c_weight_type)->default_value(PopulationManager::MIN),
@@ -215,10 +213,10 @@ void Configuration::parseOptions(const po::variables_map& vm){
 			BinApplication::reportPrefix = fn.substr(0,fn.find_first_of('.'));
 		}
 	}
-	PopulationManager::CompressedVCF = vm["compressed-vcf"].as<Bool>();
-	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
+//	PopulationManager::CompressedVCF = vm["compressed-vcf"].as<Bool>();
+//	PopulationManager::KeepCommonLoci = vm["keep-common-loci"].as<Bool>();
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
-	PopulationManager::OverallMajorAllele = vm["overall-major-allele"].as<Bool>();
+//  PopulationManager::OverallMajorAllele = vm["overall-major-allele"].as<Bool>();
 	PopulationManager::c_use_calc_weight = vm["weight-loci"].as<Bool>();
 
 
@@ -240,9 +238,9 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//==========================================
 	BioBin::Task::GenerateFiles::WriteLociData = vm["report-loci"].as<Bool>();
 	BioBin::Task::GenerateFiles::WriteBinData = vm["report-bins"].as<Bool>();
-	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
-	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
-	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
+//	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
+//	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
+//	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
 	BinApplication::c_transpose_bins = vm["transpose-bins"].as<Bool>();
 
 	//===========================================

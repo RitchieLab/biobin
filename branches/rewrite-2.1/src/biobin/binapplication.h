@@ -88,7 +88,7 @@ public:
 	void SetReportPrefix(const std::string& pref){reportPrefix=(pref=="")?"biobin":pref;}
 
 	template <class SNP_cont>
-	void InitVcfDataset(std::string& genomicBuild,
+	void InitVcfDataset(const std::string& genomicBuild,
 			SNP_cont& lostSnps);
 
 	/**
@@ -98,10 +98,10 @@ public:
 	void InitBins();
 
 	void writeBinData(const std::string& filename, const std::string& sep=",") const;
-	void writeGenotypeData(const std::string& filename, const std::string& sep=",") const;
+//	void writeGenotypeData(const std::string& filename, const std::string& sep=",") const;
 	void writeLoci(const std::string& filename, const std::string& sep=",") const;
-	void writeAFData(const std::string& filename, const std::string& sep=",") const;
-	void writeBinFreqData(const std::string& filename, const std::string& sep=",") const;
+//	void writeAFData(const std::string& filename, const std::string& sep=",") const;
+//	void writeBinFreqData(const std::string& filename, const std::string& sep=",") const;
 
 	static bool c_transpose_bins;
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
@@ -114,7 +114,7 @@ private:
 	void Init(const std::string& dbFilename, bool reportVersions);
 
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
-	string getEscapeString(const std::string& sep) const;
+	std::string getEscapeString(const std::string& sep) const;
 
 	///< The name of the database file
 	std::string dbFilename;
@@ -163,7 +163,7 @@ private:
 
 
 template <class SNP_cont>
-void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
+void BinApplication::InitVcfDataset(const std::string& genomicBuild, SNP_cont& lostSnps) {
 
 	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
 	int chainCount = cnv.Load();

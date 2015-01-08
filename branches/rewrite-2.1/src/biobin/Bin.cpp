@@ -19,19 +19,19 @@ using std::list;
 namespace BioBin{
 
 Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp) :
-		_is_group(true), _is_intergenic(false), _chrom(-1), _cached(false),
+		_is_group(true), _is_intergenic(false), _cached(false), _chrom(-1),
 		_name(grp->getName()), _pop_mgr(pop_mgr) {
 	_member.group = grp;
 }
 
 Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg) :
-		_is_group(false), _is_intergenic(false), _chrom(reg->getChrom()),
-		_cached(false), _name(reg->getName()), _pop_mgr(pop_mgr){
+		_is_group(false), _is_intergenic(false), _cached(false), _chrom(reg->getChrom()),
+		_name(reg->getName()), _pop_mgr(pop_mgr){
 	_member.region = reg;
 }
 
 Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
-		_is_group(false), _is_intergenic(true),	_chrom(chrom), _cached(false),
+		_is_group(false), _is_intergenic(true),	_cached(false), _chrom(chrom),
 		_pop_mgr(pop_mgr) {
 	stringstream ss;
 	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << ":"
@@ -44,7 +44,7 @@ Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
 
 Bin::Bin(const Bin& other) : _member(other._member),
 		_is_group(other._is_group), _is_intergenic(other._is_intergenic),
-		_chrom(other._chrom), _cached(false), _name(other._name),
+		_cached(false), _chrom(other._chrom), _name(other._name),
 		_extra_data(other._extra_data), _pop_mgr(other._pop_mgr) {}
 
 bool Bin::operator<(const Bin& other) const{
@@ -84,7 +84,7 @@ bool Bin::operator<(const Bin& other) const{
 
 }
 
-int Bin::getSize() const{
+unsigned int Bin::getSize() const{
 	int ret_val = 0;
 	if(!_cached){
 		list<Knowledge::Locus*>::const_iterator itr = _variants.begin();
