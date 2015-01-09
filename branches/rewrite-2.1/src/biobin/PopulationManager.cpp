@@ -308,7 +308,9 @@ float PopulationManager::getMAF(const bitset_pair& geno, const boost::dynamic_bi
 		nonmissing &= *nonmiss;
 	}
 
-	return (2 * (nonmissing & geno.first).count() + (nonmissing & geno.second).count()) / static_cast<float>(2*nonmissing.count());
+	float maf = (2 * (nonmissing & geno.first).count() + (nonmissing & geno.second).count()) / static_cast<float>(2*nonmissing.count());
+
+	return std::min(maf, 1-maf);
 }
 
 float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) const{
