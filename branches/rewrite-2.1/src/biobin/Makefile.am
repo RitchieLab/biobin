@@ -27,7 +27,6 @@ AM_LDFLAGS=$(BOOST_LDFLAGS)
 
 biobin_LDADD=\
 	../knowledge/libknowledge.la \
-	../vcftools/libvcftools.la \
 	$(SQLITE_LIBS) \
 	$(BOOST_REGEX_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
