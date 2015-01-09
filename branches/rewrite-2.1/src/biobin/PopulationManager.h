@@ -126,6 +126,7 @@ public:
 	// determine rarity of a variant by either case or control status
 	static bool RareCaseControl;
 	//static bool OverallMajorAllele;
+	static bool NoSummary;
 
 	static bool c_use_calc_weight;
 	static bool _use_custom_weight;
@@ -192,17 +193,19 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 	// Print 1st line
 	printEscapedString(os, "Bin Name", sep, sep_repl);
 	os << sep;
-	printEscapedString(os, "Total Variants", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Total Loci", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Loci Totals", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Loci Totals", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+	if (!NoSummary) {
+		printEscapedString(os, "Total Variants", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+	}
 
 	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
@@ -214,8 +217,10 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 	os << "\n";
 
 	printEscapedString(os, "Status", sep, sep_repl);
-	os << sep <<
-			-1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
+	os << sep;
+	if(!NoSummary){
+		os << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
+	}
 
 	m_itr = _positions.begin();
 	std::map<std::string, float>::const_iterator pheno_status;
@@ -235,35 +240,37 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 	Bin::const_locus_iterator l_itr;
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
 
-	while(b_itr != bins.end()){
+	while (b_itr != bins.end()) {
 		// Print bin name
 		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
 
-		// print total var
-		os << sep << (*b_itr)->getSize();
+		if (!NoSummary) {
+			// print total var
+			os << sep << (*b_itr)->getSize();
 
-		// print total loci
-		os << sep << (*b_itr)->getVariantSize();
+			// print total loci
+			os << sep << (*b_itr)->getVariantSize();
 
-		// print case/control loci
-		boost::array<unsigned int, 2> num_loci;
-		num_loci[0] = 0;
-		num_loci[1] = 0;
-		l_itr = (*b_itr)->variantBegin();
-		while(l_itr != (*b_itr)->variantEnd()){
-			loc_itr = _genotypes.find((*l_itr));
-			if (loc_itr != _genotypes.end()){
-				num_loci[0] += getTotalContrib((*loc_itr).second, &_control_bitset);
-				num_loci[1] += getTotalContrib((*loc_itr).second, &_case_bitset);
+			// print case/control loci
+			boost::array<unsigned int, 2> num_loci;
+			num_loci[0] = 0;
+			num_loci[1] = 0;
+			l_itr = (*b_itr)->variantBegin();
+			while (l_itr != (*b_itr)->variantEnd()) {
+				loc_itr = _genotypes.find((*l_itr));
+				if (loc_itr != _genotypes.end()) {
+					num_loci[0] += getTotalContrib((*loc_itr).second, &_control_bitset);
+					num_loci[1] += getTotalContrib((*loc_itr).second, &_case_bitset);
+				}
+				++l_itr;
 			}
-			++l_itr;
-		}
 
-		os << sep << num_loci[0] << sep << num_loci[1];
+			os << sep << num_loci[0] << sep << num_loci[1];
 
-		// print case/control capacity
-		boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
-		os << sep << capacity[0] << sep << capacity[1];
+			// print case/control capacity
+			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
+			os << sep << capacity[0] << sep << capacity[1];
+		} // End summary info
 
 		// print for each person
 		float bin_count = 0;
@@ -303,29 +310,6 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 	}
 	os << "\n";
 
-	// Print second Line (totals)
-	printEscapedString(os, "Total Variants", sep, sep_repl);
-	os << sep << -1;
-	b_itr = bins.begin();
-	b_end = bins.end();
-	while(b_itr != b_end){
-		os << sep << (*b_itr)->getSize();
-		++b_itr;
-	}
-	os << "\n";
-
-	// Print third line (variant totals)
-	printEscapedString(os, "Total Loci", sep, sep_repl);
-	os << sep << -1;
-	b_itr = bins.begin();
-	b_end = bins.end();
-	while(b_itr != b_end){
-		os << sep << (*b_itr)->getVariantSize();
-		++b_itr;
-	}
-	os << "\n";
-
-
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
 
@@ -333,41 +317,66 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_not_found =
 			_genotypes.end();
 
-	int locus_count = 0;
-	// Print 4th + 5th lines (variant totals for cases + controls
-	for(int i=0; i<2; i++){
-		printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
-		os << sep << -1;
-		b_itr = bins.begin();
-		b_end = bins.end();
-		while(b_itr != b_end){
-			l_itr = (*b_itr)->variantBegin();
-			l_end = (*b_itr)->variantEnd();
-			locus_count = 0;
-			while(l_itr != l_end){
-				loc_itr = _genotypes.find((*l_itr));
-				if (loc_itr != loc_not_found){
-					locus_count += getTotalContrib((*loc_itr).second, &(i ? _case_bitset : _control_bitset));
-				}
-				++l_itr;
-			}
-			os << sep << locus_count;
-			++b_itr;
-		}
-		os << "\n";
-	}
+	if(!NoSummary){
 
-	// Print 6th + 7th Lines (bin capacities for cases and controls)
-	for(int i=0; i<2; i++){
-		printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
+		// Print second Line (totals)
+		printEscapedString(os, "Total Variants", sep, sep_repl);
 		os << sep << -1;
 		b_itr = bins.begin();
 		b_end = bins.end();
 		while(b_itr != b_end){
-			os << sep << getBinCapacity(**b_itr)[i];
+			os << sep << (*b_itr)->getSize();
 			++b_itr;
 		}
 		os << "\n";
+
+		// Print third line (variant totals)
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep << -1;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep << (*b_itr)->getVariantSize();
+			++b_itr;
+		}
+		os << "\n";
+
+		int locus_count = 0;
+		// Print 4th + 5th lines (variant totals for cases + controls
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
+			os << sep << -1;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				l_itr = (*b_itr)->variantBegin();
+				l_end = (*b_itr)->variantEnd();
+				locus_count = 0;
+				while(l_itr != l_end){
+					loc_itr = _genotypes.find((*l_itr));
+					if (loc_itr != loc_not_found){
+						locus_count += getTotalContrib((*loc_itr).second, &(i ? _case_bitset : _control_bitset));
+					}
+					++l_itr;
+				}
+				os << sep << locus_count;
+				++b_itr;
+			}
+			os << "\n";
+		}
+
+		// Print 6th + 7th Lines (bin capacities for cases and controls)
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
+			os << sep << -1;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				os << sep << getBinCapacity(**b_itr)[i];
+				++b_itr;
+			}
+			os << "\n";
+		}
 	}
 
 	std::map<std::string, int>::const_iterator m_itr = _positions.begin();

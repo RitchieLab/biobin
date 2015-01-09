@@ -55,6 +55,7 @@ bool PopulationManager::RareCaseControl = true;
 //bool PopulationManager::OverallMajorAllele = true;
 bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::_use_custom_weight = false;
+bool PopulationManager::NoSummary = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) : _vcf_fn(vcf_fn){
 	//if(BinApplication::s_run_normal){
