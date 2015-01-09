@@ -128,6 +128,9 @@ void PopulationManager::loadIndividuals(){
 	vector<string>::const_iterator itr = c_phenotype_files.begin();
 	vector<string>::const_iterator end = c_phenotype_files.end();
 
+	// if we give NO phenotype file, just set everyone as a control
+	bool allControl = (itr == end);
+
 	while(itr != end){
 		parsePhenotypeFile(*itr);
 		++itr;
@@ -157,6 +160,13 @@ void PopulationManager::loadIndividuals(){
 		}
 		++p_itr;
 		++pheno_itr;
+	}
+
+	if(allControl){
+		_control_bitset.set();
+		_case_bitset.reset();
+		n_controls = _control_bitset.size();
+		n_cases = 0;
 	}
 
 	unsigned int total = n_controls + n_cases;
