@@ -448,16 +448,20 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 		"(value, chr, pos, biopolymer_id) VALUES (?,?,?,?)";
 
 	sqlite3_stmt* insert_stmt_gene;
-	int err_code = sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
+	//int err_code =
+	sqlite3_prepare_v2(_db, insert_sql_gene.c_str(), -1,
 			&insert_stmt_gene, NULL);
 	sqlite3_stmt* insert_stmt_null;
-	err_code = sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1,
+	//err_code =
+	sqlite3_prepare_v2(_db, insert_sql_null.c_str(), -1,
 			&insert_stmt_null, NULL);
 	sqlite3_stmt* insert_pos_gene_stmt;
-	err_code = sqlite3_prepare_v2(_db, insert_pos_gene.c_str(), -1,
+	//err_code =
+	sqlite3_prepare_v2(_db, insert_pos_gene.c_str(), -1,
 			&insert_pos_gene_stmt, NULL);
 	sqlite3_stmt* insert_pos_null_stmt;
-	err_code = sqlite3_prepare_v2(_db, insert_pos_null.c_str(), -1,
+	//err_code =
+	sqlite3_prepare_v2(_db, insert_pos_null.c_str(), -1,
 			&insert_pos_null_stmt, NULL);
 
 	// Get rid of any indexes in the 2 tables of interest
@@ -545,10 +549,14 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 							}
 
 							if (result.size() == 4) {
-								int err_code = sqlite3_bind_double(insert_stmt_null, 1, weight);
-								err_code = sqlite3_bind_int(insert_stmt_null, 2, chr);
-								err_code = sqlite3_bind_int(insert_stmt_null, 3, posMin);
-								err_code = sqlite3_bind_int(insert_stmt_null, 4, posMax);
+								//int err_code =
+								sqlite3_bind_double(insert_stmt_null, 1, weight);
+								//err_code =
+								sqlite3_bind_int(insert_stmt_null, 2, chr);
+								//err_code =
+								sqlite3_bind_int(insert_stmt_null, 3, posMin);
+								//err_code =
+								sqlite3_bind_int(insert_stmt_null, 4, posMax);
 
 								while (sqlite3_step(insert_stmt_null)
 										== SQLITE_ROW) {
@@ -996,11 +1004,12 @@ void InformationSQLite::prepRoleTables(){
 	sql_stmts.push_back("CREATE INDEX '" + _weight_snp_tbl + "__chr_pos' ON " + _weight_snp_tbl + " (chr,pos)");
 
 	vector<string>::const_iterator sql_itr = sql_stmts.begin();
-	int err_code = 0;
+	//int err_code = 0;
 	string curr_str;
 	while(sql_itr != sql_stmts.end()){
 		curr_str = *sql_itr;
-		err_code = sqlite3_exec(_db, (*sql_itr).c_str(), NULL, NULL, NULL);
+		//err_code =
+		sqlite3_exec(_db, (*sql_itr).c_str(), NULL, NULL, NULL);
 		++sql_itr;
 	}
 
