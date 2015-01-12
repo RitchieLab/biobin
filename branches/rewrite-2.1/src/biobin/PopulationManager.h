@@ -27,6 +27,8 @@
 
 #include "util/ICompressedFile.h"
 
+#include "taskfilegeneration.h"
+
 #include "knowledge/Locus.h"
 #include "knowledge/liftover/Converter.h"
 #include "knowledge/Information.h"
@@ -99,7 +101,7 @@ public:
 	~PopulationManager(){}
 
 	template <class T_cont>
-	void loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv);
+	void loadLoci(T_cont& loci_out, const std::string& prefix, const Knowledge::Liftover::Converter* conv=0);
 
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
@@ -423,7 +425,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 }
 
 template<class T_cont>
-void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv=0){
+void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const Knowledge::Liftover::Converter* conv){
 
 	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());
 	unsigned int lineno = readVCFHeader(vcf_f);
@@ -441,6 +443,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 	unsigned int ft_idx;
 	unsigned short curr_max;
 	unsigned int max_count;
+	bool lift_warn = false;
+	std::ofstream unlift_out;
 	std::vector<std::string> geno_list;
 	std::vector<std::string> fields;
 	std::vector<std::string> alleles;
@@ -487,7 +491,21 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 				if(conv){
 					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
 					if (! new_loc){
-						// Add to the
+						if(!lift_warn){
+							std::string fn(prefix + "-unlifted.csv");
+							unlift_out.open(fn.c_str());
+							std::cerr << "WARNING: Some variants not lifted!  See "
+									  << fn << " for details." << std::endl;
+
+							unlift_out << "Chrom" << Task::GenerateFiles::OutputDelimiter
+									   << "Pos" << Task::GenerateFiles::OutputDelimiter
+									   << "ID" << std::endl;
+							lift_warn = true;
+
+						}
+						loc->print(unlift_out, Task::GenerateFiles::OutputDelimiter);
+						unlift_out << std::endl;
+
 						delete loc;
 						loc = 0;
 					}else{
@@ -496,109 +514,116 @@ void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Co
 					}
 				}
 
-				// get a list of all the alleles, in the correct order
-				std::string allele_str = ref + "," + alt;
-				boost::algorithm::split(alleles, allele_str, boost::is_any_of(","));
-				// initialize the call count so I can easily determine the major allele
-				call_count.clear();
-				call_count.resize(alleles.size(), 0);
 
-				// parse the format string
-				format_list.clear();
-				boost::algorithm::split(format_list, format, boost::is_any_of(":"));
-				gt_idx = (find(format_list.begin(), format_list.end(), "GT") - format_list.begin());
-				ft_idx = (find(format_list.begin(), format_list.end(), "FT") - format_list.begin());
-				ft_idx = (ft_idx == format_list.size()) ? static_cast<unsigned int>(-1) : ft_idx;
+				if(loc != 0){
+					// get a list of all the alleles, in the correct order
+					std::string allele_str = ref + "," + alt;
+					boost::algorithm::split(alleles, allele_str, boost::is_any_of(","));
+					// initialize the call count so I can easily determine the major allele
+					call_count.clear();
+					call_count.resize(alleles.size(), 0);
 
-				if(gt_idx == format_list.size()){
-					std::cerr << "ERROR: No 'GT' format on line " << lineno <<
-							", cannot continue." << std::endl;
-					throw std::runtime_error("No GT given in format string");
-				}
+					// parse the format string
+					format_list.clear();
+					boost::algorithm::split(format_list, format, boost::is_any_of(":"));
+					gt_idx = (find(format_list.begin(), format_list.end(), "GT") - format_list.begin());
+					ft_idx = (find(format_list.begin(), format_list.end(), "FT") - format_list.begin());
+					ft_idx = (ft_idx == format_list.size()) ? static_cast<unsigned int>(-1) : ft_idx;
 
-				calls.clear();
-				for(unsigned int i=0; i<n_fields-9; i++){
+					if(gt_idx == format_list.size()){
+						std::cerr << "ERROR: No 'GT' format on line " << lineno <<
+								", cannot continue." << std::endl;
+						throw std::runtime_error("No GT given in format string");
+					}
 
-					// parse the individual call
-					geno_list.clear();
-					boost::algorithm::split(geno_list, fields[i+9], boost::is_any_of(":"));
+					calls.clear();
+					for(unsigned int i=0; i<n_fields-9; i++){
 
-					if(ft_idx == static_cast<unsigned int>(-1) ||
-						geno_list[ft_idx] == "PASS"){
-						call_list.clear();
-						boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(geno_sep));
-						if(call_list.size() == 1){
-							// we should be here very rarely!  If we're here,
-							// we'll assume that the "primary" separator of
-							// genotypes is in fact the "alternate", so swap them!
-							boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(alt_geno_sep));
-							geno_sep.swap(alt_geno_sep);
-						}
+						// parse the individual call
+						geno_list.clear();
+						boost::algorithm::split(geno_list, fields[i+9], boost::is_any_of(":"));
 
-						if(call_list.size() != 2){
-							std::cerr << "WARNING: Non-diploid found on line " <<
-									lineno << ", setting to missing" << std::endl;
-							calls.push_back(std::make_pair(missing_geno, missing_geno));
-						} else {
-							unsigned short g1, g2;
-							if( (std::stringstream(call_list[0]) >> g1) && (std::stringstream(call_list[1]) >> g2) ){
-								calls.push_back(std::make_pair(g1, g2));
-								++call_count[g1];
-								++call_count[g2];
-							} else{
+						if(ft_idx == static_cast<unsigned int>(-1) ||
+							geno_list[ft_idx] == "PASS"){
+							call_list.clear();
+							boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(geno_sep));
+							if(call_list.size() == 1){
+								// we should be here very rarely!  If we're here,
+								// we'll assume that the "primary" separator of
+								// genotypes is in fact the "alternate", so swap them!
+								boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(alt_geno_sep));
+								geno_sep.swap(alt_geno_sep);
+							}
+
+							if(call_list.size() != 2){
+								std::cerr << "WARNING: Non-diploid found on line " <<
+										lineno << ", setting to missing" << std::endl;
 								calls.push_back(std::make_pair(missing_geno, missing_geno));
+							} else {
+								unsigned short g1, g2;
+								if( (std::stringstream(call_list[0]) >> g1) && (std::stringstream(call_list[1]) >> g2) ){
+									calls.push_back(std::make_pair(g1, g2));
+									++call_count[g1];
+									++call_count[g2];
+								} else{
+									calls.push_back(std::make_pair(missing_geno, missing_geno));
+								}
 							}
 						}
-					}
 
-				} // end iterating over genotypes
+					} // end iterating over genotypes
 
-				// OK, now we'll find the major allele
-				curr_max = 0;
-				max_count = call_count[0];
-				for(unsigned short i=1; i<call_count.size(); i++){
-					if(call_count[i] > max_count){
-						curr_max = i;
-						max_count = call_count[i];
-					}
-				}
-
-				// let's make sure that this isn't monoporphic
-				std::sort(call_count.begin(), call_count.end());
-				if(call_count.size() < 2 || call_count[call_count.size() - 2] == 0){
-					delete loc;
-				} else {
-
-					bitset_pair curr_geno(std::make_pair(boost::dynamic_bitset<>(calls.size()), boost::dynamic_bitset<>(calls.size())));
-
-					for(unsigned int i=0; i<calls.size(); i++){
-						curr_call = calls[i];
-
-						if(curr_call.first == missing_geno || curr_call.second == missing_geno){
-							curr_geno.first.set(i);
-							curr_geno.second.set(i);
-						} else if (curr_call.first != curr_max && curr_call.second != curr_max){
-							curr_geno.first.set(i);
-						} else if (curr_call.first != curr_max || curr_call.second != curr_max) {
-							curr_geno.second.set(i);
+					// OK, now we'll find the major allele
+					curr_max = 0;
+					max_count = call_count[0];
+					for(unsigned short i=1; i<call_count.size(); i++){
+						if(call_count[i] > max_count){
+							curr_max = i;
+							max_count = call_count[i];
 						}
 					}
 
-					// again, make sure it isn't monomorphic with regards to the
-					// disease encoding
-					if(getTotalContrib(curr_geno) == 0){
+					// let's make sure that this isn't monoporphic
+					std::sort(call_count.begin(), call_count.end());
+					if(call_count.size() < 2 || call_count[call_count.size() - 2] == 0){
 						delete loc;
 					} else {
-						loci_out.insert(loci_out.end(), loc);
-						_genotypes.insert(std::make_pair(loc, curr_geno));
+
+						bitset_pair curr_geno(std::make_pair(boost::dynamic_bitset<>(calls.size()), boost::dynamic_bitset<>(calls.size())));
+
+						for(unsigned int i=0; i<calls.size(); i++){
+							curr_call = calls[i];
+
+							if(curr_call.first == missing_geno || curr_call.second == missing_geno){
+								curr_geno.first.set(i);
+								curr_geno.second.set(i);
+							} else if (curr_call.first != curr_max && curr_call.second != curr_max){
+								curr_geno.first.set(i);
+							} else if (curr_call.first != curr_max || curr_call.second != curr_max) {
+								curr_geno.second.set(i);
+							}
+						}
+
+						// again, make sure it isn't monomorphic with regards to the
+						// disease encoding
+						if(getTotalContrib(curr_geno) == 0){
+							delete loc;
+						} else {
+							loci_out.insert(loci_out.end(), loc);
+							_genotypes.insert(std::make_pair(loc, curr_geno));
+						}
 					}
 				}
 
 			} // end marker parsing
-
 		}
 
 	} // end while(getline)
+
+	if(lift_warn){
+		unlift_out.close();
+	}
+
 }
 
 /*

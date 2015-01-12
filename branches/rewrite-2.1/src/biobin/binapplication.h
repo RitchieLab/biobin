@@ -169,9 +169,9 @@ void BinApplication::InitVcfDataset(const std::string& genomicBuild, SNP_cont& l
 	int chainCount = cnv.Load();
 
 	if (chainCount > 0) {
-		_pop_mgr.loadLoci(dataset,&cnv);
+		_pop_mgr.loadLoci(dataset,reportPrefix,&cnv);
 	}else{
-		_pop_mgr.loadLoci(dataset);
+		_pop_mgr.loadLoci(dataset,reportPrefix);
 	}
 
 }
