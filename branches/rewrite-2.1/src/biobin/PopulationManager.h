@@ -163,8 +163,8 @@ private:
 
 	boost::array<unsigned int, 2> getBinCapacity(Bin& bin) const;
 
-	std::map<std::string, float> _phenotypes;
-	std::map<std::string, int> _positions;
+	boost::unordered_map<std::string, float> _phenotypes;
+	boost::unordered_map<std::string, int> _positions;
 
 	boost::dynamic_bitset<> _control_bitset;
 	boost::dynamic_bitset<> _case_bitset;
@@ -209,7 +209,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
 	}
 
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
 		os << sep;
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
@@ -225,7 +225,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 	}
 
 	m_itr = _positions.begin();
-	std::map<std::string, float>::const_iterator pheno_status;
+	boost::unordered_map<std::string, float>::const_iterator pheno_status;
 	while(m_itr != _positions.end()){
 		float status = -1;
 		pheno_status = _phenotypes.find((*m_itr).first);
@@ -381,11 +381,11 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 		}
 	}
 
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
+	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, int>::const_iterator m_end = _positions.end();
 
-	std::map<std::string, float>::const_iterator pheno_status;
-	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
+	boost::unordered_map<std::string, float>::const_iterator pheno_status;
+	boost::unordered_map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
 
 	int pos;
 	float status;
@@ -543,8 +543,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 						geno_list.clear();
 						boost::algorithm::split(geno_list, fields[i+9], boost::is_any_of(":"));
 
-						if(ft_idx == static_cast<unsigned int>(-1) ||
-							geno_list[ft_idx] == "PASS"){
+						if(fields[i+9] != "." && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == "PASS")){
 							call_list.clear();
 							boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(geno_sep));
 							if(call_list.size() == 1){

@@ -17,7 +17,7 @@ using std::string;
 using std::set;
 using std::map;
 using std::vector;
-using boost::unordered_map;
+
 
 namespace Knowledge{
 
@@ -35,8 +35,8 @@ Region::Region(const string& name, uint id, short chrom,
 	addDefaultBoundary(chrom, true_start, true_end);
 }
 
-void Region::addLocus(const Locus* locus){
-	_locus_map[locus->getID()] = locus;
+void Region::addLocus(const Locus& locus){
+	_locus_set.insert(&locus);
 }
 
 void Region::addGroup(Group& container){
@@ -60,7 +60,7 @@ string Region::getAliasString(const string& sep) const{
 }
 
 bool Region::containsLocus(const Locus& other) const{
-	return (_locus_map.find(other.getID()) != _locus_map.end());
+	return (_locus_set.count(&other) != 0);
 }
 
 void Region::addAliases(const string& aliases, const string& sep){

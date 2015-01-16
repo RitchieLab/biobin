@@ -13,7 +13,8 @@
 #include <set>
 #include <map>
 #include <vector>
-#include <boost/unordered_map.hpp>
+//#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 
@@ -123,7 +124,7 @@ public:
 	 *
 	 * \param locus the Locus object to associate with this region
 	 */
-	void addLocus(const Locus* locus);
+	void addLocus(const Locus& locus);
 
 	void addPopulationBoundary(short chr, uint start, uint stop){
 		_pop_bounds.push_back(Boundary(chr, start, stop));
@@ -201,7 +202,7 @@ public:
 	 *
 	 * \return The size of the Locus map
 	 */
-	uint locusCount() const {return _locus_map.size();}
+	uint locusCount() const {return _locus_set.size();}
 
 	/*!
 	 * Get the chromosome of this region
@@ -293,8 +294,10 @@ private:
 	Region(const Region& other);
 	Region& operator=(const Region& other);
 
+	boost::unordered_set<const Locus*> _locus_set;
+
 	// A map of IDs -> Loci
-	boost::unordered_map<std::string, const Locus*> _locus_map;
+	//boost::unordered_map<std::string, const Locus*> _locus_map;
 
 	// A list of all aliases to this Region
 	std::deque<std::string> _aliases;
@@ -314,7 +317,7 @@ private:
 template <class T_iter>
 void Region::addLoci(T_iter begin, const T_iter& end){
 	while (begin != end){
-		addLocus(*(*begin));
+		addLocus(**(*begin));
 		++begin;
 	}
 }

@@ -361,7 +361,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		// Now, execute the query!
 		while(sqlite3_step(region_stmt) == SQLITE_ROW){
 			Knowledge::Region* reg = addRegion(region_stmt);
-			reg->addLocus(*itr);
+			reg->addLocus(**itr);
 			_locus_map[*itr].insert(reg);
 		}
 		sqlite3_reset(region_stmt);
@@ -378,7 +378,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 				uint start = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 3));
 				uint end = static_cast<uint>(sqlite3_column_int(tmp_region_stmt, 4));
 				Knowledge::Region* reg = AddRegion(label, pop_id_result, chr, start, end);
-				reg->addLocus(*itr);
+				reg->addLocus(**itr);
 				_locus_map[*itr].insert(reg);
 			}
 			sqlite3_reset(tmp_region_stmt);

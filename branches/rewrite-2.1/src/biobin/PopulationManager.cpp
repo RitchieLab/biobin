@@ -137,10 +137,10 @@ void PopulationManager::loadIndividuals(){
 	}
 
 	// Now, we go through and determine who is a case and who is a control
-	map<string, int>::const_iterator p_itr = _positions.begin();
-	map<string, int>::const_iterator p_end = _positions.end();
-	map<string, float>::const_iterator pheno_itr = _phenotypes.begin();
-	map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
+	boost::unordered_map<string, int>::const_iterator p_itr = _positions.begin();
+	boost::unordered_map<string, int>::const_iterator p_end = _positions.end();
+	boost::unordered_map<string, float>::const_iterator pheno_itr = _phenotypes.begin();
+	boost::unordered_map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
 	n_controls = 0;
 	n_cases = 0;
 	while(p_itr != p_end){
