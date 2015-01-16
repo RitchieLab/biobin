@@ -568,6 +568,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 									calls.push_back(std::make_pair(missing_geno, missing_geno));
 								}
 							}
+						} else {
+							calls.push_back(std::make_pair(missing_geno, missing_geno));
 						}
 
 					} // end iterating over genotypes

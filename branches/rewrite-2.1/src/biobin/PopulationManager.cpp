@@ -143,27 +143,27 @@ void PopulationManager::loadIndividuals(){
 	boost::unordered_map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
 	n_controls = 0;
 	n_cases = 0;
-	while(p_itr != p_end){
-		pheno_itr = _phenotypes.find((*p_itr).first);
-
-		if (pheno_itr != pheno_not_found){
-			if((*pheno_itr).second == c_phenotype_control){
-
-				++n_controls;
-				_control_bitset.set((*p_itr).second);
-			}else{
-				++n_cases;
-				_case_bitset[(*p_itr).second] = !std::isnan((*pheno_itr).second);
-			}
-		}
-		++p_itr;
-	}
-
 	if(allControl){
 		_control_bitset.set();
 		_case_bitset.reset();
 		n_controls = _control_bitset.size();
 		n_cases = 0;
+	} else {
+		while(p_itr != p_end){
+			pheno_itr = _phenotypes.find((*p_itr).first);
+
+			if (pheno_itr != pheno_not_found){
+				if((*pheno_itr).second == c_phenotype_control){
+
+					++n_controls;
+					_control_bitset.set((*p_itr).second);
+				}else{
+					++n_cases;
+					_case_bitset[(*p_itr).second] = !std::isnan((*pheno_itr).second);
+				}
+			}
+			++p_itr;
+		}
 	}
 
 	unsigned int total = n_controls + n_cases;
