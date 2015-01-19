@@ -454,7 +454,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	std::vector<boost::string_ref> geno_list;
 	std::vector<boost::string_ref> fields;
 	std::vector<std::string> alleles;
-	std::vector<std::string> call_list;
+	std::vector<boost::string_ref> call_list;
 	std::vector<std::string> format_list;
 	std::vector<std::pair<unsigned short, unsigned short> > calls;
 	std::pair<unsigned short, unsigned short> curr_call;
@@ -614,7 +614,9 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 								calls.push_back(std::make_pair(missing_geno, missing_geno));
 							} else {
 								unsigned short g1, g2;
-								if( (std::stringstream(call_list[0]) >> g1) && (std::stringstream(call_list[1]) >> g2) ){
+								if(call_list[0] != "." && call_list[1] != "."){
+									g1 = boost::lexical_cast<unsigned short>(call_list[0]);
+									g2 = boost::lexical_cast<unsigned short>(call_list[1]);
 									calls.push_back(std::make_pair(g1, g2));
 									++call_count[g1];
 									++call_count[g2];
@@ -680,120 +682,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	}
 
 }
-
-/*
-template <class Bin_cont>
-void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
-
-	std::string sep_repl = getEscapeString(sep);
-
-	typename Bin_cont::const_iterator b_itr = bins.begin();
-	typename Bin_cont::const_iterator b_end = bins.end();
-
-	std::map<std::string, int>::const_iterator m_itr;
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
-	int case_cont_contrib[2];
-
-	printEscapedString(os, "Bin", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Freq.", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Freq.", sep, sep_repl);
-	os << "\n";
-
-	while(b_itr != b_end){
-
-		Bin::const_locus_iterator v_itr = (*b_itr)->variantBegin();
-		Bin::const_locus_iterator v_end = (*b_itr)->variantEnd();
-
-		case_cont_contrib[0] = 0;
-		case_cont_contrib[1] = 0;
-		while(v_itr != v_end){
-			m_itr = _positions.begin();
-			while(m_itr != m_end){
-				case_cont_contrib[!_is_control[(*m_itr).second]] +=
-						getIndivContrib(**v_itr, (*m_itr).second, false);
-				++m_itr;
-			}
-			++v_itr;
-		}
-
-		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
-		os << sep;
-
-		short capacity = 0;
-		for (int i=0; i<=1; i++){
-			capacity = getBinCapacity(**b_itr)[i];
-			os << (capacity ? case_cont_contrib[i] / ((float) capacity) : -1);
-			os << sep;
-		}
-		os << "\n";
-
-		++b_itr;
-	}
-
-}
-
-template <class Locus_cont>
-void PopulationManager::printGenotypes(std::ostream& os, const Locus_cont& loci, const std::string& sep) const{
-
-	string sep_repl = getEscapeString(sep);
-
-	typename Locus_cont::const_iterator l_itr = loci.begin();
-
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
-
-	std::map<std::string, float>::const_iterator pheno_status;
-	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
-
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator g_itr;
-	// Print the first line// TODO: format the genotype if we want to!
-	printEscapedString(os, "ID", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Status", sep, sep_repl);
-
-	while(l_itr != loci.end()){
-		os << sep;
-		printEscapedString(os, (*l_itr)->getID(), sep, sep_repl);
-		++l_itr;
-	}
-	os << "\n";
-
-	int pos;
-	float status;
-	while (m_itr != m_end){
-		l_itr = loci.begin();
-
-		pos = (*m_itr).second;
-
-		pheno_status = _phenotypes.find((*m_itr).first);
-		status = -1;
-		if (pheno_status != pheno_end){
-			status = (*pheno_status).second;
-		}
-
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
-		os << sep << status;
-
-		while(l_itr != loci.end()){
-			g_itr = _genotype_bitset.find(*l_itr);
-			if(g_itr != _genotype_bitset.end()){
-				// TODO: format the genotype if we want to!
-				os << sep << (*g_itr).second.first[pos] << "/" << (*g_itr).second.second[pos];
-			}else{
-				os << sep << "?/?";
-			}
-			++l_itr;
-		}
-
-		os << "\n";
-		++m_itr;
-	}
-
-}
-
-*/
 
 }
 
