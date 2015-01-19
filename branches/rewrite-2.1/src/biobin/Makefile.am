@@ -18,7 +18,9 @@ biobin_SOURCES= \
    Configuration.h \
    Configuration.cpp \
    util/ICompressedFile.h \
-   util/ICompressedFile.cpp
+   util/ICompressedFile.cpp \
+   util/string_ref.hpp \
+   util/string_ref_fwd.hpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  

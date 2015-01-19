@@ -21,11 +21,13 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include "Bin.h"
 #include "binmanager.h"
 
 #include "util/ICompressedFile.h"
+#include "util/string_ref.hpp"
 
 #include "taskfilegeneration.h"
 
@@ -426,6 +428,9 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 
 template<class T_cont>
 void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const Knowledge::Liftover::Converter* conv){
+	typedef std::string::const_iterator sc_iter;
+	typedef boost::iterator_range<sc_iter> string_view;
+
 
 	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());
 	unsigned int lineno = readVCFHeader(vcf_f);
@@ -438,6 +443,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	unsigned int n_fields = 9 + _positions.size();
 
 	std::string chr, id, ref, alt, filter, format;
+
 	unsigned int bploc = 0;
 	unsigned int gt_idx;
 	unsigned int ft_idx;
@@ -445,8 +451,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	unsigned int max_count;
 	bool lift_warn = false;
 	std::ofstream unlift_out;
-	std::vector<std::string> geno_list;
-	std::vector<std::string> fields;
+	std::vector<boost::string_ref> geno_list;
+	std::vector<boost::string_ref> fields;
 	std::vector<std::string> alleles;
 	std::vector<std::string> call_list;
 	std::vector<std::string> format_list;
@@ -460,6 +466,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	format_list.reserve(10);
 	call_list.reserve(2);
 
+	//boost::char_separator<char> vcf_sep("\t");
 
 	while(getline(vcf_f, curr_line)){
 		++lineno;
@@ -467,7 +474,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 		if(curr_line.size() > 2 && curr_line[0] != '#'){
 			// In this case, we're looking at a marker
 
-			boost::algorithm::split(fields, curr_line, boost::is_any_of("\t"));
+			boost::algorithm::iter_split(fields, curr_line, boost::first_finder("\t"));
 			if(fields.size() != n_fields){
 				std::cerr << "ERROR: Mismatched number of fields on line "
 						<< lineno << std::endl;
@@ -475,13 +482,59 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 				throw std::runtime_error("Mismatched number of fields in VCF file");
 			}
 
-			chr = fields[0];
+
+			/*boost::tokenizer<boost::char_separator<char> > tokens(curr_line, vcf_sep);
+			boost::tokenizer<boost::char_separator<char> >::const_iterator curr_entry = tokens.begin();
+			boost::tokenizer<boost::char_separator<char> >::const_iterator curr_end = tokens.end();
+
+			for(unsigned int i=0; i<9; i++){
+				if(curr_entry == curr_end){
+					std::cerr << "ERROR: Missing header fields on "
+							<< lineno << std::endl;
+					// throw exception here
+					throw std::runtime_error("Mismatched number of fields in VCF file");
+				}
+				else{
+					switch(i){
+					case 0:
+						chr = *curr_entry;
+						break;
+					case 1:
+						bploc = boost::lexical_cast<unsigned int>(*curr_entry);
+						break;
+					case 2:
+						id = *curr_entry;
+						break;
+					case 3:
+						ref = *curr_entry;
+						break;
+					case 4:
+						alt = *curr_entry;
+						break;
+					case 6:
+						filter = *curr_entry;
+						break;
+					case 8:
+						format = *curr_entry;
+						break;
+					// note: anything not listed, we drop!
+					}
+					++curr_entry;
+				}
+			}
+			unsigned int curr_nfields = 9;
+
+			for (tokenizer::iterator tok_iter = tokens.begin();
+			       tok_iter != tokens.end(); ++tok_iter)
+			chr =
+			*/
+			chr = std::string(fields[0].begin(), fields[0].end());
 			bploc = boost::lexical_cast<unsigned int>(fields[1]);
-			id = fields[2];
-			ref = fields[3];
-			alt = fields[4];
-			filter = fields[6];
-			format = fields[8];
+			id = std::string(fields[2].begin(), fields[2].end());
+			ref = std::string(fields[3].begin(), fields[4].end());
+			alt = std::string(fields[3].begin(), fields[4].end());
+			filter = std::string(fields[6].begin(), fields[6].end());
+			format = std::string(fields[8].begin(), fields[8].end());
 
 			// check for marker-level inclusion
 			if(filter == "." || filter == "PASS"){
@@ -537,20 +590,21 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 					}
 
 					calls.clear();
-					for(unsigned int i=0; i<n_fields-9; i++){
+					for (unsigned int i=0; i<fields.size() - 9; i++){
 
 						// parse the individual call
 						geno_list.clear();
-						boost::algorithm::split(geno_list, fields[i+9], boost::is_any_of(":"));
+						//std::string currstr(fields[i+9].begin(), fields[i+9].end());
+						boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
 
 						if(fields[i+9] != "." && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == "PASS")){
 							call_list.clear();
-							boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(geno_sep));
+							boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
 							if(call_list.size() == 1){
 								// we should be here very rarely!  If we're here,
 								// we'll assume that the "primary" separator of
 								// genotypes is in fact the "alternate", so swap them!
-								boost::algorithm::split(call_list, geno_list[gt_idx], boost::is_any_of(alt_geno_sep));
+								boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(alt_geno_sep));
 								geno_sep.swap(alt_geno_sep);
 							}
 
