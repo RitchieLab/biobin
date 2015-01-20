@@ -163,6 +163,22 @@ private:
 	float calcWeight(const Knowledge::Locus& loc) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
 
+	/*
+	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
+	 */
+	unsigned short fast_atoi(const boost::string_ref& r){
+		unsigned short value_ = 0;
+		unsigned int len = r.size();
+		switch(len){
+        case  5:    value_ += (r[len- 5] - '0') * 10000;
+        case  4:    value_ += (r[len- 4] - '0') * 1000;
+        case  3:    value_ += (r[len- 3] - '0') * 100;
+        case  2:    value_ += (r[len- 2] - '0') * 10;
+        case  1:    value_ += (r[len- 1] - '0');
+		}
+		return value_;
+	}
+
 	boost::array<unsigned int, 2> getBinCapacity(Bin& bin) const;
 
 	boost::unordered_map<std::string, float> _phenotypes;
@@ -615,8 +631,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 							} else {
 								unsigned short g1, g2;
 								if(call_list[0] != "." && call_list[1] != "."){
-									g1 = boost::lexical_cast<unsigned short>(call_list[0]);
-									g2 = boost::lexical_cast<unsigned short>(call_list[1]);
+									g1 = fast_atoi(call_list[0]);
+									g2 = fast_atoi(call_list[1]);
 									calls.push_back(std::make_pair(g1, g2));
 									++call_count[g1];
 									++call_count[g2];
