@@ -130,6 +130,7 @@ FILE* BinManager::printLocusBins(const L_cont& loci, const std::string& sep) con
 	while(l_itr != loci.end()){
 		tmp_stream << "\n";
 		printBins(tmp_stream, *l_itr, sep);
+		++l_itr;
 	}
 
 	return tmpf;
