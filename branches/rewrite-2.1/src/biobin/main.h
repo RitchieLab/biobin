@@ -12,9 +12,6 @@
 
 namespace BioBin {
 
-namespace Task{
-class Task;
-}
 
 /*!
  * \brief The class that controls all top-level behavior.
@@ -36,29 +33,8 @@ public:
 	Main() : app(c_knowledge_file, c_vcf_file){}
 	~Main();
 
-	/*!
-	 * \brief Runs the commands in order.
-	 * This is the main running function of the Main class.  Within this
-	 * function, the tasks are run as follows:
-	 * 0 - Run any setup tasks
-	 * Load SNPs / Variants
-	 * 1 - Run any tasks on only SNPS
-	 * Load Region / gene data
-	 * 2 - Run any tasks on Gene / SNP info only
-	 * Load Pathway data
-	 * Construct Bins
-	 * 3 - Run any final tasks
-	 */
+	// does the actual biobin work (only called if configuration is A-OK
 	void RunCommands();
-
-	/*!
-	 * \brief Initializes tasks to be performed by the RunCommands function.
-	 * This function sets up any tasks that need to be performed, and it must
-	 * be called before RunComands.
-	 *
-	 * NOTE:  Should we make this private and call it from within RunCommands??
-	 */
-	void initTasks();
 
 	//! The name of the VCF file containing info on variants
 	static std::string c_vcf_file;
@@ -67,19 +43,18 @@ public:
 	//! The build of the genome that the VCF file is based on
 	static std::string c_genome_build;
 
+	static std::string OutputDelimiter;
+
+	static bool WriteLociData;
+	static bool WriteBinData;
+
 	//! A vector of custom groups to use
 	static std::vector<std::string> c_custom_groups;
 
 
 private:
-	void LoadSNPs();
-	void RunTasks(int level);
-	void InitGroupData();
-	void InitRegionData();
 	
 	BinApplication app;					///< The application that does all of the work
-
-	std::multimap<int,Task::Task*> _task_list;
 
 };
 

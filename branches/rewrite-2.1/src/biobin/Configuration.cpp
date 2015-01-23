@@ -15,7 +15,6 @@
 
 #include "main.h"
 #include "binmanager.h"
-#include "taskfilegeneration.h"
 #include "binapplication.h"
 #include "PopulationManager.h"
 
@@ -59,9 +58,9 @@ void Configuration::initGeneric(){
 //				"Flag indicating to keep data pertaining to common variants (turn off to save memory)")
 		("add-group", value<vector<string> >()->composing(),
 				"A list of filenames containing a group collection definition")
-		("output-delimiter,d",value<string>(&Task::GenerateFiles::OutputDelimiter)->default_value(","),
+		("output-delimiter,d",value<string>(&Main::OutputDelimiter)->default_value(","),
 				"The delimiter to use when outputting text files")
-		("phenotype-filename,p",value<vector<string> >(&PopulationManager::c_phenotype_files)->composing(),
+		("phenotype-filename,p",value<string>(&PopulationManager::c_phenotype_file),
 				"Filename containing phenotype information")
 		("bin-minimum-size,m", value<uint>(&BinManager::MinBinSize)->default_value(5),
 				"The minimum size of any bin")
@@ -238,11 +237,8 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	//==========================================
 	// Parsing report strategies
 	//==========================================
-	BioBin::Task::GenerateFiles::WriteLociData = vm["report-loci"].as<Bool>();
-	BioBin::Task::GenerateFiles::WriteBinData = vm["report-bins"].as<Bool>();
-//	BioBin::Task::GenerateFiles::WriteGenotypeData = vm["report-genotypes"].as<Bool>();
-//	BioBin::Task::GenerateFiles::WriteAFData = vm["report-locus-freq"].as<Bool>();
-//	BioBin::Task::GenerateFiles::WriteBinFreqData = vm["report-bin-freq"].as<Bool>();
+	BioBin::Main::WriteLociData = vm["report-loci"].as<Bool>();
+	BioBin::Main::WriteBinData = vm["report-bins"].as<Bool>();
 	BinApplication::c_transpose_bins = vm["transpose-bins"].as<Bool>();
 	PopulationManager::NoSummary = vm["no-summary"].as<Bool>();
 

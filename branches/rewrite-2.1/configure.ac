@@ -22,7 +22,6 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
                  src/biobin/Makefile
                  src/knowledge/Makefile
-                 src/vcftools/Makefile
                  updater/Makefile
                  updater/loki/loadPops/Makefile
                  updater/loki/loadPops/ldspline/Makefile

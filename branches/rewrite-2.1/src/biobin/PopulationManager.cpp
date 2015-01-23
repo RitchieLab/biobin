@@ -8,6 +8,7 @@
 #include "PopulationManager.h"
 
 #include "binapplication.h"
+#include "binmanager.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -42,38 +43,33 @@ using Knowledge::Locus;
 namespace BioBin{
 
 float PopulationManager::c_phenotype_control = 0;
-vector<string> PopulationManager::c_phenotype_files;
+string PopulationManager::c_phenotype_file = "";
 float PopulationManager::c_min_control_frac = 0.125;
 PopulationManager::DiseaseModel PopulationManager::c_model =
 		PopulationManager::ADDITIVE;
 PopulationManager::WeightModel PopulationManager::c_weight_type =
 		PopulationManager::MAX;
 
-//bool PopulationManager::CompressedVCF = false;
-//bool PopulationManager::KeepCommonLoci = true;
 bool PopulationManager::RareCaseControl = true;
-//bool PopulationManager::OverallMajorAllele = true;
 bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::_use_custom_weight = false;
 bool PopulationManager::NoSummary = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) : _vcf_fn(vcf_fn){
-	//if(BinApplication::s_run_normal){
-	//	vcf = new VCF::vcf_file(vcf_fn, CompressedVCF);
-	//}
+
 }
 
-bool PopulationManager::isRare(const Locus& locus, float lower, float upper) const{
+bool PopulationManager::isRare(const Locus& locus, const bitset_pair& status, float lower, float upper) const{
 	bool rare = false;
 	float currmaf;
 
 	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr = _genotypes.find(&locus);
 	if(g_itr != _genotypes.end()){
-		currmaf = getMAF((*g_itr).second, &_control_bitset);
+		currmaf = getMAF((*g_itr).second, & status.first);
 		rare = currmaf <= upper && currmaf >= lower;
 
 		if(!rare && RareCaseControl){
-			currmaf = getMAF((*g_itr).second, &_case_bitset);
+			currmaf = getMAF((*g_itr).second, & status.second);
 			rare = currmaf <= upper && currmaf >= lower;
 		}
 	}
@@ -119,75 +115,93 @@ unsigned int PopulationManager::readVCFHeader(std::istream& v){
 
 void PopulationManager::loadIndividuals(){
 
-	// By default, everyone is missing who is not found in a phenotype file
-	//_is_control = vector<bool>(size, true);
-	_control_bitset = dynamic_bitset<>(_positions.size());
-	_case_bitset = dynamic_bitset<>(_positions.size());
-
-	// OK, now iterate through the phenotype files and load them up
-	vector<string>::const_iterator itr = c_phenotype_files.begin();
-	vector<string>::const_iterator end = c_phenotype_files.end();
-
-	// if we give NO phenotype file, just set everyone as a control
-	bool allControl = (itr == end);
-
-	while(itr != end){
-		parsePhenotypeFile(*itr);
-		++itr;
+	bool allControl = false;
+	if(c_phenotype_file != ""){
+		parsePhenotypeFile(c_phenotype_file);
+	} else {
+		allControl = true;
 	}
 
 	// Now, we go through and determine who is a case and who is a control
 	boost::unordered_map<string, int>::const_iterator p_itr = _positions.begin();
 	boost::unordered_map<string, int>::const_iterator p_end = _positions.end();
-	boost::unordered_map<string, float>::const_iterator pheno_itr;
-	boost::unordered_map<string, float>::const_iterator pheno_not_found = _phenotypes.end();
-	n_controls = 0;
-	n_cases = 0;
+	boost::unordered_map<string, vector<float> >::const_iterator pheno_itr;
+	boost::unordered_map<string, vector<float> >::const_iterator pheno_not_found = _phenos.end();
 	if(allControl){
-		_control_bitset.set();
-		_case_bitset.reset();
-		n_controls = _control_bitset.size();
-		n_cases = 0;
-	} else {
+		_pheno_names.push_back("");
+		// this will create the vector and make it length 1 (w/ value 0) all at once!
 		while(p_itr != p_end){
-			pheno_itr = _phenotypes.find((*p_itr).first);
+			_phenos[(*p_itr).first].push_back(0);
+			++p_itr;
+		}
+		dynamic_bitset<> cab = dynamic_bitset<>(_positions.size());
+		dynamic_bitset<> cob = dynamic_bitset<>(_positions.size());
+		cob.set();
+		_pheno_status.push_back(std::make_pair(cob, cab));
+	} else {
+
+		// push back all phenotypes that consists of "all missing"
+		dynamic_bitset<> cab(_positions.size());
+		dynamic_bitset<> cob(_positions.size());
+		_pheno_status.reserve(_pheno_names.size());
+		for(unsigned int i=0; i<_pheno_names.size(); i++){
+			_pheno_status.push_back(std::make_pair(cob, cab));
+		}
+
+		// now, iterate over ALL people that we have phenotypes for
+		while(p_itr != p_end){
+			pheno_itr = _phenos.find((*p_itr).first);
 
 			if (pheno_itr != pheno_not_found){
-				if((*pheno_itr).second == c_phenotype_control){
-
-					++n_controls;
-					_control_bitset.set((*p_itr).second);
-				}else{
-					++n_cases;
-					_case_bitset[(*p_itr).second] = !std::isnan((*pheno_itr).second);
+				for(unsigned int i=0; i<std::min((*pheno_itr).second.size(), _pheno_names.size()); i++){
+					if((*pheno_itr).second[i] == c_phenotype_control){
+						_pheno_status[i].first.set((*p_itr).second);
+					}else{
+						_pheno_status[i].second[(*p_itr).second] = !std::isnan((*pheno_itr).second[i]);
+					}
 				}
 			}
 			++p_itr;
 		}
 	}
 
-	unsigned int total = n_controls + n_cases;
+	// now, check each phenotype to make sure we have enough controls!
+	for(unsigned int i=0; i<_pheno_names.size(); i++){
+		unsigned int n_controls = _pheno_status[i].first.count();
+		unsigned int n_cases = _pheno_status[i].second.count();
+		unsigned int total = n_controls + n_cases;
 
-	// If we don't have enough controls, print a warning and make everyone a control
-	if ((n_controls / (float) total) < c_min_control_frac){
-		std::cerr << "WARNING: Number of controls is less than " <<
-				c_min_control_frac * 100 << "% of the data.  Using all individuals as controls\n";
-		_control_bitset |= _case_bitset;
-		_case_bitset.reset();
-	}else if(1-(n_controls / (float) total) < c_min_control_frac && (n_controls / total != 1)){
-		std::cerr << "WARNING: Number of cases is less than " <<
-				c_min_control_frac * 100 << "% of the data.  Allele frequencies"
-				" for cases may be unreliable\n";
-	}
+		// If we don't have enough controls, print a warning and make everyone a control
+		if ((n_controls / (float) total) < c_min_control_frac){
+			std::cerr << "WARNING: In Phenotype '" << _pheno_names[i]
+			          << "', number of controls is less than "
+			          << c_min_control_frac * 100
+			          << "% of the data.  Using all individuals as controls"
+			          << std::endl;
+			_pheno_status[i].first |= _pheno_status[i].second;
+			_pheno_status[i].second.reset();
+			n_controls = total;
+			n_cases = 0;
+		}else if(1-(n_controls / (float) total) < c_min_control_frac && (n_controls / total != 1)){
+			std::cerr << "WARNING: In phenotype '" << _pheno_names[i]
+			          << "', number of cases is less than "
+			          << c_min_control_frac * 100
+			          << "% of the data.  Allele frequencies for cases may be unreliable"
+			          << std::endl;
+		}
 
-	// Print a warning if rare variants will only be fixed variants
-	if (1 / static_cast<float>(2 *n_controls) > BinManager::mafCutoff){
-		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in controls are rare.\n";
+		// Print a warning if rare variants will only be fixed variants
+		if (1 / static_cast<float>(2 *n_controls) > BinManager::mafCutoff){
+			std::cerr << "WARNING: MAF cutoff is set so low that only variants "
+					  << "fixed in controls are rare for phenotype '"
+					  << _pheno_names[i] << "'." << std::endl;
+		}
+		if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(n_cases)) > BinManager::mafCutoff){
+			std::cerr << "WARNING: MAF cutoff is set so low that only variants "
+					  << "fixed in cases are rare for phenotype '"
+					  << _pheno_names[i] << "." << std::endl;
+		}
 	}
-	if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(n_cases)) > BinManager::mafCutoff){
-		std::cerr << "WARNING: MAF cutoff is set so low that only variants fixed in cases are rare.\n";
-	}
-
 }
 
 void PopulationManager::parsePhenotypeFile(const string& filename){
@@ -203,40 +217,52 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 	string line;
 	vector<string> result;
 	int line_no = 0;
+	bool header_read = false;
 	while(data_file.good()){
 		getline(data_file, line);
 		++line_no;
 		trim(line);
 
-		if(line.size() > 0 && line[0] != '#'){
-			split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
+		if(line.size() > 0){
 
-			if (result.size() && result.size() < 2){
-				std::cerr << "WARNING: improperly formatted phenotype file "
-						<< "on line " << line_no << ".\n";
+			if(!header_read && line[0] == '#'){
+				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
+				for(unsigned int i=1; i<result.size(); i++){
+					_pheno_names.push_back(result[i]);
+				}
+			} else if(line[0] != '#'){
+				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 
-			}else if(result.size()){
-				if (_positions.find(result[0]) == _positions.end()){
-					std::cerr << "WARNING: cannot find " << result[0] << " in VCF file.\n";
+				// if we haven't read the header, just assign arbitrary phenotype names
+				if(!header_read){
+					if(result.size() > 2){
+						std::cerr << "WARNING: No header given for multiple phenotypes, assigning sequential phenotype names" << std::endl;
+						for(unsigned int i=1; i<result.size(); i++){
+							_pheno_names.push_back("pheno_" + boost::lexical_cast<string>(i));
+						}
+					}else{
+						_pheno_names.push_back("");
+					}
 				}
 
-				try{
-					_phenotypes[result[0]] = lexical_cast<float>(result[1]);
-				}catch(bad_lexical_cast&){
-					_phenotypes[result[0]] = std::numeric_limits<float>::quiet_NaN();
+				if (result.size() != _pheno_names.size() + 1){
+					std::cerr << "WARNING: improperly formatted phenotype file "
+							  << "on line " << line_no << ", ignoring." << std::endl;
+				}else if (_positions.find(result[0]) == _positions.end()){
+						std::cerr << "WARNING: cannot find " << result[0] << " in VCF file." << std::endl;
+				} else {
+					_phenos[result[0]].reserve(_pheno_names.size());
+					for(unsigned int i=1; i<result.size(); i++){
+						try{
+							_phenos[result[0]].push_back(lexical_cast<float>(result[i]));
+						}catch(bad_lexical_cast&){
+							_phenos[result[0]].push_back(std::numeric_limits<float>::quiet_NaN());
+						}
+					}
 				}
 			}
+			header_read = true;
 		}
-	}
-}
-
-float PopulationManager::getCaseAF(const Locus& loc) const{
-	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
-
-	if(itr != _genotypes.end()){
-		return getMAF((*itr).second, &_case_bitset);
-	} else {
-		return std::numeric_limits<float>::quiet_NaN();
 	}
 }
 
@@ -250,7 +276,7 @@ unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
 	}
 }
 
-float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeights, const Information* const info, const Region* const reg) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset_pair& status, bool useWeights, const Information* const info, const Region* const reg) const{
 
 	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
 
@@ -281,7 +307,7 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, bool useWeig
 		}
 		if(c_use_calc_weight && loc_cache != &loc){
 			loc_cache = &loc;
-			weight_cache = calcWeight(loc);
+			weight_cache = calcWeight(loc, status);
 		}
 
 	}
@@ -332,9 +358,12 @@ float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) co
 	//return 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
 }
 
-float PopulationManager::calcWeight(const Locus& loc) const{
+float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status) const{
 	// *_a = Affected (cases), *_u = Unaffected (controls)
 	// N_* = Number (population), F_* = Frequency
+	const boost::dynamic_bitset<>& control_bitset=status.first;
+	const boost::dynamic_bitset<>& case_bitset=status.second;
+
 	int N_a, N_u, N;
 	int M_a, M_u, M;
 	float w_a = std::numeric_limits<float>::quiet_NaN();
@@ -348,14 +377,14 @@ float PopulationManager::calcWeight(const Locus& loc) const{
 
 	dynamic_bitset<> nonmissing = ~((*it).second.first & (*it).second.second);
 
-	N_u = (nonmissing & _control_bitset).count() ;
-	N_a = (nonmissing & _case_bitset).count();
+	N_u = (nonmissing & control_bitset).count() ;
+	N_a = (nonmissing & case_bitset).count();
 	N = N_u + N_a;
 
-	M_u = 2*((*it).second.first & _control_bitset & nonmissing).count() +
-			((*it).second.second & _control_bitset & nonmissing).count();
-	M_a = 2*((*it).second.first & _case_bitset & nonmissing).count() +
-			((*it).second.second & _case_bitset & nonmissing).count();
+	M_u = 2*((*it).second.first & control_bitset & nonmissing).count() +
+			((*it).second.second & control_bitset & nonmissing).count();
+	M_a = 2*((*it).second.first & case_bitset & nonmissing).count() +
+			((*it).second.second & case_bitset & nonmissing).count();
 	M = M_u + M_a;
 
 	float weight = 1;
@@ -405,8 +434,10 @@ float PopulationManager::getCustomWeight(const Locus& loc, const Information& in
 	return weight_cache;
 }
 
-boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const {
+boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin, const bitset_pair& status) const {
 
+	const boost::dynamic_bitset<>& control_bitset=status.first;
+	const boost::dynamic_bitset<>& case_bitset=status.second;
 	Bin::const_locus_iterator b_itr = bin.variantBegin();
 	Bin::const_locus_iterator b_end = bin.variantEnd();
 	boost::array<unsigned int, 2> capacity;
@@ -420,8 +451,8 @@ boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin) const 
 		l_itr = _genotypes.find(*b_itr);
 		if (l_itr != l_end) {
 			dynamic_bitset<> nonmiss = ~((*l_itr).second.first & (*l_itr).second.second);
-			capacity[0] += (nonmiss & _control_bitset).count();
-			capacity[1] += (nonmiss & _case_bitset).count();
+			capacity[0] += (nonmiss & control_bitset).count();
+			capacity[1] += (nonmiss & case_bitset).count();
 		}
 		++b_itr;
 	}

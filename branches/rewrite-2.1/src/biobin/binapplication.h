@@ -29,6 +29,7 @@
 #include <deque>
 #include <utility>
 #include <set>
+#include <cstdio>
 
 #include <sqlite3.h>
 
@@ -56,9 +57,6 @@ public:
 	BinApplication(const std::string& db_fn, const std::string& vcf_file);
 	~BinApplication();
 
-	std::string GetReportLog() {return reportLog.str();}
-	std::string AddReport(const std::string& suffix, const std::string& extension, const std::string& description);
-
 	// We want to separate the next two steps because some jobs require only one
 	// of the two be performed, and they do take time to complete
 	/**
@@ -82,14 +80,10 @@ public:
 
 	unsigned int GetPopulationID(const std::string& pop){return _info->getPopulationID(pop);}
 
-	Knowledge::RegionCollection* GetRegions(){return regions;}
-
 	void SetGeneExtension(unsigned int geneBoundaryExt){geneExtensionLength = geneBoundaryExt;}
 	void SetReportPrefix(const std::string& pref){reportPrefix=(pref=="")?"biobin":pref;}
-
-	template <class SNP_cont>
-	void InitVcfDataset(const std::string& genomicBuild,
-			SNP_cont& lostSnps);
+	void InitVcfDataset(const std::string& genomicBuild);
+	void loadRoles(){_info->loadRoles(*regions);}
 
 	/**
 	 * Initialize the bins.  After this call, the binmanager will have the final
@@ -98,10 +92,7 @@ public:
 	void InitBins();
 
 	void writeBinData(const std::string& filename, const std::string& sep=",") const;
-//	void writeGenotypeData(const std::string& filename, const std::string& sep=",") const;
 	void writeLoci(const std::string& filename, const std::string& sep=",") const;
-//	void writeAFData(const std::string& filename, const std::string& sep=",") const;
-//	void writeBinFreqData(const std::string& filename, const std::string& sep=",") const;
 
 	static bool c_transpose_bins;
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
@@ -132,19 +123,19 @@ private:
 	///< the data associated with the user
 	std::deque<Knowledge::Locus*> dataset;
 
+	std::vector<FILE*> _locus_bins;
+
 	///< The variation version (to guarantee that the variations file is correct for the database being used)
 	unsigned int varVersion;
 	///< Filename for variation data-this might not be opened, depending on how the user loads their data
 	std::string variationFilename;
-	///< The list of report filenames generated
-	std::stringstream reportLog;
 
 	///< Length of extension on either side of a gene (not to be mixed with LD extension)
 	unsigned int geneExtensionLength;
 
 	PopulationManager _pop_mgr;
 
-	BinManager binData;
+	BinManager* binData;
 
 //Everything from here on down has to do with installing a new handler that
 // will try to get sqlite to give up some of its cache
@@ -160,21 +151,6 @@ private:
 
 
 };
-
-
-template <class SNP_cont>
-void BinApplication::InitVcfDataset(const std::string& genomicBuild, SNP_cont& lostSnps) {
-
-	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
-	int chainCount = cnv.Load();
-
-	if (chainCount > 0) {
-		_pop_mgr.loadLoci(dataset,reportPrefix,&cnv);
-	}else{
-		_pop_mgr.loadLoci(dataset,reportPrefix);
-	}
-
-}
 
 
 template <class T_cont>
@@ -193,6 +169,7 @@ unsigned int BinApplication::LoadRegionData(T_cont& aliasesNotFound, const std::
 	}
 
 	return aliasList.size() - aliasesNotFound.size();
+
 }
 
 

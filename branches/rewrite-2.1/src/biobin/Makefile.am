@@ -9,10 +9,6 @@ biobin_SOURCES= \
    binmanager.cpp \
    main.h \
    main.cpp \
-   task.h \
-   task.cpp \
-   taskfilegeneration.h \
-   taskfilegeneration.cpp \
    PopulationManager.h \
    PopulationManager.cpp \
    Configuration.h \
