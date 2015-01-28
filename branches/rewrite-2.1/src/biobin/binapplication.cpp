@@ -10,6 +10,7 @@
 #include "main.h"
 
 #include <iomanip>
+#include <cstdio>
 
 #include <boost/algorithm/string.hpp>
 
@@ -169,12 +170,12 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locus_streams.reserve(_locus_bins.size());
 	string pheno_bins;
 	for(unsigned int i=0; i<_locus_bins.size(); i++){
+		rewind(_locus_bins[i]);
 		locus_streams.push_back(
 				new boost::iostreams::stream<boost::iostreams::file_descriptor>(
 						boost::iostreams::file_descriptor(fileno(_locus_bins[i])),
 						std::ios_base::binary | std::ios_base::in | std::ios_base::out)
 				);
-		locus_streams[i]->seekg(0);
 		locusFile << sep;
 		getline(*locus_streams[i], pheno_bins);
 		printEscapedString(locusFile, pheno_bins + " Bin Name(s)", sep, sep_repl);
