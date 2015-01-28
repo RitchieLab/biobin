@@ -42,7 +42,7 @@ bool BinApplication::s_run_normal = true;
 new_handler BinApplication::currentHandler;
 
 BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
-	dbFilename(db_fn), varVersion(0), geneExtensionLength(0),
+	dbFilename(db_fn), _info(0), regions(0), groups(0), varVersion(0), geneExtensionLength(0),
 			_pop_mgr(vcf_file) {
 
 	Init(db_fn, true);
@@ -64,8 +64,12 @@ BinApplication::~BinApplication(){
 
 	sqlite3_close(_db);
 
-	delete _info;
-	delete regions;
+	if(_info){
+		delete _info;
+	}
+	if(regions){
+		delete regions;
+	}
 
 	deque<Knowledge::Locus*>::iterator d_itr = dataset.begin();
 	while(d_itr != dataset.end()){
@@ -73,8 +77,9 @@ BinApplication::~BinApplication(){
 		++d_itr;
 	}
 	//dataset.clear();
-
-	delete groups;
+	if(groups){
+		delete groups;
+	}
 
 	for(unsigned int i=0; i<_locus_bins.size(); i++){
 		fclose(_locus_bins[i]);
@@ -174,7 +179,7 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		locus_streams.push_back(
 				new boost::iostreams::stream<boost::iostreams::file_descriptor>(
 						boost::iostreams::file_descriptor(fileno(_locus_bins[i])),
-						std::ios_base::binary | std::ios_base::in | std::ios_base::out)
+						std::ios_base::binary | std::ios_base::in)
 				);
 		locusFile << sep;
 		getline(*locus_streams[i], pheno_bins);

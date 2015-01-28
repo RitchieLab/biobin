@@ -65,8 +65,8 @@ public:
 
 	// create a temporary file (using tmpfile) and
 	template <class L_cont>
-	FILE* printLocusBins(const L_cont& loci, const std::string& sep=":") const;
-	void printBins(std::ostream& os, Knowledge::Locus* locus, const std::string& sep=":") const;
+	FILE* printLocusBins(const L_cont& loci, const std::string& sep="|") const;
+	void printBins(std::ostream& os, Knowledge::Locus* locus, const std::string& sep="|") const;
 	void printLocusBinCount(std::ostream& os, float pct=0.1) const;
 
 	static unsigned int IntergenicBinWidth;				///< The width of the intergenic bins within a chromosome
@@ -123,7 +123,7 @@ template <class L_cont>
 FILE* BinManager::printLocusBins(const L_cont& loci, const std::string& sep) const{
 	FILE* tmpf = std::tmpfile();
 	boost::iostreams::stream<boost::iostreams::file_descriptor> tmp_stream(boost::iostreams::file_descriptor(fileno(tmpf)),
-					std::ios_base::binary | std::ios_base::in | std::ios_base::out);
+					std::ios_base::binary | std::ios_base::out);
 
 	tmp_stream << _pop_mgr.getPhenotypeName(_pheno.getIndex());
 	typename L_cont::const_iterator l_itr = loci.begin();
@@ -132,8 +132,9 @@ FILE* BinManager::printLocusBins(const L_cont& loci, const std::string& sep) con
 		printBins(tmp_stream, *l_itr, sep);
 		++l_itr;
 	}
+	tmp_stream << std::endl;
 
-	return tmpf;
+	return fdopen(dup(fileno(tmpf)), "wb+");;
 }
 
 } //namespace BioBin
