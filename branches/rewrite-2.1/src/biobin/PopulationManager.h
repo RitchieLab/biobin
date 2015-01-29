@@ -415,7 +415,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 		// Print 6th + 7th Lines (bin capacities for cases and controls)
 		for(int i=0; i<2; i++){
 			printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
-			os << sep << -1;
+			os << sep << missing_status;
 			b_itr = bins.begin();
 			b_end = bins.end();
 			while(b_itr != b_end){

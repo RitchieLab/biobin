@@ -91,7 +91,6 @@ public:
      */
 	void InitBins();
 
-	void writeBinData(const std::string& filename, const std::string& sep=",") const;
 	void writeLoci(const std::string& filename, const std::string& sep=",") const;
 
 	static bool c_transpose_bins;
