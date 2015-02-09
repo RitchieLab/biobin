@@ -13,6 +13,8 @@
 #include <cstdio>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
 
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
@@ -32,12 +34,13 @@ using boost::unordered_map;
 
 namespace BioBin {
 
+std::string BinApplication::reportPrefix = "biobin";
 bool BinApplication::c_transpose_bins = false;
 bool BinApplication::errorExit = false;
-std::string BinApplication::reportPrefix = "biobin";
 bool BinApplication::c_print_sources = false;
 bool BinApplication::c_print_populations = false;
 bool BinApplication::s_run_normal = true;
+unsigned int BinApplication::n_threads = 0;
 
 new_handler BinApplication::currentHandler;
 
@@ -88,60 +91,87 @@ BinApplication::~BinApplication(){
 
 }
 
+void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_itr){
+
+	_pheno_mutex.lock();
+		while(ph_itr != _pop_mgr.endPheno()){
+			PopulationManager::Phenotype ph(*ph_itr);
+			_pheno_mutex.unlock();
+
+			BinManager binData(_pop_mgr, *regions, dataset, *_info, ph);
+
+			_output_mutex.lock();
+			std::cout << "Phenotype: " << _pop_mgr.getPhenotypeName(ph.getIndex()) << std::endl;
+
+			std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+						<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
+						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
+
+			std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
+					 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
+
+			if (binData.numBins() > 0 && binData.numBins() < 500) {
+				std::cout<<"\n\nBin Name\tVariant Count\n";
+				BinManager::const_iterator itr = binData.begin();
+				BinManager::const_iterator end = binData.end();
+				while(itr != end){
+					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+					++itr;
+				}
+			}
+
+			std::cout << std::endl;
+			binData.printLocusBinCount(std::cout);
+			std::cout << std::endl;
+
+			_output_mutex.unlock();
+
+			// If we are creating a locus report, print all bin data for each locus
+			if(Main::WriteLociData){
+				FILE* fp = binData.printLocusBins(dataset);
+
+				_data_mutex.lock();
+				_locus_bins[ph.getIndex()] = fp;
+				_data_mutex.unlock();
+			}
+
+			// print the Bin data
+			if(Main::WriteBinData){
+				std::string filename = reportPrefix + "-" + _pop_mgr.getPhenotypeName(ph.getIndex()) + "-bins.csv";
+				std::ofstream file(filename.c_str());
+				binData.printBinData(file, Main::OutputDelimiter, c_transpose_bins);
+				file.close();
+			}
+
+			_pheno_mutex.lock();
+			if(ph_itr != _pop_mgr.endPheno()){
+				++ph_itr;
+			}
+		}
+		_pheno_mutex.unlock();
+
+}
+
 void BinApplication::InitBins() {
-	
+
 	_info->loadWeights(*regions);
 
 	if(Main::WriteLociData){
 		_locus_bins.resize(_pop_mgr.getNumPhenotypes(), 0);
 	}
-
 	PopulationManager::const_pheno_iterator ph_itr = _pop_mgr.beginPheno();
-	while(ph_itr != _pop_mgr.endPheno()){
-		BinManager binData(_pop_mgr, *regions, dataset, *_info, *ph_itr);
 
-		std::cout << "Phenotype: " << _pop_mgr.getPhenotypeName((*ph_itr).getIndex()) << std::endl;
-
-		std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
-					<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
-					<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
-
-		std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
-				 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
-
-		if (binData.numBins() > 0 && binData.numBins() < 500) {
-			std::cout<<"\n\nBin Name\tVariant Count\n";
-			BinManager::const_iterator itr = binData.begin();
-			BinManager::const_iterator end = binData.end();
-			while(itr != end){
-				std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
-				++itr;
-			}
+	//TODO: make this a threaded call
+	if(n_threads == 0){
+		binPhenotypes(ph_itr);
+	} else {
+		boost::thread_group tg;
+		for (unsigned int i = 0; i < n_threads; i++) {
+			tg.create_thread(boost::bind(&BinApplication::binPhenotypes, this, boost::ref(ph_itr)));
 		}
-
-		// If we are creating a locus report, print all bin data for each locus
-		if(Main::WriteLociData){
-			_locus_bins[(*ph_itr).getIndex()] = binData.printLocusBins(dataset);
-		}
-
-		// print the Bin data
-		if(Main::WriteBinData){
-			std::string filename = reportPrefix + "-" + _pop_mgr.getPhenotypeName((*ph_itr).getIndex()) + "-bins.csv";
-			std::ofstream file(filename.c_str());
-			binData.printBinData(file, Main::OutputDelimiter, c_transpose_bins);
-			file.close();
-		}
-
-		std::cout << std::endl;
-		binData.printLocusBinCount(std::cout);
-		std::cout << std::endl;
-
-		// Add output about number of bins
-
-		++ph_itr;
+		tg.join_all();
 	}
-
-	}
+}
 
 void BinApplication::InitVcfDataset(const std::string& genomicBuild) {
 

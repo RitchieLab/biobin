@@ -35,6 +35,7 @@
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 
 #include "Bin.h"
 #include "binmanager.h"
@@ -93,15 +94,18 @@ public:
 
 	void writeLoci(const std::string& filename, const std::string& sep=",") const;
 
+	static std::string reportPrefix;
 	static bool c_transpose_bins;
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
-	static std::string reportPrefix;
 	static bool c_print_sources;
 	static bool c_print_populations;
 	static bool s_run_normal;
+	static unsigned int n_threads;
 
 private:
 	void Init(const std::string& dbFilename, bool reportVersions);
+
+	void binPhenotypes(PopulationManager::const_pheno_iterator& ph_itr);
 
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
 	std::string getEscapeString(const std::string& sep) const;
@@ -135,6 +139,11 @@ private:
 	PopulationManager _pop_mgr;
 
 	BinManager* binData;
+
+	boost::mutex _output_mutex;
+	boost::mutex _pheno_mutex;
+	boost::mutex _data_mutex;
+
 
 //Everything from here on down has to do with installing a new handler that
 // will try to get sqlite to give up some of its cache

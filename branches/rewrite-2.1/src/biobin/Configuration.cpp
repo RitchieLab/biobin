@@ -49,7 +49,8 @@ void Configuration::initGeneric(){
 		("settings-db,D", value<string>(&Main::c_knowledge_file)->default_value("knowledge.bio"),
 				"The location of the database")
 		("vcf-file,V",value<string>(&Main::c_vcf_file), "The file containing VCF information")
-//		("compressed-vcf,C", value<Bool>()->default_value(false), "Flag indicating VCF file is compressed")
+		("threads,t", value<unsigned int>(&BinApplication::n_threads)->default_value(1),
+				"Number of threads to use when PheWAS binning")
 		("maf-cutoff,F",value<float>(&BinManager::mafCutoff)->default_value(.05, "0.05"),
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("maf-threshold", value<float>(&BinManager::mafThreshold)->default_value(0, "0"),
