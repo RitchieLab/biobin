@@ -1,0 +1,145 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> exon_BF_bins <- read.csv("../data/combined_output_b37-BinFreq.csv")
+> 
+> resid <- abs(exon_BF_bins$Control.Freq. - exon_BF_bins$Case.Freq.)/sqrt(2)
+> exon_BF_bins <- cbind(exon_BF_bins, resid)
+> for (i in 1:length(exon_BF_bins$Bin)){
++   if (exon_BF_bins[i,2]<0 || exon_BF_bins[i,3]<0){
++     exon_BF_bins[i,4] <- -1
++   }
++   if (exon_BF_bins[i,1] == "ATP8B4" || exon_BF_bins[i,1] =="DUSP26" || exon_BF_bins[i,1] =="ARHGEF10L"){
++     show(exon_BF_bins[i,])
++   }
++ }
+          Bin Control.Freq. Case.Freq.      resid
+470 ARHGEF10L      0.010101 0.00185185 0.00583303
+       Bin Control.Freq. Case.Freq.      resid
+571 DUSP26     0.0265152          0 0.01874908
+       Bin Control.Freq. Case.Freq.       resid
+589 ATP8B4    0.00137741  0.0111111 0.006882758
+> View(exon_BF_bins)
+> 
+> #find the limit of the highest ten residuals 
+> sorted_resid <- sort(exon_BF_bins$resid, TRUE)
+> resid_lim <- sorted_resid[30]
+> 
+> #create a column with ids for only those top 10 residuals
+> labels_top <- exon_BF_bins$Bin
+> top10table <- exon_BF_bins[0,]
+> for (i in 1:length(exon_BF_bins$Bin)){
++   if (exon_BF_bins[i,4] < resid_lim){
++     labels_top[i] <- ''
++   }
++   else{
++     top10table <- rbind(top10table,exon_BF_bins[i,])
++   }
++ }
+There were 50 or more warnings (use warnings() to see the first 50)
+> show(top10table)
+        Bin Control.Freq. Case.Freq.      resid
+17    C1QBP    0.03787880 0.01111110 0.01892762
+35     CES1    0.00324675 0.05079370 0.03362077
+41     CTSS    0.02272730 0.10000000 0.05464005
+47     DSC1    0.03030300 0.06111110 0.02178462
+93     RBPJ    0.00378788 0.02500000 0.01499923
+109    MAPT    0.00000000 0.03888890 0.02749860
+152   PPYR1    0.00303030 0.02888890 0.01828479
+189 SULT1A1    0.00000000 0.02592590 0.01833238
+247 SLC16A5    0.00000000 0.03333330 0.02357020
+267   AKAP7    0.00757576 0.03055560 0.01624920
+272  SPTLC2    0.03030300 0.07222220 0.02964135
+343   ACIN1    0.00420875 0.02962960 0.01797526
+345   PALLD    0.00568182 0.03819440 0.02298987
+348    SMC5    0.00757576 0.03611110 0.02017753
+408 MRPS18B    0.04545450 0.00555556 0.02821281
+435   MTFP1    0.00757576 0.02777780 0.01428500
+442  CALML5    0.01515150 0.19444400 0.12677894
+483  IMPACT    0.03787880 0.10555600 0.04785501
+525    ACN9    0.00000000 0.05000000 0.03535534
+533 C3orf14    0.03030300 0.00555556 0.01749908
+544 DENND1A    0.02020200 0.04074070 0.01452305
+558   CARD9    0.02651520 0.00694444 0.01383862
+571  DUSP26    0.02651520 0.00000000 0.01874908
+599 SLC44A4    0.02272730 0.00000000 0.01607063
+618 FAM71F1    0.00000000 0.02222220 0.01571347
+643  TP53RK    0.02272730 0.05000000 0.01928471
+675  CCDC26    0.03787880 0.00000000 0.02678436
+694   WFDC5    0.00000000 0.02222220 0.01571347
+761   NPSR1    0.01767680 0.04814810 0.02154646
+773    AAA1    0.02651520 0.06944440 0.03035553
+>     
+> plot(exon_BF_bins$Control.Freq., exon_BF_bins$Case.Freq, 
++      ylab = "Case Bin Freq (CEU)", 
++      xlab = "Control Bin Freq (TSI)",
++      xlim=c(0,(max(exon_BF_bins$Control.Freq))), 
++      ylim=c(0,(max(top10table$Case.Freq))+.02),
++      pch = 20, 
++      cex = .3)
+> title(main = "Case Bin Freq versus Control Bin Freq")
+> abline(0,1)
+> text(exon_BF_bins$Control.Freq., exon_BF_bins$Case.Freq., labels_top, cex=0.6, pos=3, col="red")
+> 
+> genes_pvalues <- read.delim("../data/genes_pvalues.txt", header=F)
+> # BF_pval <- ''
+>  BF_pval <- merge(exon_BF_bins, genes_pvalues, by.x = "Bin", by.y = "V1")
+>  View(BF_pval)
+> 
+> # for (i in 1:length(exon_BF_bins)){
+> #   if (exon_BF_bins[i,5] >= .2){
+> #     exon_BF_bins[i,5] <- -1
+> #   }
+> # }
+> 
+> cor.p <- cor.test(BF_pval$resid,BF_pval$V2)
+> plot(BF_pval$resid,
++      axes=FALSE, ann=FALSE,
++      ylab = "Bin residuals", 
++      xlab = "Bins",
++      xlim=c(0,262), 
++      ylim=c(0,0.2),
++      pch = 20, 
++      cex = .3, 
++      col = "blue")
+> par(new=TRUE)
+> plot(BF_pval$V2, col = "green",
++      axes=FALSE, ann=FALSE,
++      ylab = "Bin residuals", 
++      xlab = "Bins",
++      xlim=c(0,262), 
++      ylim=c(0,0.2))
+> axis(1, las=2, at=0:(length(BF_pval$Bin)-1), lab=BF_pval$Bin, cex.axis=.15)
+> axis(2)
+> box()
+> # Graph resid with thicker blue dashed line
+> lines(BF_pval$resid, type="l", lty=2, lwd=2, 
++   col="blue")
+> 
+> # Graph pvalue with thicker green dotted line
+> lines(BF_pval$V2, type="l", lty=3, lwd=2, 
++   col="green")
+> title(main = "Residuals for each bin")
+> 
+> proc.time()
+   user  system elapsed 
+  1.310   0.031   1.458 
