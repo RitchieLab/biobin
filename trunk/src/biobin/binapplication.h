@@ -29,11 +29,13 @@
 #include <deque>
 #include <utility>
 #include <set>
+#include <cstdio>
 
 #include <sqlite3.h>
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 
 #include "Bin.h"
 #include "binmanager.h"
@@ -55,9 +57,6 @@ class BinApplication{
 public:
 	BinApplication(const std::string& db_fn, const std::string& vcf_file);
 	~BinApplication();
-
-	std::string GetReportLog() {return reportLog.str();}
-	std::string AddReport(const std::string& suffix, const std::string& extension, const std::string& description);
 
 	// We want to separate the next two steps because some jobs require only one
 	// of the two be performed, and they do take time to complete
@@ -82,14 +81,10 @@ public:
 
 	unsigned int GetPopulationID(const std::string& pop){return _info->getPopulationID(pop);}
 
-	Knowledge::RegionCollection* GetRegions(){return regions;}
-
 	void SetGeneExtension(unsigned int geneBoundaryExt){geneExtensionLength = geneBoundaryExt;}
 	void SetReportPrefix(const std::string& pref){reportPrefix=(pref=="")?"biobin":pref;}
-
-	template <class SNP_cont>
-	void InitVcfDataset(std::string& genomicBuild,
-			SNP_cont& lostSnps);
+	void InitVcfDataset(const std::string& genomicBuild);
+	void loadRoles(){_info->loadRoles(*regions);}
 
 	/**
 	 * Initialize the bins.  After this call, the binmanager will have the final
@@ -97,24 +92,23 @@ public:
      */
 	void InitBins();
 
-	void writeBinData(const std::string& filename, const std::string& sep=",") const;
-	void writeGenotypeData(const std::string& filename, const std::string& sep=",") const;
 	void writeLoci(const std::string& filename, const std::string& sep=",") const;
-	void writeAFData(const std::string& filename, const std::string& sep=",") const;
-	void writeBinFreqData(const std::string& filename, const std::string& sep=",") const;
 
+	static std::string reportPrefix;
 	static bool c_transpose_bins;
 	static bool errorExit;										///< When exiting on errors, we won't report the files that "would" have been generated.
-	static std::string reportPrefix;
 	static bool c_print_sources;
 	static bool c_print_populations;
 	static bool s_run_normal;
+	static unsigned int n_threads;
 
 private:
 	void Init(const std::string& dbFilename, bool reportVersions);
 
+	void binPhenotypes(PopulationManager::const_pheno_iterator& ph_itr);
+
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
-	string getEscapeString(const std::string& sep) const;
+	std::string getEscapeString(const std::string& sep) const;
 
 	///< The name of the database file
 	std::string dbFilename;
@@ -132,19 +126,24 @@ private:
 	///< the data associated with the user
 	std::deque<Knowledge::Locus*> dataset;
 
+	std::vector<FILE*> _locus_bins;
+
 	///< The variation version (to guarantee that the variations file is correct for the database being used)
 	unsigned int varVersion;
 	///< Filename for variation data-this might not be opened, depending on how the user loads their data
 	std::string variationFilename;
-	///< The list of report filenames generated
-	std::stringstream reportLog;
 
 	///< Length of extension on either side of a gene (not to be mixed with LD extension)
 	unsigned int geneExtensionLength;
 
 	PopulationManager _pop_mgr;
 
-	BinManager binData;
+	BinManager* binData;
+
+	boost::mutex _output_mutex;
+	boost::mutex _pheno_mutex;
+	boost::mutex _data_mutex;
+
 
 //Everything from here on down has to do with installing a new handler that
 // will try to get sqlite to give up some of its cache
@@ -160,21 +159,6 @@ private:
 
 
 };
-
-
-template <class SNP_cont>
-void BinApplication::InitVcfDataset(std::string& genomicBuild, SNP_cont& lostSnps) {
-
-	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
-	int chainCount = cnv.Load();
-
-	if (chainCount > 0) {
-		_pop_mgr.loadLoci(dataset,&cnv);
-	}else{
-		_pop_mgr.loadLoci(dataset);
-	}
-
-}
 
 
 template <class T_cont>
@@ -193,6 +177,7 @@ unsigned int BinApplication::LoadRegionData(T_cont& aliasesNotFound, const std::
 	}
 
 	return aliasList.size() - aliasesNotFound.size();
+
 }
 
 

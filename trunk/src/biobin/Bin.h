@@ -74,13 +74,13 @@ public:
 	 *
 	 * \return The size (number of contributions) of this bin.
 	 */
-	int getSize() const;
+	unsigned int getSize() const;
 	/*!
 	 * \brief Return the number of variants in the bin.
 	 *
 	 * \return The number of variants (Loci) that the bin contains
 	 */
-	int getVariantSize() const {return _variants.size();}
+	unsigned int getVariantSize() const {return _variants.size();}
 	/*!
 	 * \brief Return a unique ID (for type) of the bin.
 	 *
@@ -145,10 +145,11 @@ private:
 
 	bool _is_group;
 	bool _is_intergenic;
+	mutable bool _cached;
+
 	short _chrom;
 
-	mutable int _size_cache;
-	mutable bool _cached;
+	mutable unsigned int _size_cache;
 
 	std::string _name;
 	std::vector<std::string> _extra_data;

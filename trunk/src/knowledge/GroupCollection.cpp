@@ -38,7 +38,7 @@ unordered_set<uint> GroupCollection::c_id_list;
 Group GroupCollection::_group_not_found(-1, "Not found", "");
 GroupCollection::AmbiguityModel GroupCollection::c_ambiguity(GroupCollection::PERMISSIVE);
 
-GroupCollection::GroupCollection(RegionCollection& reg) : _regions(reg) {}
+GroupCollection::GroupCollection(RegionCollection& reg) : _max_group(0), _regions(reg) {}
 
 GroupCollection::~GroupCollection(){
 	unordered_map<uint, Group*>::iterator itr = _group_map.begin();

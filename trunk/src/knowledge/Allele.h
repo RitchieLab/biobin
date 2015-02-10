@@ -36,7 +36,7 @@ public:
 	 * \param freq The frequency of this allele
 	 * \param pos The position of the allele in the given input file
 	 */
-	Allele(const std::string& data, float freq, unsigned short pos);
+	Allele(const std::string& data, unsigned short pos);
 
 	/*!
 	 * Destructor for the allele.  Currently a noop.
@@ -44,15 +44,8 @@ public:
 	~Allele() {}
 
 	/*!
-	 * Comparison operator, used in STL constructs.  Alleles are ordered by
-	 * frequency, then by data.  This should ensure that for a given locus, the
-	 * alleles are strictly ordered.  The comparison of alleles between loci is
-	 * nonsensical.
-	 *
-	 * NOTE: The comparison of frequencies is reversed from standard, so the
-	 * allele with the highest frequency will be first in an STL ordered
-	 * container.  That is, other._freq > this._freq => other < this.
-	 *
+	 * Comparison operator, used in STL constructs.  Ordered by index into the
+	 * static string pool.
 	 * \param other The allele to compare to
 	 */
 	bool operator<(const Allele& other) const;
@@ -63,11 +56,6 @@ public:
 	bool operator==(const std::string& other) const{return s_string_pool[_data_idx] == other;}
 	bool operator!=(const std::string& other) const{return !(*this == other);}
 
-	/*!
-	 * Returns the frequency associated with this allele.
-	 * \return The frequency of the allele.
-	 */
-	float getFreq() const { return _freq;}
 	// Will we need to access the allele?  we'll see
 	/*!
 	 * Returns the data of the allele.
@@ -88,7 +76,6 @@ public:
 
 private:
 
-	float _freq;
 	unsigned short _pos;
 	unsigned short _data_idx;
 

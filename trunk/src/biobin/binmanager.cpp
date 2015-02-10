@@ -44,8 +44,14 @@ bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
 float BinManager::mafThreshold = 0;
 
-BinManager::BinManager(const PopulationManager& pop_mgr) : _total_variants(0),
-		_pop_mgr(pop_mgr){}
+BinManager::BinManager(const PopulationManager& pop_mgr,
+		const Knowledge::RegionCollection& regions,
+		const std::deque<Knowledge::Locus*>& loci,
+		const Knowledge::Information& info,
+		const PopulationManager::Phenotype& pheno) :
+	_pop_mgr(pop_mgr), _regions(regions), _info(info), _pheno(pheno) {
+	InitBins(loci);
+}
 
 BinManager::~BinManager() {
 	set<Bin*>::const_iterator itr = _bin_list.begin();
@@ -56,14 +62,9 @@ BinManager::~BinManager() {
 	}
 }
 
-void BinManager::InitBins(
-		const Knowledge::RegionCollection& regions,
-		const deque<Knowledge::Locus*>& loci,
-		Knowledge::Information* info) {
+void BinManager::InitBins(const deque<Knowledge::Locus*>& loci) {
 
 	deque<Knowledge::Locus*>::const_iterator l_itr = loci.begin();
-
-	_total_variants = loci.size();
 
 	_rare_variants = 0;
 
@@ -71,14 +72,14 @@ void BinManager::InitBins(
 		Knowledge::Locus& l = **l_itr;
 
 
-		if (l.isRare()) {
+		if (_pop_mgr.isRare(l,_pheno.getStatus(), mafThreshold, mafCutoff)) {
 			++_rare_variants;
 
 			// First, find all of the regions that contain this locus
 			RegionCollection::const_region_iterator r_itr =
-					regions.locusBegin(&l);
+					_regions.locusBegin(&l);
 			RegionCollection::const_region_iterator r_end =
-					regions.locusEnd(&l);
+					_regions.locusEnd(&l);
 
 			Bin* curr_bin;
 			if ((r_itr == r_end || (!UsePathways && !ExpandByGenes)) && IncludeIntergenic){
@@ -93,7 +94,7 @@ void BinManager::InitBins(
 				int bin_no = l.getPos() / (IntergenicBinStep*1000);
 				while((bin_no*IntergenicBinStep + IntergenicBinWidth)*1000 >= l.getPos()){
 					pair<short, int> key = make_pair(l.getChrom(), bin_no);
-					map<pair<short, int>, Bin*>::const_iterator i_bin =
+					unordered_map<pair<short, int>, Bin*>::const_iterator i_bin =
 							_intergenic_bins.find(key);
 
 					if (i_bin == _intergenic_bins.end()){
@@ -129,7 +130,7 @@ void BinManager::InitBins(
 				// we want to use pathway information
 				while(UsePathways && g_itr != g_end){
 					int id = (*g_itr)->getID();
-					map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
+					unordered_map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
 					if (gm_itr == _group_bins.end()){
 						curr_bin = new Bin(_pop_mgr, *g_itr);
 						_bin_list.insert(curr_bin);
@@ -150,7 +151,15 @@ void BinManager::InitBins(
 	// At this point, we have all of the top level bins constructed and
 	// stored in the variable _bin_list.  We should now collapse the
 	// bins according to the preferences given
-	collapseBins(info, regions);
+	collapseBins();
+}
+
+void BinManager::printBinData(std::ostream& os, const string& sep, bool transpose) const{
+	if (transpose){
+		_pop_mgr.printBinsTranspose(os, *this, _pheno, _info, sep);
+	} else {
+		_pop_mgr.printBins(os, *this, _pheno, _info, sep);
+	}
 }
 
 void BinManager::printBins(std::ostream& os, Knowledge::Locus* l,
@@ -212,14 +221,14 @@ void BinManager::printLocusBinCount(std::ostream& os, float pct) const{
 	}
 }
 
-void BinManager::collapseBins(Information* info, const RegionCollection& reg){
+void BinManager::collapseBins(){
 
 	// First, we expand the groups into genes
 	set<Bin*>::iterator b_itr = _bin_list.begin();
 	Bin::locus_iterator v_itr;
 	Bin::const_locus_iterator v_end;
 	while(ExpandByGenes && b_itr != _bin_list.end() && (*b_itr)->isGroup()){
-		if((uint)(*b_itr)->getSize() > BinTraverseThreshold){
+		if((*b_itr)->getSize() > BinTraverseThreshold){
 
 			// First, add all of the appropriate child bins
 			Group* curr_group = (*b_itr)->getGroup();
@@ -257,10 +266,6 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 
 	set<Bin*> new_bins;
 
-	if (ExpandByExons){
-		info->loadRoles(reg);
-	}
-
 	map<const Information::snp_role, Bin*> role_bin_list;
 	map<const Information::snp_role, Bin*>::const_iterator role_bin_itr;
 
@@ -285,11 +290,11 @@ void BinManager::collapseBins(Information* info, const RegionCollection& reg){
 					Group::const_region_iterator r_end =
 							curr_group->regionEnd();
 					while (r_itr != r_end) {
-						role |= info->getSNPRole(**v_itr, **r_itr);
+						role |= _info.getSNPRole(**v_itr, **r_itr);
 						++r_itr;
 					}
 				} else {
-					role = info->getSNPRole(**v_itr, *(*b_itr)->getRegion());
+					role = _info.getSNPRole(**v_itr, *(*b_itr)->getRegion());
 				}
 
 				role_itr = Information::snp_role::begin();
@@ -391,7 +396,7 @@ void BinManager::eraseBin(set<Bin*>::iterator& b_itr){
 Bin* BinManager::addRegionBin(Region* reg){
 	Bin* curr_bin;
 	int id = reg->getID();
-	map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
+	unordered_map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
 	if (rm_itr == _region_bins.end()){
 		curr_bin = new Bin(_pop_mgr, reg);
 		_bin_list.insert(curr_bin);

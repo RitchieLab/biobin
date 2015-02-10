@@ -6,10 +6,7 @@
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
-#include "binapplication.h"
-
-#include "task.h"
-#include "taskfilegeneration.h"
+#include "binmanager.h"
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>
@@ -19,91 +16,53 @@
 namespace po=boost::program_options;
 
 using po::value;
+using std::string;
+using std::vector;
+using std::multimap;
+using std::ifstream;
 
-/**
- * The VCF Tools require this, but I don't want to use their main...
- */
-namespace VCF {
-std::ofstream LOG;
-}
 
 namespace BioBin {
 
 string Main::c_vcf_file="";
 string Main::c_knowledge_file="";
 string Main::c_genome_build = "37";
+string Main::OutputDelimiter = ",";
+
+bool Main::WriteBinData = true;
+bool Main::WriteLociData = true;
+
 
 vector<string> Main::c_custom_groups;
 
-Main::~Main(){
-	multimap<int, Task::Task*>::iterator m_itr = _task_list.begin();
-	while(m_itr != _task_list.end()){
-		delete (*m_itr).second;
-		++m_itr;
-	}
-	_task_list.clear();
-}
-
-void Main::initTasks(){
-	BioBin::Task::Task *t = new BioBin::Task::GenerateFiles(&app);
-	_task_list.insert(std::make_pair(t->getType(), t));
-}
+Main::~Main(){}
 
 void Main::RunCommands() {
 
-	//VCF::LOG.open("vcf-responses.log");
+	app.InitVcfDataset(c_genome_build);
 
-	//app.Init(c_knowledge_file, true);
-
-	//Tasks that run before SNPs load (not sure what those would be)
-	RunTasks(0);
-
-	LoadSNPs();
-
-	RunTasks(1);
-
-	InitRegionData();
-
-	RunTasks(2);
-
-	InitGroupData();
-	app.InitBins();
-
-	RunTasks(3);
-
-}
-
-void Main::InitRegionData() {
 	vector<string> missingAliases;
 	vector<string> aliasList;
 
 	app.LoadRegionData(missingAliases, aliasList);
-}
 
-void Main::InitGroupData() {
-	app.LoadGroupDataByName(c_custom_groups);
-}
-
-void Main::RunTasks(int level){
-	multimap<int, Task::Task*>::iterator itr = _task_list.lower_bound(level);
-	multimap<int, Task::Task*>::iterator end = _task_list.upper_bound(level);
-
-	while (itr != end) {
-		(*itr).second->ExecuteTask();
-		++itr;
+	// only do this if we're expanding by role, please!
+	if(BinManager::ExpandByExons){
+		app.loadRoles();
 	}
-}
 
-
-
-
-
-void Main::LoadSNPs() {
-	vector<string> lostSnps;
-	app.InitVcfDataset(c_genome_build, lostSnps);
-	if (lostSnps.size() > 0){
-		std::cerr << "WARNING: Could not translate " << lostSnps.size() << " variants.\n";
+	// only do this if we're binning by pathway, please!
+	if(BinManager::UsePathways){
+		app.LoadGroupDataByName(c_custom_groups);
 	}
+
+	app.InitBins();
+
+	if (WriteLociData){
+		std::string filename = app.reportPrefix + "-locus.csv";
+		app.writeLoci(filename,OutputDelimiter);
+	}
+
 }
 
 }
@@ -226,7 +185,6 @@ int main(int argc, char *argv[]) {
 	BioBin::Main *app = new BioBin::Main();					///<The application object
 
 	if(BioBin::BinApplication::s_run_normal){
-		app->initTasks();
 
 		try {
 			app->RunCommands();

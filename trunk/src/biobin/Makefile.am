@@ -9,14 +9,14 @@ biobin_SOURCES= \
    binmanager.cpp \
    main.h \
    main.cpp \
-   task.h \
-   task.cpp \
-   taskfilegeneration.h \
-   taskfilegeneration.cpp \
    PopulationManager.h \
    PopulationManager.cpp \
    Configuration.h \
-   Configuration.cpp
+   Configuration.cpp \
+   util/ICompressedFile.h \
+   util/ICompressedFile.cpp \
+   util/string_ref.hpp \
+   util/string_ref_fwd.hpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  
@@ -25,10 +25,11 @@ AM_LDFLAGS=$(BOOST_LDFLAGS)
 
 biobin_LDADD=\
 	../knowledge/libknowledge.la \
-	../vcftools/libvcftools.la \
 	$(SQLITE_LIBS) \
 	$(BOOST_REGEX_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-	$(BOOST_PROGRAM_OPTIONS_LIB) 
+	$(BOOST_PROGRAM_OPTIONS_LIB) \
+	$(BOOST_IOSTREAMS_LIB) \
+	$(BOOST_THREAD_LIB)
 

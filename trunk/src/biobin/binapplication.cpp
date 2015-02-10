@@ -7,9 +7,14 @@
 
 #include "binapplication.h"
 
+#include "main.h"
+
 #include <iomanip>
+#include <cstdio>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
 
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
@@ -21,23 +26,27 @@ using std::set;
 using std::deque;
 using std::new_handler;
 using std::set_new_handler;
+using std::stringstream;
+using std::ostream;
+using std::istream;
 
 using boost::unordered_map;
 
 namespace BioBin {
 
+std::string BinApplication::reportPrefix = "biobin";
 bool BinApplication::c_transpose_bins = false;
 bool BinApplication::errorExit = false;
-std::string BinApplication::reportPrefix = "biobin";
 bool BinApplication::c_print_sources = false;
 bool BinApplication::c_print_populations = false;
 bool BinApplication::s_run_normal = true;
+unsigned int BinApplication::n_threads = 0;
 
 new_handler BinApplication::currentHandler;
 
 BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
-	dbFilename(db_fn), varVersion(0), geneExtensionLength(0),
-			_pop_mgr(vcf_file), binData(_pop_mgr) {
+	dbFilename(db_fn), _info(0), regions(0), groups(0), varVersion(0), geneExtensionLength(0),
+			_pop_mgr(vcf_file) {
 
 	Init(db_fn, true);
 
@@ -58,12 +67,12 @@ BinApplication::~BinApplication(){
 
 	sqlite3_close(_db);
 
-	if (!errorExit){
-		std::cout<<GetReportLog()<<"\n";
+	if(_info){
+		delete _info;
 	}
-
-	delete _info;
-	delete regions;
+	if(regions){
+		delete regions;
+	}
 
 	deque<Knowledge::Locus*>::iterator d_itr = dataset.begin();
 	while(d_itr != dataset.end()){
@@ -71,56 +80,112 @@ BinApplication::~BinApplication(){
 		++d_itr;
 	}
 	//dataset.clear();
+	if(groups){
+		delete groups;
+	}
 
-	delete groups;
+	for(unsigned int i=0; i<_locus_bins.size(); i++){
+		fclose(_locus_bins[i]);
+	}
+	_locus_bins.clear();
+
+}
+
+void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_itr){
+
+	_pheno_mutex.lock();
+		while(ph_itr != _pop_mgr.endPheno()){
+			PopulationManager::Phenotype ph(*ph_itr);
+			_pheno_mutex.unlock();
+
+			BinManager binData(_pop_mgr, *regions, dataset, *_info, ph);
+
+			_output_mutex.lock();
+			std::cout << "Phenotype: " << _pop_mgr.getPhenotypeName(ph.getIndex()) << std::endl;
+
+			std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+						<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
+						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
+
+			std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
+					 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
+
+			if (binData.numBins() > 0 && binData.numBins() < 500) {
+				std::cout<<"\n\nBin Name\tVariant Count\n";
+				BinManager::const_iterator itr = binData.begin();
+				BinManager::const_iterator end = binData.end();
+				while(itr != end){
+					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+					++itr;
+				}
+			}
+
+			std::cout << std::endl;
+			binData.printLocusBinCount(std::cout);
+			std::cout << std::endl;
+
+			_output_mutex.unlock();
+
+			// If we are creating a locus report, print all bin data for each locus
+			if(Main::WriteLociData){
+				FILE* fp = binData.printLocusBins(dataset);
+
+				_data_mutex.lock();
+				_locus_bins[ph.getIndex()] = fp;
+				_data_mutex.unlock();
+			}
+
+			// print the Bin data
+			if(Main::WriteBinData){
+				std::string filename = reportPrefix + "-" + _pop_mgr.getPhenotypeName(ph.getIndex()) + "-bins.csv";
+				std::ofstream file(filename.c_str());
+				binData.printBinData(file, Main::OutputDelimiter, c_transpose_bins);
+				file.close();
+			}
+
+			_pheno_mutex.lock();
+			if(ph_itr != _pop_mgr.endPheno()){
+				++ph_itr;
+			}
+		}
+		_pheno_mutex.unlock();
+
 }
 
 void BinApplication::InitBins() {
-	
+
 	_info->loadWeights(*regions);
 
-	binData.InitBins(*regions, dataset, _info);
+	if(Main::WriteLociData){
+		_locus_bins.resize(_pop_mgr.getNumPhenotypes(), 0);
+	}
+	PopulationManager::const_pheno_iterator ph_itr = _pop_mgr.beginPheno();
 
-	std::cout<<"\n   Total SNPS:   "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
-				<<"   Variants:     "<<std::setw(10)<<std::right<<binData.numVariants()<<"\n"
-				<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
-				<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
-
-	std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
-			 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
-
-	if (binData.numBins() > 0 && binData.numBins() < 500) {
-		std::cout<<"\n\nBin Name\tVariant Count\n";
-		BinManager::const_iterator itr = binData.begin();
-		BinManager::const_iterator end = binData.end();
-		while(itr != end){
-			std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
-			++itr;
+	//TODO: make this a threaded call
+	if(n_threads == 0){
+		binPhenotypes(ph_itr);
+	} else {
+		boost::thread_group tg;
+		for (unsigned int i = 0; i < n_threads; i++) {
+			tg.create_thread(boost::bind(&BinApplication::binPhenotypes, this, boost::ref(ph_itr)));
 		}
+		tg.join_all();
 	}
-
-	std::cout << std::endl;
-	binData.printLocusBinCount(std::cout);
-	std::cout << std::endl;
-
-	// Add output about number of bins
 }
 
-void BinApplication::writeBinData(const string& filename, const string& sep) const{
-	std::ofstream file(filename.c_str());
-	if(c_transpose_bins){
-		_pop_mgr.printBinsTranspose(file, binData, *_info, sep);
+void BinApplication::InitVcfDataset(const std::string& genomicBuild) {
+
+	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
+	int chainCount = cnv.Load();
+
+	if (chainCount > 0) {
+		_pop_mgr.loadLoci(dataset,reportPrefix,Main::OutputDelimiter,&cnv);
 	}else{
-		_pop_mgr.printBins(file, binData, *_info, sep);
+		_pop_mgr.loadLoci(dataset,reportPrefix,Main::OutputDelimiter);
 	}
-	file.close();
+
 }
 
-void BinApplication::writeGenotypeData(const string& filename, const string& sep) const{
-	std::ofstream file(filename.c_str());
-	_pop_mgr.printGenotypes(file, dataset, sep);
-	file.close();
-}
 
 void BinApplication::writeLoci(const string& filename, const string& sep) const{
 
@@ -134,22 +199,26 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 	locusFile << sep;
 	printEscapedString(locusFile, "ID", sep, sep_repl);
 	locusFile << sep;
-	printEscapedString(locusFile, "Alleles", sep, sep_repl);
-	locusFile << sep;
-	printEscapedString(locusFile, "Case Allele Freq.", sep, sep_repl);
-	locusFile << sep;
-	printEscapedString(locusFile, "Rare", sep, sep_repl);
-	locusFile << sep;
 	printEscapedString(locusFile, "Gene(s)", sep, sep_repl);
-	locusFile << sep;
-	printEscapedString(locusFile, "Bin Name(s)", sep, sep_repl);
+
+	vector<istream*> locus_streams;
+	locus_streams.reserve(_locus_bins.size());
+	string pheno_bins;
+	for(unsigned int i=0; i<_locus_bins.size(); i++){
+		rewind(_locus_bins[i]);
+		locus_streams.push_back(
+				new boost::iostreams::stream<boost::iostreams::file_descriptor>(
+						boost::iostreams::file_descriptor(fileno(_locus_bins[i])),
+						std::ios_base::binary | std::ios_base::in)
+				);
+		locusFile << sep;
+		getline(*locus_streams[i], pheno_bins);
+		printEscapedString(locusFile, pheno_bins + " Bin Name(s)", sep, sep_repl);
+	}
 	locusFile << "\n";
 
 	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
 
-	unordered_map<Knowledge::Locus*, float> case_maf;
-
-	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
 
 	while(itr != dataset.end()){
 		printEscapedString(locusFile, (*itr)->getChromStr(), sep, sep_repl);
@@ -157,12 +226,6 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 		printEscapedString(locusFile, (*itr)->getID(), sep, sep_repl);
 		locusFile << sep;
 
-		stringstream allele_str;
-		(*itr)->printAlleles(allele_str, "|");
-		printEscapedString(locusFile, allele_str.str(), sep, sep_repl);
-
-		locusFile << sep << _pop_mgr.getCaseAF(**itr) << sep
-				<< static_cast<int>((*itr)->isRare()) << sep;
 		// Print the genes here
 		Knowledge::RegionCollection::const_region_iterator r_itr =
 				regions->locusBegin(*itr);
@@ -177,64 +240,21 @@ void BinApplication::writeLoci(const string& filename, const string& sep) const{
 			}
 		}
 		printEscapedString(locusFile, gene_str.str(), sep, sep_repl);
-		locusFile << sep;
-		// Now print the bins
-		stringstream bin_str;
-		binData.printBins(bin_str, *itr, "|");
-		printEscapedString(locusFile, bin_str.str(), sep, sep_repl);
+
+		// print all of the old bins now
+		for(unsigned int i=0; i<locus_streams.size(); i++){
+			locusFile << sep;
+			getline(*locus_streams[i], pheno_bins);
+			printEscapedString(locusFile, pheno_bins, sep, sep_repl);
+		}
+
 		locusFile << "\n";
 		++itr;
 	}
 	locusFile.close();
-}
-
-void BinApplication::writeAFData(const string& filename, const string& sep) const{
-	string sep_repl = getEscapeString(sep);
-
-	std::ofstream freqFile(filename.c_str());
-
-	unordered_map<Knowledge::Locus*, float> case_maf;
-
-	//_data.getCaseAF(dataset, _pop_mgr.getControls(), case_maf);
-
-	deque<Knowledge::Locus*>::const_iterator itr = dataset.begin();
-
-	printEscapedString(freqFile, "Locus", sep, sep_repl);
-	freqFile << sep;
-	printEscapedString(freqFile, "Control NMAF", sep, sep_repl);
-	freqFile << sep;
-	printEscapedString(freqFile, "Case NMAF", sep, sep_repl);
-	freqFile << sep;
-	printEscapedString(freqFile, "Rare", sep, sep_repl);
-	freqFile << sep;
-	printEscapedString(freqFile, "Bins", sep, sep_repl);
-	freqFile << "\n";
-
-	while(itr != dataset.end()){
-		printEscapedString(freqFile, (*itr)->getID(), sep, sep_repl);
-
-		freqFile << sep << 1 - (*itr)->majorAlleleFreq() << sep
-				<< _pop_mgr.getCaseAF(**itr) << sep
-				<< static_cast<int>((*itr)->isRare()) << sep;
-
-		stringstream ss;
-		binData.printBins(ss, *itr, "|");
-		printEscapedString(freqFile, ss.str(), sep, sep_repl);
-
-		freqFile << "\n";
-
-		++itr;
+	for(unsigned int i=0; i<locus_streams.size(); i++){
+		delete locus_streams[i];
 	}
-
-	freqFile.close();
-
-}
-
-void BinApplication::writeBinFreqData(const string& filename, const string& sep) const {
-	std::ofstream freqFile(filename.c_str());
-	_pop_mgr.printBinFreq(freqFile, binData, sep);
-	freqFile.close();
-
 }
 
 void BinApplication::printEscapedString(ostream& os, const string& toPrint, const string& toRepl, const string& replStr) const{
@@ -247,18 +267,6 @@ string BinApplication::getEscapeString(const string& sep) const{
 		sep_repl = "-";
 	}
 	return sep_repl;
-}
-
-string BinApplication::AddReport(const string& suffix, const string& extension, const string& description) {
-	string newFilename(reportPrefix);
-	if (suffix.size() > 0){
-		newFilename += ("-" + suffix);
-	}
-	if (extension.size() > 0){
-		newFilename += ("." + extension);
-	}
-	reportLog<<std::setw(50)<<std::right<<newFilename<<" : "<<description<<"\n";
-	return newFilename;
 }
 
 void BinApplication::Init(const string& filename, bool reportVersion) {

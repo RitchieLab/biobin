@@ -12,20 +12,27 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
+#include <stdexcept>
+
 #include <boost/unordered_map.hpp>
 #include <boost/array.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 
 #include "Bin.h"
-#include "binmanager.h"
+
+#include "util/ICompressedFile.h"
+#include "util/string_ref.hpp"
 
 #include "knowledge/Locus.h"
 #include "knowledge/liftover/Converter.h"
 #include "knowledge/Information.h"
 #include "knowledge/Region.h"
-
-#include "vcftools/vcf_file.h"
 
 namespace BioBin{
 
@@ -36,6 +43,7 @@ namespace BioBin{
 class PopulationManager{
 
 public:
+
 	// A list of the available disease models.  These affect the calculation
 	// of the genotype sum and an individual's contribution to a bin.
 	enum DiseaseModel_ENUM { ADDITIVE, DOMINANT, RECESSIVE };
@@ -90,37 +98,70 @@ public:
 		Weight_ENUM _data;
 	};
 
+	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
+
+	class Phenotype{
+	public:
+		Phenotype(unsigned int idx, const bitset_pair& status) : _idx(idx), _status(&status) {}
+		const bitset_pair& getStatus() const {return *_status;}
+		unsigned int getIndex() const {return _idx;}
+
+	private:
+		unsigned int _idx;
+		const bitset_pair* _status;
+	};
+
+	class const_pheno_iterator : public boost::iterator_facade<const_pheno_iterator, Phenotype const, boost::forward_traversal_tag>{
+
+	public:
+		const_pheno_iterator(unsigned int i, const PopulationManager& pop_mgr) : _idx(i), _mgr(pop_mgr), _itr(i, pop_mgr._pheno_status[i]){}
+
+	private:
+		friend class boost::iterator_core_access;
+
+		void increment() { ++_idx;}
+		bool equal(const const_pheno_iterator& other) const { return _idx == other._idx;}
+		Phenotype const& dereference() const {_itr = Phenotype(_idx, _mgr._pheno_status[_idx]); return _itr;}
+
+		unsigned int _idx;
+		const PopulationManager& _mgr;
+		mutable Phenotype _itr;
+
+	};
+
+
+	const_pheno_iterator beginPheno() const{
+		return const_pheno_iterator(0, *this);
+	}
+	const_pheno_iterator endPheno() const{
+		return const_pheno_iterator(_pheno_names.size(), *this);
+	}
+
+
 	explicit PopulationManager(const std::string& vcf_file);
-	~PopulationManager(){delete vcf;}
+	~PopulationManager(){}
 
 	template <class T_cont>
-	void loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv);
+	void loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv=0);
 
 	// Usage functions
-	int genotypeContribution(const Knowledge::Locus& locus) const;
-
-	const std::vector<bool>& getControls() const {return _is_control;}
+	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
+	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
+	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
+	const std::string& getPhenotypeName(unsigned int i) const {return _pheno_names[i];}
 
 	// Printing functions
 	template <class Bin_cont>
-	void printBins(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep=",") const;
+	void printBins(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
 	template <class Bin_cont>
-	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep=",") const;
-	template <class Bin_cont>
-	void printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep=",") const;
-	template <class Locus_cont>
-	void printGenotypes(std::ostream& os, const Locus_cont& loci, const std::string& sep=",") const;
-
-	float getCaseAF(const Knowledge::Locus& loc) const;
+	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
 
 	static float c_phenotype_control;
-	static std::vector<std::string> c_phenotype_files;
+	static std::string c_phenotype_file;
 
-	static bool CompressedVCF;					///< gzipped file Y/N
-	static bool KeepCommonLoci;
 	// determine rarity of a variant by either case or control status
 	static bool RareCaseControl;
-	static bool OverallMajorAllele;
+	static bool NoSummary;
 
 	static bool c_use_calc_weight;
 	static bool _use_custom_weight;
@@ -129,8 +170,6 @@ public:
 
 	static DiseaseModel c_model;
 	static WeightModel c_weight_type;
-
-	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
 
 private:
 
@@ -142,60 +181,78 @@ private:
 	PopulationManager& operator=(const PopulationManager&);
 
 	// Loading functions
+	unsigned int readVCFHeader(std::istream& v);
 	void loadIndividuals();
 	void parsePhenotypeFile(const std::string& filename);
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
-	int getTotalContrib(const Knowledge::Locus& loc) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, const bitset_pair& status, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
+	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
+	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
-	float calcWeight(const Knowledge::Locus& loc) const;
+	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
 
-	float getMAF(const std::vector<int>& allele_count, unsigned int nmcc) const;
+	/*
+	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
+	 */
+	unsigned short fast_atoi(const boost::string_ref& r){
+		unsigned short value_ = 0;
+		unsigned int len = r.size();
+		switch(len){
+        case  5:    value_ += (r[len- 5] - '0') * 10000;
+        case  4:    value_ += (r[len- 4] - '0') * 1000;
+        case  3:    value_ += (r[len- 3] - '0') * 100;
+        case  2:    value_ += (r[len- 2] - '0') * 10;
+        case  1:    value_ += (r[len- 1] - '0');
+		}
+		return value_;
+	}
 
-	boost::array<unsigned int, 2> getBinCapacity(Bin& bin) const;
+	boost::array<unsigned int, 2> getBinCapacity(Bin& bin, const bitset_pair& status) const;
 
-	std::map<std::string, float> _phenotypes;
-	std::map<std::string, int> _positions;
+	// mapping of ID -> position in the VCF file
+	boost::unordered_map<std::string, int> _positions;
+	// names of multiple phenotypes
+	std::vector<std::string> _pheno_names;
+	// the actual phenotypes as read from the phenotype file
+	boost::unordered_map<std::string, std::vector<float> > _phenos;
+	// phenotypes converted to case/control status
+	std::vector<bitset_pair> _pheno_status;
 
-	// _is_control can be passed to the VCF parser
-	std::vector<bool> _is_control;
-	boost::dynamic_bitset<> _control_bitset;
-	int n_controls;
+	// the actual genotypes included in the VCF file
+	// NOTE: this should eventually be a class that caches its results to a
+	// temporary file for better use of memory!
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotypes;
 
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotype_bitset;
-
-	// A map to keep track of where in the file a locus resides
-	boost::unordered_map<Knowledge::Locus*, int> _locus_position;
-
-	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> > _locus_count;
-
-	VCF::vcf_file* vcf;
+	std::string _vcf_fn;
 };
 
 template <class Bin_cont>
-void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep) const{
+void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
 
 	_use_custom_weight = (info.c_weight_files.size() > 0);
+	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
 
 	std::string sep_repl = getEscapeString(sep);
 
 	// Print 1st line
 	printEscapedString(os, "Bin Name", sep, sep_repl);
 	os << sep;
-	printEscapedString(os, "Total Variants", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Total Loci", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Loci Totals", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Loci Totals", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+	if (!NoSummary) {
+		printEscapedString(os, "Total Variants", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+	}
 
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
 		os << sep;
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
@@ -205,16 +262,19 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 	os << "\n";
 
 	printEscapedString(os, "Status", sep, sep_repl);
-	os << sep <<
-			-1 << sep << -1 << sep << -1 << sep << -1 << sep << -1 << sep << -1;
+	os << sep;
+	if(!NoSummary){
+		os << missing_status << sep << missing_status << sep << missing_status
+		   << sep << missing_status << sep << missing_status << sep << missing_status;
+	}
 
 	m_itr = _positions.begin();
-	std::map<std::string, float>::const_iterator pheno_status;
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status;
 	while(m_itr != _positions.end()){
-		float status = -1;
-		pheno_status = _phenotypes.find((*m_itr).first);
-		if (pheno_status != _phenotypes.end()){
-			status = (*pheno_status).second;
+		float status = missing_status;
+		pheno_status = _phenos.find((*m_itr).first);
+		if (pheno_status != _phenos.end()){
+			status = (*pheno_status).second[pheno.getIndex()];
 		}
 		os << sep << status;
 		++m_itr;
@@ -224,37 +284,39 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 
 	typename Bin_cont::const_iterator b_itr = bins.begin();
 	Bin::const_locus_iterator l_itr;
-	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_itr;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
 
-	while(b_itr != bins.end()){
+	while (b_itr != bins.end()) {
 		// Print bin name
 		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
 
-		// print total var
-		os << sep << (*b_itr)->getSize();
+		if (!NoSummary) {
+			// print total var
+			os << sep << (*b_itr)->getSize();
 
-		// print total loci
-		os << sep << (*b_itr)->getVariantSize();
+			// print total loci
+			os << sep << (*b_itr)->getVariantSize();
 
-		// print case/control loci
-		boost::array<unsigned int, 2> num_loci;
-		num_loci[0] = 0;
-		num_loci[1] = 0;
-		l_itr = (*b_itr)->variantBegin();
-		while(l_itr != (*b_itr)->variantEnd()){
-			loc_itr = _locus_count.find((*l_itr));
-			if (loc_itr != _locus_count.end()){
-				num_loci[0] += (*loc_itr).second[0] != 0;
-				num_loci[1] += (*loc_itr).second[1] != 0;
+			// print case/control loci
+			boost::array<unsigned int, 2> num_loci;
+			num_loci[0] = 0;
+			num_loci[1] = 0;
+			l_itr = (*b_itr)->variantBegin();
+			while (l_itr != (*b_itr)->variantEnd()) {
+				loc_itr = _genotypes.find((*l_itr));
+				if (loc_itr != _genotypes.end()) {
+					num_loci[0] += getTotalContrib((*loc_itr).second, & pheno.getStatus().first);
+					num_loci[1] += getTotalContrib((*loc_itr).second, & pheno.getStatus().second);
+				}
+				++l_itr;
 			}
-			++l_itr;
-		}
 
-		os << sep << num_loci[0] << sep << num_loci[1];
+			os << sep << num_loci[0] << sep << num_loci[1];
 
-		// print case/control capacity
-		boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr);
-		os << sep << capacity[0] << sep << capacity[1];
+			// print case/control capacity
+			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());
+			os << sep << capacity[0] << sep << capacity[1];
+		} // End summary info
 
 		// print for each person
 		float bin_count = 0;
@@ -263,7 +325,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 			l_itr = (*b_itr)->variantBegin();
 			bin_count = 0;
 			while (l_itr != (*b_itr)->variantEnd()) {
-				bin_count += getIndivContrib(**l_itr, (*m_itr).second, true, &info, (*b_itr)->getRegion());
+				bin_count += getIndivContrib(**l_itr, (*m_itr).second, pheno.getStatus(), true, &info, (*b_itr)->getRegion());
 				++l_itr;
 			}
 			os << sep << std::setprecision(4) << bin_count;
@@ -275,7 +337,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bin
 }
 
 template <class Bin_cont>
-void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const Knowledge::Information& info, const std::string& sep) const{
+void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
+	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
 	std::string sep_repl = getEscapeString(sep);
 
 	_use_custom_weight = (info.c_weight_files.size() > 0);
@@ -294,78 +357,80 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 	}
 	os << "\n";
 
-	// Print second Line (totals)
-	printEscapedString(os, "Total Variants", sep, sep_repl);
-	os << sep << -1;
-	b_itr = bins.begin();
-	b_end = bins.end();
-	while(b_itr != b_end){
-		os << sep << (*b_itr)->getSize();
-		++b_itr;
-	}
-	os << "\n";
-
-	// Print third line (variant totals)
-	printEscapedString(os, "Total Loci", sep, sep_repl);
-	os << sep << -1;
-	b_itr = bins.begin();
-	b_end = bins.end();
-	while(b_itr != b_end){
-		os << sep << (*b_itr)->getVariantSize();
-		++b_itr;
-	}
-	os << "\n";
-
-
 	Bin::const_locus_iterator l_itr;
 	Bin::const_locus_iterator l_end;
 
-	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_itr;
-	boost::unordered_map<const Knowledge::Locus*, boost::array<unsigned short, 2> >::const_iterator loc_not_found =
-			_locus_count.end();
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_not_found =
+			_genotypes.end();
 
-	int locus_count = 0;
-	// Print 4th + 5th lines (variant totals for cases + controls
-	for(int i=0; i<2; i++){
-		printEscapedString(os, string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
-		os << sep << -1;
+	if(!NoSummary){
+
+		// Print second Line (totals)
+		printEscapedString(os, "Total Variants", sep, sep_repl);
+		os << sep << missing_status;
 		b_itr = bins.begin();
 		b_end = bins.end();
 		while(b_itr != b_end){
-			l_itr = (*b_itr)->variantBegin();
-			l_end = (*b_itr)->variantEnd();
-			locus_count = 0;
-			while(l_itr != l_end){
-				loc_itr = _locus_count.find((*l_itr));
-				if (loc_itr != loc_not_found){
-					locus_count += ((*loc_itr).second[i] != 0);
+			os << sep << (*b_itr)->getSize();
+			++b_itr;
+		}
+		os << "\n";
+
+		// Print third line (variant totals)
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep << missing_status;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep << (*b_itr)->getVariantSize();
+			++b_itr;
+		}
+		os << "\n";
+
+		int locus_count = 0;
+		// Print 4th + 5th lines (variant totals for cases + controls
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
+			os << sep << missing_status;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				l_itr = (*b_itr)->variantBegin();
+				l_end = (*b_itr)->variantEnd();
+				locus_count = 0;
+				while(l_itr != l_end){
+					loc_itr = _genotypes.find((*l_itr));
+					if (loc_itr != loc_not_found){
+						locus_count += getTotalContrib((*loc_itr).second, &(i ? pheno.getStatus().second : pheno.getStatus().first));
+					}
+					++l_itr;
 				}
-				++l_itr;
+				os << sep << locus_count;
+				++b_itr;
 			}
-			os << sep << locus_count;
-			++b_itr;
+			os << "\n";
 		}
-		os << "\n";
+
+		// Print 6th + 7th Lines (bin capacities for cases and controls)
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
+			os << sep << missing_status;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				os << sep << getBinCapacity(**b_itr, pheno.getStatus())[i];
+				++b_itr;
+			}
+			os << "\n";
+		}
 	}
 
-	// Print 6th + 7th Lines (bin capacities for cases and controls)
-	for(int i=0; i<2; i++){
-		printEscapedString(os, string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
-		os << sep << -1;
-		b_itr = bins.begin();
-		b_end = bins.end();
-		while(b_itr != b_end){
-			os << sep << getBinCapacity(**b_itr)[i];
-			++b_itr;
-		}
-		os << "\n";
-	}
+	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, int>::const_iterator m_end = _positions.end();
 
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
-
-	std::map<std::string, float>::const_iterator pheno_status;
-	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status;
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_end = _phenos.end();
 
 	int pos;
 	float status;
@@ -376,10 +441,10 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 		b_end = bins.end();
 
 		pos = (*m_itr).second;
-		pheno_status = _phenotypes.find((*m_itr).first);
-		status = -1;
+		pheno_status = _phenos.find((*m_itr).first);
+		status = missing_status;
 		if (pheno_status != pheno_end){
-			status = (*pheno_status).second;
+			status = (*pheno_status).second[pheno.getIndex()];
 		}
 
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
@@ -392,7 +457,7 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 			l_end = (*b_itr)->variantEnd();
 			bin_count = 0;
 			while(l_itr != l_end){
-				bin_count += getIndivContrib(**l_itr, pos, true, &info, (*b_itr)->getRegion());
+				bin_count += getIndivContrib(**l_itr, pos, pheno.getStatus(), true, &info, (*b_itr)->getRegion());
 				++l_itr;
 			}
 			os << sep << std::setprecision(4) << bin_count;
@@ -404,258 +469,214 @@ void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const 
 	}
 }
 
-
-template <class Bin_cont>
-void PopulationManager::printBinFreq(std::ostream& os, const Bin_cont& bins, const std::string& sep) const{
-
-	std::string sep_repl = getEscapeString(sep);
-
-	typename Bin_cont::const_iterator b_itr = bins.begin();
-	typename Bin_cont::const_iterator b_end = bins.end();
-
-	std::map<std::string, int>::const_iterator m_itr;
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
-	int case_cont_contrib[2];
-
-	printEscapedString(os, "Bin", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Control Freq.", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Case Freq.", sep, sep_repl);
-	os << "\n";
-
-	while(b_itr != b_end){
-
-		Bin::const_locus_iterator v_itr = (*b_itr)->variantBegin();
-		Bin::const_locus_iterator v_end = (*b_itr)->variantEnd();
-
-		case_cont_contrib[0] = 0;
-		case_cont_contrib[1] = 0;
-		while(v_itr != v_end){
-			m_itr = _positions.begin();
-			while(m_itr != m_end){
-				case_cont_contrib[!_is_control[(*m_itr).second]] +=
-						getIndivContrib(**v_itr, (*m_itr).second, false);
-				++m_itr;
-			}
-			++v_itr;
-		}
-
-		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
-		os << sep;
-
-		short capacity = 0;
-		for (int i=0; i<=1; i++){
-			capacity = getBinCapacity(**b_itr)[i];
-			os << (capacity ? case_cont_contrib[i] / ((float) capacity) : -1);
-			os << sep;
-		}
-		os << "\n";
-
-		++b_itr;
-	}
-
-}
-
-template <class Locus_cont>
-void PopulationManager::printGenotypes(std::ostream& os, const Locus_cont& loci, const std::string& sep) const{
-
-	string sep_repl = getEscapeString(sep);
-
-	typename Locus_cont::const_iterator l_itr = loci.begin();
-
-	std::map<std::string, int>::const_iterator m_itr = _positions.begin();
-	std::map<std::string, int>::const_iterator m_end = _positions.end();
-
-	std::map<std::string, float>::const_iterator pheno_status;
-	std::map<std::string, float>::const_iterator pheno_end = _phenotypes.end();
-
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator g_itr;
-	// Print the first line// TODO: format the genotype if we want to!
-	printEscapedString(os, "ID", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Status", sep, sep_repl);
-
-	while(l_itr != loci.end()){
-		os << sep;
-		printEscapedString(os, (*l_itr)->getID(), sep, sep_repl);
-		++l_itr;
-	}
-	os << "\n";
-
-	int pos;
-	float status;
-	while (m_itr != m_end){
-		l_itr = loci.begin();
-
-		pos = (*m_itr).second;
-
-		pheno_status = _phenotypes.find((*m_itr).first);
-		status = -1;
-		if (pheno_status != pheno_end){
-			status = (*pheno_status).second;
-		}
-
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
-		os << sep << status;
-
-		while(l_itr != loci.end()){
-			g_itr = _genotype_bitset.find(*l_itr);
-			if(g_itr != _genotype_bitset.end()){
-				// TODO: format the genotype if we want to!
-				os << sep << (*g_itr).second.first[pos] << "/" << (*g_itr).second.second[pos];
-			}else{
-				os << sep << "?/?";
-			}
-			++l_itr;
-		}
-
-		os << "\n";
-		++m_itr;
-	}
-
-}
-
 template<class T_cont>
-void PopulationManager::loadLoci(T_cont& loci_out, const Knowledge::Liftover::Converter* conv=0){
+void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv){
+	typedef std::string::const_iterator sc_iter;
+	typedef boost::iterator_range<sc_iter> string_view;
 
+
+	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());
+	unsigned int lineno = readVCFHeader(vcf_f);
 	loadIndividuals();
-	int size = _is_control.size();
-	std::set<std::string> unknownChromosomes;
-	unsigned int totalSiteCount	= vcf->N_entries;
 
-	// Predefine everything so that the loop below can be as tight as possible
-	std::vector<std::pair<int, int> > genotype_pairs;
-	genotype_pairs.resize(size);
-	bitset_pair gen_bits(std::make_pair(boost::dynamic_bitset<>(size),boost::dynamic_bitset<>(size)));
-	std::pair<int,int> genotype;
-	boost::array<unsigned short, 2> nm;
-	unsigned int alleleCount = 0;
-	std::string line;
-	boost::array<std::vector<int>, 2> alleleCounts;
-	std::pair<boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator, bool> gen_pair;
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair>::iterator gen_itr;
-	VCF::vcf_entry entry(vcf->N_indv);
+	std::string geno_sep = "/";
+	std::string alt_geno_sep = "|";
 
-	for (unsigned int i=0; i<totalSiteCount; i++) {
-		vcf->get_vcf_entry(i, line);
-		entry.reset(line);
-		entry.parse_basic_entry(true);
+	std::string curr_line;
+	unsigned int n_fields = 9 + _positions.size();
 
-		entry.parse_genotype_entries(true, false, false, false);
-		alleleCount = entry.get_N_alleles();
+	std::string chr, id, ref, alt, filter, format;
 
-		nm[0] = 0;
-		nm[1] = 0;
-		alleleCounts[0].resize(alleleCount);
-		fill(alleleCounts[0].begin(), alleleCounts[0].end(), 0);
-		alleleCounts[1].resize(alleleCount);
-		fill(alleleCounts[1].begin(), alleleCounts[1].end(), 0);
+	unsigned int bploc = 0;
+	unsigned int gt_idx;
+	unsigned int ft_idx;
+	unsigned short curr_max;
+	unsigned int max_count;
+	bool lift_warn = false;
+	std::ofstream unlift_out;
+	std::vector<boost::string_ref> geno_list;
+	std::vector<boost::string_ref> fields;
+	std::vector<std::string> alleles;
+	std::vector<boost::string_ref> call_list;
+	std::vector<std::string> format_list;
+	std::vector<std::pair<unsigned short, unsigned short> > calls;
+	std::pair<unsigned short, unsigned short> curr_call;
+	std::vector<unsigned int> call_count;
 
-		for (unsigned int j=0; j<vcf->N_indv; j++) {
-			entry.get_indv_GENOTYPE_ids(j, genotype);
 
-			if(genotype.first != -1){
-				++alleleCounts[!_control_bitset[j]][genotype.first];
-			}
-			if(genotype.second != -1){
-				++alleleCounts[!_control_bitset[j]][genotype.second];
-			}
+	const unsigned short missing_geno = static_cast<unsigned short>(-1);
+	calls.reserve(_positions.size());
+	format_list.reserve(10);
+	call_list.reserve(2);
 
-			if((genotype.first==-1)^(genotype.second==-1)){
-				std::cerr << "WARNING: Genotype partially missing at chromosome "
-						<< entry.get_CHROM() <<", position " << entry.get_POS()
-						<< std::endl;
-			}
+	//boost::char_separator<char> vcf_sep("\t");
 
-			nm[!_control_bitset[j]] += (genotype.first != -1);
-			nm[!_control_bitset[j]] += (genotype.second != -1);
+	while(getline(vcf_f, curr_line)){
+		++lineno;
+		fields.clear();
+		if(curr_line.size() > 2 && curr_line[0] != '#'){
+			// In this case, we're looking at a marker
 
-			// I need to save this to determine if it is in fact "minor"
-			genotype_pairs[j] = genotype;
-
-		}
-
-		// To deal with the default parameter, we really just want to use
-		// vcf->include_indivs, but NOOOO C++ has to be a pain
-
-		float controlMAF = getMAF(alleleCounts[0], nm[0]);
-		float caseMAF = getMAF(alleleCounts[1], nm[1]);
-
-		bool is_rare = ( controlMAF <= BinManager::mafCutoff && controlMAF >= BinManager::mafThreshold) ||
-				(RareCaseControl && nm[1] >= 0 && caseMAF <= BinManager::mafCutoff && caseMAF >= BinManager::mafThreshold);
-
-		// If the minimum bin size is > 0 and this locus has no minor alleles,
-		// just keep going!
-
-		// Note that if the MAF is < 0, we have no data for that population, so
-		// it could contribute nothing to the analysis
-		bool drop_loci = controlMAF <= 0 && caseMAF <= 0 && BinManager::MinBinSize > 0;
-
-		if(KeepCommonLoci || (is_rare && !drop_loci) ){
-			Knowledge::Locus* loc = new Knowledge::Locus(entry.get_CHROM(),entry.get_POS(),is_rare,entry.get_ID());
-
-			if(conv){
-				Knowledge::Locus* new_loc = conv->convertLocus(*loc);
-				if (! new_loc){
-					// Add to the
-					delete loc;
-					loc = 0;
-				}else{
-					delete loc;
-					loc = new_loc;
-				}
+			boost::algorithm::iter_split(fields, curr_line, boost::first_finder("\t"));
+			if(fields.size() != n_fields){
+				std::cerr << "ERROR: Mismatched number of fields on line "
+						<< lineno << std::endl;
+				// throw exception here
+				throw std::runtime_error("Mismatched number of fields in VCF file");
 			}
 
-			if(loc){
-				string currMajor = "";
-				float currMax = 0;
-				float currFreq = 0;
+			chr = std::string(fields[0].begin(), fields[0].end());
+			bploc = boost::lexical_cast<unsigned int>(fields[1]);
+			id = std::string(fields[2].begin(), fields[2].end());
+			ref = std::string(fields[3].begin(), fields[4].end());
+			alt = std::string(fields[3].begin(), fields[4].end());
+			filter = std::string(fields[6].begin(), fields[6].end());
+			format = std::string(fields[8].begin(), fields[8].end());
 
-				loci_out.insert(loci_out.end(), loc);
-				_locus_position.insert(make_pair(loc, i));
+			// check for marker-level inclusion
+			if(filter == "." || filter == "PASS"){
 
-				// Add ability to order the alleles by overall population here!
-				float freq = (nm[0] != 0 ? (alleleCounts[0][0] / static_cast<float>(nm[0])) : 0);
-				int nm_sum = nm[0] + nm[1];
-				if (OverallMajorAllele){
-					currMax = (nm_sum != 0 ? (alleleCounts[0][0] + alleleCounts[1][0]) / static_cast<float>(nm_sum) : 0);
-					currMajor = entry.get_REF();
+				// construct a locus object and lift over, if necessary
+				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id);
+				if(conv){
+					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
+					if (! new_loc){
+						if(!lift_warn){
+							std::string fn(prefix + "-unlifted.csv");
+							unlift_out.open(fn.c_str());
+							std::cerr << "WARNING: Some variants not lifted!  See "
+									  << fn << " for details." << std::endl;
+
+							unlift_out << "Chrom" << sep << "Pos" << sep
+									   << "ID" << std::endl;
+							lift_warn = true;
+
+						}
+						loc->print(unlift_out, sep);
+						unlift_out << std::endl;
+
+						delete loc;
+						loc = 0;
+					}else{
+						delete loc;
+						loc = new_loc;
+					}
 				}
 
 
-				loc->addAllele(entry.get_REF(), freq);
-				for (uint n = 1; n<alleleCount; n++){
-					freq = (nm[0] != 0 ? alleleCounts[0][n] / static_cast<float>(nm[0]) : -1);
-					if (OverallMajorAllele){
-						currFreq = (nm_sum != 0 ? (alleleCounts[0][n] + alleleCounts[1][n]) / static_cast<float>(nm_sum) : -1);
-						if(currFreq > currMax){
-							currMax = currFreq;
-							currMajor = entry.get_ALT_allele(n-1);
+				if(loc != 0){
+					// get a list of all the alleles, in the correct order
+					std::string allele_str = ref + "," + alt;
+					boost::algorithm::split(alleles, allele_str, boost::is_any_of(","));
+					// initialize the call count so I can easily determine the major allele
+					call_count.clear();
+					call_count.resize(alleles.size(), 0);
+
+					// parse the format string
+					format_list.clear();
+					boost::algorithm::split(format_list, format, boost::is_any_of(":"));
+					gt_idx = (find(format_list.begin(), format_list.end(), "GT") - format_list.begin());
+					ft_idx = (find(format_list.begin(), format_list.end(), "FT") - format_list.begin());
+					ft_idx = (ft_idx == format_list.size()) ? static_cast<unsigned int>(-1) : ft_idx;
+
+					if(gt_idx == format_list.size()){
+						std::cerr << "ERROR: No 'GT' format on line " << lineno <<
+								", cannot continue." << std::endl;
+						throw std::runtime_error("No GT given in format string");
+					}
+
+					calls.clear();
+					for (unsigned int i=0; i<fields.size() - 9; i++){
+
+						// parse the individual call
+						geno_list.clear();
+						//std::string currstr(fields[i+9].begin(), fields[i+9].end());
+						boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
+
+						if(fields[i+9] != "." && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == "PASS")){
+							call_list.clear();
+							boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
+							if(call_list.size() == 1){
+								// we should be here very rarely!  If we're here,
+								// we'll assume that the "primary" separator of
+								// genotypes is in fact the "alternate", so swap them!
+								boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(alt_geno_sep));
+								geno_sep.swap(alt_geno_sep);
+							}
+
+							if(call_list.size() != 2){
+								std::cerr << "WARNING: Non-diploid found on line " <<
+										lineno << ", setting to missing" << std::endl;
+								calls.push_back(std::make_pair(missing_geno, missing_geno));
+							} else {
+								unsigned short g1, g2;
+								if(call_list[0] != "." && call_list[1] != "."){
+									g1 = fast_atoi(call_list[0]);
+									g2 = fast_atoi(call_list[1]);
+									calls.push_back(std::make_pair(g1, g2));
+									++call_count[g1];
+									++call_count[g2];
+								} else{
+									calls.push_back(std::make_pair(missing_geno, missing_geno));
+								}
+							}
+						} else {
+							calls.push_back(std::make_pair(missing_geno, missing_geno));
+						}
+
+					} // end iterating over genotypes
+
+					// OK, now we'll find the major allele
+					curr_max = 0;
+					max_count = call_count[0];
+					for(unsigned short i=1; i<call_count.size(); i++){
+						if(call_count[i] > max_count){
+							curr_max = i;
+							max_count = call_count[i];
 						}
 					}
-					loc->addAllele(entry.get_ALT_allele(n-1), freq);
-				}
-				if(OverallMajorAllele){
-					loc->setMajorAllele(currMajor);
+
+					// let's make sure that this isn't monoporphic
+					std::sort(call_count.begin(), call_count.end());
+					if(call_count.size() < 2 || call_count[call_count.size() - 2] == 0){
+						delete loc;
+					} else {
+
+						bitset_pair curr_geno(std::make_pair(boost::dynamic_bitset<>(calls.size()), boost::dynamic_bitset<>(calls.size())));
+
+						for(unsigned int i=0; i<calls.size(); i++){
+							curr_call = calls[i];
+
+							if(curr_call.first == missing_geno || curr_call.second == missing_geno){
+								curr_geno.first.set(i);
+								curr_geno.second.set(i);
+							} else if (curr_call.first != curr_max && curr_call.second != curr_max){
+								curr_geno.first.set(i);
+							} else if (curr_call.first != curr_max || curr_call.second != curr_max) {
+								curr_geno.second.set(i);
+							}
+						}
+
+						// again, make sure it isn't monomorphic with regards to the
+						// disease encoding
+						if(getTotalContrib(curr_geno) == 0){
+							delete loc;
+						} else {
+							loci_out.insert(loci_out.end(), loc);
+							_genotypes.insert(std::make_pair(loc, curr_geno));
+						}
+					}
 				}
 
-				_locus_count.insert(make_pair(loc, nm));
-				gen_pair = _genotype_bitset.insert(
-						std::make_pair(loc,
-								std::make_pair(boost::dynamic_bitset<>(size),
-										boost::dynamic_bitset<>(size))));
-				gen_itr = gen_pair.first;
-
-				for (unsigned int j=0; j<vcf->N_indv; ++j) {
-
-					//MOVE THIS!!
-					(*gen_itr).second.first[j] = genotype_pairs[j].first != -1 && static_cast<unsigned short>(genotype_pairs[j].first) != loc->getMajorPos();
-					(*gen_itr).second.second[j] = genotype_pairs[j].second != -1 && static_cast<unsigned short>(genotype_pairs[j].second) != loc->getMajorPos();
-				}
-			}
+			} // end marker parsing
 		}
+
+	} // end while(getline)
+
+	if(lift_warn){
+		unlift_out.close();
 	}
+
 }
 
 }
