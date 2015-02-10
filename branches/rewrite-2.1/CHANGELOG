@@ -1,3 +1,14 @@
+== 2.2.0 ==
+
+Features and Changes:
+- Added ability to run PheWAS, reading the VCF only once
+- Compressed VCFs are automatically detected
+- Added an output listing unlifted loci
+- Added the ability to suppress summary information in the bins file
+- Removed dependence on VCFTools library
+- Removed Genotype and Frequency reports
+- Removed all allele information from memory storage 
+
 == 2.1.1 ==
 
 - Fixed bug that yields NaN for some bins when using locus weighting
