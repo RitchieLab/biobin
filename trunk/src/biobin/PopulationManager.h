@@ -537,7 +537,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			if(filter == "." || filter == "PASS"){
 
 				// construct a locus object and lift over, if necessary
-				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id);
+				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id, ref);
 				if(conv){
 					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
 					if (! new_loc){
