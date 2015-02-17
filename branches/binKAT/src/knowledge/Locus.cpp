@@ -71,18 +71,18 @@ void Locus::operator delete(void* deadObj, size_t size) {
 	s_locus_pool.free(deadObj);
 }
 
-Locus::Locus(short chrom, uint pos, const string& id):
+Locus::Locus(short chrom, uint pos, const string& id, const string& ref):
 		_chrpos(chrom, pos), _id(id){
 	if (id.size() == 0 || _id == "."){
-		createID();
+		createID(ref);
 	}
 
 }
 
-Locus::Locus(const string& chrom_str, uint pos, const string& id):
+Locus::Locus(const string& chrom_str, uint pos, const string& id, const string& ref):
 		_chrpos(getChrom(chrom_str), pos), _id(id){
 	if (_id.size() == 0 || _id == "."){
-		createID();
+		createID(ref);
 	}
 }
 
@@ -132,9 +132,12 @@ unsigned short Locus::getChrom(const string& chrom_str){
 
 }
 
-void Locus::createID(){
+void Locus::createID(const string& ref){
 	std::stringstream ss;
 	ss << "chr" << getChromStr(_chrpos.getChrom()) << "-" << _chrpos.getPos();
+	if(!ref.empty()){
+		ss << "-" << ref;
+	}
 	_id = ss.str();
 }
 

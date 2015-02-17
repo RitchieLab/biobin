@@ -19,6 +19,8 @@
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
 
+#include "util/Phenotype.h"
+
 using std::string;
 using std::vector;
 using std::map;
@@ -95,7 +97,7 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 	_pheno_mutex.lock();
 		while(ph_itr != _pop_mgr.endPheno()){
-			PopulationManager::Phenotype ph(*ph_itr);
+			Utility::Phenotype ph(*ph_itr);
 			_pheno_mutex.unlock();
 
 			BinManager binData(_pop_mgr, *regions, dataset, *_info, ph);
@@ -105,12 +107,12 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 			std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
 						<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
-						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
+						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.size()<<"\n";
 
 			std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
 					 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
 
-			if (binData.numBins() > 0 && binData.numBins() < 500) {
+			if (binData.size() > 0 && binData.size() < 100) {
 				std::cout<<"\n\nBin Name\tVariant Count\n";
 				BinManager::const_iterator itr = binData.begin();
 				BinManager::const_iterator end = binData.end();
@@ -128,7 +130,8 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 			// If we are creating a locus report, print all bin data for each locus
 			if(Main::WriteLociData){
-				FILE* fp = binData.printLocusBins(dataset);
+				FILE* fp = binData.printLocusBins(dataset,
+						_pop_mgr.getPhenotypeName(ph.getIndex()));
 
 				_data_mutex.lock();
 				_locus_bins[ph.getIndex()] = fp;

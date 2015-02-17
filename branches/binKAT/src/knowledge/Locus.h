@@ -52,8 +52,9 @@ public:
 	 * \param chrom_str The chromosome string ID of the chromosome (see the _chrom_list variable for acceptable formatting)
 	 * \param pos The position on the chromosome of this locus
 	 * \param id The unique ID string of this locus (optional)
+	 * \param ref The reference allele for this locus (optional)
 	 */
-	Locus(const std::string& chrom_str, uint pos, const std::string& id = "");
+	Locus(const std::string& chrom_str, uint pos, const std::string& id = "", const std::string& ref="");
 
 	/*!
 	 * \brief Constructs a locus object using the chromosome index.
@@ -66,8 +67,9 @@ public:
 	 * \param chrom The chromosome index of the chromosome
 	 * \param pos The position on the chromosome of the locus
 	 * \param id The unique ID string of this locus (optional)
+	 * \param ref The reference allele for this locus (optional)
 	 */
-	Locus(short chrom, uint pos, const std::string& id = "");
+	Locus(short chrom, uint pos, const std::string& id = "", const std::string& ref="");
 
 	/*!
 	 * Return the ID of this Locus (passed in or auto-generated).
@@ -168,7 +170,7 @@ private:
 	 * Method that creates an ID based on the chromosome and position and saves
 	 * the created Id into the _id member.
 	 */
-	void createID();
+	void createID(const std::string& ref="");
 
 	LocusPosition _chrpos;
 

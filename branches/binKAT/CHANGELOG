@@ -7,7 +7,9 @@ Features and Changes:
 - Added the ability to suppress summary information in the bins file
 - Removed dependence on VCFTools library
 - Removed Genotype and Frequency reports
-- Removed all allele information from memory storage 
+- Removed all allele information from memory storage
+- Added the ability to run statistical tests within BioBin.  Tests included:
+	- linear regression  
 
 == 2.1.1 ==
 

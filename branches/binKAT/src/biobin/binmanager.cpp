@@ -19,6 +19,7 @@ using std::string;
 using std::pair;
 using std::set;
 using std::deque;
+using std::make_pair;
 
 using boost::unordered_map;
 
@@ -27,7 +28,8 @@ using Knowledge::Region;
 using Knowledge::Group;
 using Knowledge::Locus;
 using Knowledge::Information;
-using std::make_pair;
+
+using BioBin::Utility::Phenotype;
 
 namespace BioBin {
 
@@ -48,7 +50,7 @@ BinManager::BinManager(const PopulationManager& pop_mgr,
 		const Knowledge::RegionCollection& regions,
 		const std::deque<Knowledge::Locus*>& loci,
 		const Knowledge::Information& info,
-		const PopulationManager::Phenotype& pheno) :
+		const Phenotype& pheno) :
 	_pop_mgr(pop_mgr), _regions(regions), _info(info), _pheno(pheno) {
 	InitBins(loci);
 }
