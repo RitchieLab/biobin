@@ -7,7 +7,6 @@
 
 #include "MatrixUtils.h"
 
-#include <vector>
 #include <set>
 #include <limits>
 #include <cmath>

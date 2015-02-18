@@ -10,6 +10,8 @@
 
 #include<gsl/gsl_matrix.h>
 
+#include <vector>
+
 namespace BioBin {
 
 namespace Test {

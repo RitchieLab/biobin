@@ -75,7 +75,7 @@ unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
 	}
 }
 
-float PopulationManager::getAvgGenotype(const Locus& locus) const{
+float PopulationManager::getAvgGenotype(const Locus& loc) const{
 	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
 	unsigned int n_vars = 0;
 	float nonmiss = 1;
@@ -89,7 +89,7 @@ float PopulationManager::getAvgGenotype(const Locus& locus) const{
 	return n_vars / nonmiss;
 }
 
-unsigned short PopulationManager::getIndivGeno(const Knowlege::Locus& loc, int pos) const{
+unsigned short PopulationManager::getIndivGeno(const Locus& loc, int pos) const{
 	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
 	if(it == _genotypes.end()){
 		return missing_geno;
