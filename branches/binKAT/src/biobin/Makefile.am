@@ -24,7 +24,9 @@ biobin_SOURCES= \
    tests/LinearRegression.h \
    tests/LinearRegression.cpp \
    tests/MatrixUtils.h \
-   tests/MatrixUtils.cpp
+   tests/MatrixUtils.cpp \
+   tests/SKATLinear.h \
+   tests/SKATLinear.cpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  

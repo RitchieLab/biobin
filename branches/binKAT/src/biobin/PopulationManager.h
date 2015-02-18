@@ -172,6 +172,7 @@ public:
 	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
 	const std::vector<float>& getCovariates(const std::string& sample) const;
 	float getTotalIndivContrib(const Bin& b, int pos, const Utility::Phenotype& pheno) const;
+	float getLocusWeight(const Knowledge::Locus& loc, const Utility::Phenotype& pheno) const;
 
 	// working with the Knowlede::Information
 	void setInfo(const Knowledge::Information* info) {

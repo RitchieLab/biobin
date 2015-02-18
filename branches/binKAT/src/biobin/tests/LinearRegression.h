@@ -30,6 +30,7 @@ public:
 	public:
 		Result(gsl_vector* b, gsl_matrix* c) : beta(b), cov(c), chisq(0) {}
 
+		std::vector<unsigned int> dropped_cols;
 		gsl_vector* beta;
 		gsl_matrix* cov;
 		double chisq;
@@ -64,6 +65,7 @@ private:
 
 	//! The null model result
 	Result* _null_result;
+
 
 	//! A vector of sample IDs containing completely non-missing covariates + phenotypes
 	//! along with the index of each!

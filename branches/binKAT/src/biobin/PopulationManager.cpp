@@ -428,6 +428,10 @@ float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) co
 	//return 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
 }
 
+float PopulationManager::getLocusWeight(const Locus& loc, const Utility::Phenotype& pheno) const{
+	return calcWeight(loc, pheno.getStatus());
+}
+
 float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status) const{
 	// *_a = Affected (cases), *_u = Unaffected (controls)
 	// N_* = Number (population), F_* = Frequency

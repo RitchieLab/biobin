@@ -102,6 +102,24 @@ void LinearRegression::init(const PopulationManager& pop_mgr, const Phenotype& p
 	gsl_matrix_const_view X_view = gsl_matrix_const_submatrix(_data, 0, 0, _data->size1, _data->size2-1);
 
 	_null_result = calculate(*_phenos, X_view.matrix);
+
+	// if we have colinearity in the null result, let's just drop those
+	// columns entirely
+	if(_null_result->dropped_cols.size() > 0){
+		gsl_matrix* data_new = gsl_matrix_alloc(_data->size1, _data->size2 - _null_result->dropped_cols.size());
+		gsl_matrix* P = gsl_matrix_alloc(X_view.matrix.size2, X_view.matrix.size2);
+		MatrixUtils::getPermuMatrix(_null_result->dropped_cols, P);
+		gsl_matrix* X_tmp = gsl_matrix_alloc(X_view.matrix.size1, X_view.matrix.size2);
+		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X_view.matrix, P, 0.0, X_tmp);
+
+		gsl_matrix_view data_new_sub = gsl_matrix_submatrix(data_new, 0, 0, data_new->size1, X_tmp->size2);
+		gsl_matrix_memcpy(&data_new_sub.matrix, X_tmp);
+
+		std::swap(data_new, _data);
+		gsl_matrix_free(data_new);
+		gsl_matrix_free(P);
+		gsl_matrix_free(X_tmp);
+	}
 }
 
 double LinearRegression::runTest(const Bin& bin) const{
@@ -139,6 +157,26 @@ LinearRegression::Result* LinearRegression::calculate(const gsl_vector& Y, const
 	gsl_matrix* P = gsl_matrix_alloc(X.size2, X.size2);
 
 	unsigned int n_colinear = MatrixUtils::checkColinear(&X, P);
+	// If we have colinearity, find them
+	if(n_colinear > 0){
+		gsl_vector* idx_vec = gsl_vector_alloc(X.size2);
+		for(unsigned int i=0; i<idx_vec->size; i++){
+			gsl_vector_set(idx_vec, i, i);
+		}
+		gsl_vector* idx_res = gsl_vector_calloc(idx_vec->size);
+		gsl_blas_dgemv(CblasNoTrans, 1.0, P, idx_vec, 0, idx_res);
+		r->dropped_cols.reserve(n_colinear);
+		for(unsigned int i=0; i<n_colinear; i++){
+			r->dropped_cols.push_back(gsl_vector_get(idx_res, idx_res->size - i - 1));
+		}
+
+		// sort this from smallest to largest so I'll get a consistent
+		// permutation vector when needed
+		std::sort(r->dropped_cols.begin(), r->dropped_cols.end());
+		gsl_vector_free(idx_vec);
+		gsl_vector_free(idx_res);
+	}
+
 	unsigned int n_indep = X.size2 - n_colinear;
 
 	// set A = X*P
