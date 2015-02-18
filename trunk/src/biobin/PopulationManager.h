@@ -528,8 +528,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			chr = std::string(fields[0].begin(), fields[0].end());
 			bploc = boost::lexical_cast<unsigned int>(fields[1]);
 			id = std::string(fields[2].begin(), fields[2].end());
-			ref = std::string(fields[3].begin(), fields[4].end());
-			alt = std::string(fields[3].begin(), fields[4].end());
+			ref = std::string(fields[3].begin(), fields[3].end());
+			alt = std::string(fields[4].begin(), fields[4].end());
 			filter = std::string(fields[6].begin(), fields[6].end());
 			format = std::string(fields[8].begin(), fields[8].end());
 
