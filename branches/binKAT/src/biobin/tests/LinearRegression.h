@@ -23,6 +23,8 @@ namespace BioBin {
 namespace Test {
 
 class LinearRegression : public TestImpl<LinearRegression>{
+	friend class SKATLinear;
+
 public:
 	class Result{
 	public:
@@ -53,7 +55,6 @@ private:
 
 	const PopulationManager* pop_mgr_ptr;
 	const Utility::Phenotype* _pheno_ptr;
-	const Knowledge::Information* _info;
 
 	//! The matrix of covariates + bin
 	gsl_matrix* _data;

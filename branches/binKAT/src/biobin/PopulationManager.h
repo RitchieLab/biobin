@@ -162,6 +162,8 @@ public:
 
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
+	unsigned short getIndivGeno(const Knowlege::Locus& loc, int position);
+	float getAvgGenotype(const Knowledge::Locus& locus) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}
@@ -169,11 +171,18 @@ public:
 	const std::string& getPhenotypeName(unsigned int i) const {return _pheno_names[i];}
 	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
 	const std::vector<float>& getCovariates(const std::string& sample) const;
-	float getTotalIndivContrib(const Bin& b, int pos, const Utility::Phenotype& pheno, const Knowledge::Information* const info=NULL) const;
+	float getTotalIndivContrib(const Bin& b, int pos, const Utility::Phenotype& pheno) const;
+
+	// working with the Knowlede::Information
+	void setInfo(const Knowledge::Information* info) {
+		_info = info;
+		_use_custom_weight = _info && _info->c_weight_files.size() > 0;
+	}
+	const Knowledge::Information* getInfo() const { return _info;}
 
 	// Printing functions
-	void printBins(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
-	void printBinsTranspose(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
+	void printBins(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const std::string& sep=",") const;
+	void printBinsTranspose(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const std::string& sep=",") const;
 
 	static float c_phenotype_control;
 	static std::string c_phenotype_file;
@@ -184,7 +193,6 @@ public:
 	static bool NoSummary;
 
 	static bool c_use_calc_weight;
-	static bool _use_custom_weight;
 
 	static float c_min_control_frac;
 
@@ -192,6 +200,8 @@ public:
 	static WeightModel c_weight_type;
 
 	static std::vector<Test::Test*> c_tests;
+
+	const static unsigned short missing_geno = static_cast<unsigned short>(-1);
 
 private:
 
@@ -210,12 +220,12 @@ private:
 			boost::unordered_map<std::string, std::vector<float> >& vals_out,
 			const std::string& var_prefix="pheno");
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, const bitset_pair& status, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, const bitset_pair& status, bool useWeights = false, const Knowledge::Region* const reg = NULL) const;
 	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
-	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
+	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
 
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
@@ -263,6 +273,10 @@ private:
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotypes;
 
 	std::string _vcf_fn;
+
+	bool _use_custom_weight;
+
+	const Knowledge::Information* _info;
 };
 
 template<class T_cont>

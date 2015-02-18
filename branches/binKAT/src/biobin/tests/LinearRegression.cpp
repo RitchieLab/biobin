@@ -108,7 +108,7 @@ double LinearRegression::runTest(const Bin& bin) const{
 
 	for(unsigned int i=0; i<_samp_name.size(); i++){
 		gsl_matrix_set(_data, i, _data->size2 - 1,
-				pop_mgr_ptr->getTotalIndivContrib(bin, _samp_name[i].second, *_pheno_ptr, _info));
+				pop_mgr_ptr->getTotalIndivContrib(bin, _samp_name[i].second, *_pheno_ptr));
 	}
 
 	// run the model now
@@ -136,8 +136,7 @@ LinearRegression::Result* LinearRegression::calculate(const gsl_vector& Y, const
 	Result* r = new Result(beta, cov_mat);
 
 	// permutation matrix checking for colinearity
-	gsl_matrix* P = gsl_matrix_calloc(X.size2, X.size2);
-	gsl_matrix_set_identity(P);
+	gsl_matrix* P = gsl_matrix_alloc(X.size2, X.size2);
 
 	unsigned int n_colinear = MatrixUtils::checkColinear(&X, P);
 	unsigned int n_indep = X.size2 - n_colinear;

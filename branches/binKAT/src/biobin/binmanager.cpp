@@ -158,9 +158,9 @@ void BinManager::InitBins(const deque<Knowledge::Locus*>& loci) {
 
 void BinManager::printBinData(std::ostream& os, const string& sep, bool transpose) const{
 	if (transpose){
-		_pop_mgr.printBinsTranspose(os, *this, _pheno, _info, sep);
+		_pop_mgr.printBinsTranspose(os, *this, _pheno, sep);
 	} else {
-		_pop_mgr.printBins(os, *this, _pheno, _info, sep);
+		_pop_mgr.printBins(os, *this, _pheno, sep);
 	}
 }
 

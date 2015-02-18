@@ -59,10 +59,10 @@ vector<BioBin::Test::Test*> PopulationManager::c_tests;
 
 bool PopulationManager::RareCaseControl = true;
 bool PopulationManager::c_use_calc_weight = false;
-bool PopulationManager::_use_custom_weight = false;
 bool PopulationManager::NoSummary = false;
 
-PopulationManager::PopulationManager(const string& vcf_fn) : _vcf_fn(vcf_fn){
+PopulationManager::PopulationManager(const string& vcf_fn) :
+		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
 }
 
 unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
@@ -73,6 +73,41 @@ unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
 	} else {
 		return 0;
 	}
+}
+
+float PopulationManager::getAvgGenotype(const Locus& locus) const{
+	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
+	unsigned int n_vars = 0;
+	float nonmiss = 1;
+
+	if(itr != _genotypes.end()){
+		n_vars =  getTotalContrib((*itr).second);
+		nonmiss = (~((*itr).second.first & (*itr).second.second)).count();
+	}
+
+	// will return 0 for a missing locus
+	return n_vars / nonmiss;
+}
+
+unsigned short PopulationManager::getIndivGeno(const Knowlege::Locus& loc, int pos) const{
+	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
+	if(it == _genotypes.end()){
+		return missing_geno;
+	}
+
+	unsigned short n_var = 2*(*it).second.first[pos] + (*it).second.second[pos];
+
+	if(n_var == 3){
+		// if we're here, then we had both bits set to 1, which means missing
+		n_var = missing_geno;
+	}else if(c_model == DOMINANT){
+		n_var = n_var > 0;
+	} else if (c_model == RECESSIVE){
+		n_var = n_var > 1;
+	}
+
+	return n_var;
+
 }
 
 bool PopulationManager::isRare(const Locus& locus, const bitset_pair& status, float lower, float upper) const{
@@ -112,12 +147,12 @@ const vector<float>& PopulationManager::getCovariates(const string& sample) cons
 
 }
 
-float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenotype& pheno, const Information* const info) const {
+float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenotype& pheno) const {
 	// Accumulate the contribution of this person in this bin
 	Bin::const_locus_iterator l_itr = b.variantBegin();
 	float bin_count = 0;
 	while(l_itr != b.variantEnd()){
-		bin_count += getIndivContrib(**l_itr, pos, pheno.getStatus(), true, info, b.getRegion());
+		bin_count += getIndivContrib(**l_itr, pos, pheno.getStatus(), true, b.getRegion());
 		++l_itr;
 	}
 	return bin_count;
@@ -321,34 +356,24 @@ void PopulationManager::parseTraitFile(const string& filename,
 	}
 }
 
-float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset_pair& status, bool useWeights, const Information* const info, const Region* const reg) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset_pair& status, bool useWeights, const Region* const reg) const{
 
 	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
 
 	static float weight_cache = 1;
 	static const Locus* loc_cache = 0;
 	float custom_weight = 1;
-	unsigned int n_var = 0;
+	unsigned short n_var = getIndivGeno(loc, pos);
 
-	if(it == _genotypes.end()){
-		return 0;
-	}
-
-	bool g1 = (*it).second.first[pos];
-	bool g2 = (*it).second.second[pos];
-	n_var = (g1 && g2) ? 0 : 2*g1 + g2;
-
-	if(c_model == DOMINANT){
-		n_var = n_var > 0;
-	} else if (c_model == RECESSIVE){
-		n_var = n_var > 1;
+	if(n_var == missing_geno){
+		n_var = 0;
 	}
 
 	// Cache the weights so we aren't wasting so much effort.
 	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
 	if(n_var != 0 && useWeights){
-		if(_use_custom_weight && info){
-			custom_weight = getCustomWeight(loc, *info, reg);
+		if(_use_custom_weight){
+			custom_weight = getCustomWeight(loc, reg);
 		}
 		if(c_use_calc_weight && loc_cache != &loc){
 			loc_cache = &loc;
@@ -465,17 +490,19 @@ float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status)
 	return weight;
 }
 
-float PopulationManager::getCustomWeight(const Locus& loc, const Information& info, const Region* const reg) const{
+float PopulationManager::getCustomWeight(const Locus& loc, const Region* const reg) const{
 	static float weight_cache = 1;
 	static const Locus* loc_cache = 0;
 	static const Region* reg_cache = 0;
 
-	if(&loc != loc_cache || reg != reg_cache){
-		loc_cache = &loc;
-		reg_cache = reg;
-		weight_cache = info.getSNPWeight(loc, reg);
-	}
 
+	if(_info){
+		if(&loc != loc_cache || reg != reg_cache){
+			loc_cache = &loc;
+			reg_cache = reg;
+			weight_cache = _info->getSNPWeight(loc, reg);
+		}
+	}
 	return weight_cache;
 }
 
@@ -520,10 +547,8 @@ string PopulationManager::getEscapeString(const string& sep) const{
 	return sep_repl;
 }
 
-void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
+void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const std::string& sep) const{
 	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
-
-	_use_custom_weight = (info.c_weight_files.size() > 0);
 
 	std::string sep_repl = getEscapeString(sep);
 
@@ -626,7 +651,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		// print for each person
 		m_itr = _positions.begin();
 		while (m_itr != _positions.end()) {
-			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno, &info);
+			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno);
 			++m_itr;
 		}
 		os << "\n";
@@ -635,11 +660,9 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 	}
 }
 
-void PopulationManager::printBins(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
+void PopulationManager::printBins(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const std::string& sep) const{
 	std::string sep_repl = getEscapeString(sep);
 	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
-
-	_use_custom_weight = (info.c_weight_files.size() > 0);
 
 	BinManager::const_iterator b_itr = bins.begin();
 	BinManager::const_iterator b_end = bins.end();
@@ -754,7 +777,7 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		os << sep << status;
 
 		while(b_itr != b_end){
-			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, pos, pheno, &info);
+			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, pos, pheno);
 			++b_itr;
 		}
 

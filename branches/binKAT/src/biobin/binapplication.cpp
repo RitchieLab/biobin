@@ -52,6 +52,8 @@ BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
 
 	Init(db_fn, true);
 
+	_pop_mgr.setInfo(_info);
+
 	if (c_print_populations) {
 		_info->printPopulations(std::cout);
 	}
