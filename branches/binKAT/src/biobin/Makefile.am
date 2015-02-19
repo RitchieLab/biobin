@@ -26,7 +26,9 @@ biobin_SOURCES= \
    tests/MatrixUtils.h \
    tests/MatrixUtils.cpp \
    tests/SKATLinear.h \
-   tests/SKATLinear.cpp
+   tests/SKATLinear.cpp \
+   tests/qfc.h \
+   tests/qfc.cpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  

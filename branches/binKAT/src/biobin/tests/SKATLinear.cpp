@@ -7,6 +7,7 @@
 
 #include "SKATLinear.h"
 
+#include "qfc.h"
 #include "MatrixUtils.h"
 
 #include <vector>
@@ -16,6 +17,7 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_blas.h>
+#include <gsl/gsl_eigen.h>
 
 using std::string;
 using std::vector;
@@ -60,12 +62,12 @@ void SKATLinear::init(const PopulationManager& pop_mgr, const Utility::Phenotype
 	_XT_X_inv = gsl_matrix_calloc(_base_reg._null_result->cov->size1, _base_reg._null_result->cov->size2);
 
 	// calculate the (inverse variance) of the residuals
-	double inv_var = 1 / gsl_stats_variance(_resid->data, _resid->stride, _resid->size);
+	resid_inv_var = 1 / gsl_stats_variance(_resid->data, _resid->stride, _resid->size);
 	// set _XT_X_inv = inv_var * cov
 	gsl_matrix* I = gsl_matrix_alloc(_XT_X_inv->size1, _XT_X_inv->size2);
 	gsl_matrix_set_identity(I);
 
-	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, inv_var, _base_reg._null_result->cov, I, 0.0, _XT_X_inv);
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, resid_inv_var, _base_reg._null_result->cov, I, 0.0, _XT_X_inv);
 	gsl_matrix_free(I);
 }
 
@@ -96,7 +98,7 @@ double SKATLinear::runTest(const Bin& bin) const{
 	for(unsigned int j=0; j<geno->size2; j++){
 		for(unsigned int i=0; i<geno->size1; i++){
 			unsigned char g = _pop_mgr_ptr->getIndivGeno(**ci,_base_reg._samp_name[i].second);
-			if(g == _pop_mgr_ptr->missing_geno){
+			if(g > 2){
 				missing[j]++;
 				gsl_matrix_set(geno,i,j,avg_geno[j]);
 			} else {
@@ -112,11 +114,21 @@ double SKATLinear::runTest(const Bin& bin) const{
 	float missing_thresh = 0.05 *geno->size1;
 	// OK, now let's check the missingness and variation requirements
 	for(unsigned int i=0; i<missing.size(); i++){
+		// too much missingness
 		if(missing[i] > missing_thresh){
 			bad_idx.push_back(i);
+		// not polymorphic
 		} else if( popcount(n_genos[i]) <= 0){
 			bad_idx.push_back(i);
 		}
+	}
+
+	// We have no SNPS!
+	if(bad_idx.size() == geno->size2){
+		// clean up and return 1
+		gsl_matrix_free(geno);
+		gsl_matrix_free(weights);
+		return 1;
 	}
 
 	gsl_matrix* P = gsl_matrix_alloc(geno->size2, geno->size2);
@@ -145,45 +157,94 @@ double SKATLinear::runTest(const Bin& bin) const{
 	// r*GKG*r, with K == Weights
 	// temporary vectors - we want to keep everyting BLAS lv. 2 at this point
 	gsl_vector* tmp_nsnp = gsl_vector_calloc(G_v.matrix.size2);
-	gsl_vector* tmp_nsnp2 = gsl_vector_calloc(G_v.matrix.size2);
 	gsl_vector* tmp_nind = gsl_vector_calloc(G_v.matrix.size1);
 
-	// multiplying from right to left
-	// tmp_nsnp = G^T * r
-	gsl_blas_dgemv(CblasTrans, 1.0, &G_v.matrix, _resid, 0, tmp_nsnp);
-	// tmp_nsnp2 = W * tmp_nsnp
-	gsl_blas_dgemv(CblasNoTrans, 1.0, &W_v.matrix, tmp_nsnp, 0, tmp_nsnp2);
-	// tmp_nind = G * tmp_nsnp2
-	gsl_blas_dgemv(CblasNoTrans, 1.0, &G_v.matrix, tmp_nsnp2, 0, tmp_nind);
+	// Let's calculate the matrix G*W
+	gsl_matrix* GW = gsl_matrix_calloc(G_v.matrix.size1, G_v.matrix.size2);
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &G_v.matrix, &W_v.matrix, 0.0, GW);
+
+	// At this point, I'm done with weights and the permuted genotype matrix!
+	// as well as the permutation matrix
+	gsl_matrix_free(weights);
+	gsl_matrix_free(G_P);
+	gsl_matrix_free(P);
+
+	// Now, tmp_nsnp = (GW)^T * resid
+	gsl_blas_dgemv(CblasTrans, 1.0, GW, _resid, 0, tmp_nsnp);
+	// tmp_nind = (GW) * tmp_nsnp2
+	gsl_blas_dgemv(CblasNoTrans, 1.0, GW, tmp_nsnp, 0, tmp_nind);
+
 	// and finally, Q = _resid^T * tmp_nsnp
 	double Q;
 	gsl_blas_ddot(_resid, tmp_nind, &Q);
 
+	// now divide by var(residuals) and divide by 2
+	// acutally, multiply by the inverse of the above for a hint of extra speed
+	Q *= 0.5*resid_inv_var;
+
 	// get rid of the temporary vectors
 	gsl_vector_free(tmp_nsnp);
-	gsl_vector_free(tmp_nsnp2);
 	gsl_vector_free(tmp_nind);
 
 	// And now we get the matrix for calculating the p-value
-	// first, we're going to need some space to do an SVD
-	gsl_matrix* U = gsl_matrix_alloc(G_v.matrix.size1, G_v.matrix.size2);
-	gsl_matrix* V = gsl_matrix_alloc(G_v.matrix.size2, G_v.matrix.size2);
-	gsl_vector* S = gsl_vector_alloc(G_v.matrix.size2);
+	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data,
+			0,0,_base_reg._data->size1, _base_reg._data->size2 - 1);
 
-	gsl_vector* svd_work_v = gsl_vector_alloc(G_v.matrix.size2);
-	gsl_matrix* svd_work_m = gsl_matrix_alloc(G_v.matrix.size2, G_v.matrix.size2);
+	// Now, calculate (GW) * (GW)^T - (GW)^T * X * (X^T * X)^(-1) * X^T * (GW)^T
+	// or, written another way,
+	// (GW)^T * (I - X (X^T X)^-1 X^T) * (GW)^T
+	gsl_matrix* tmp_ss = gsl_matrix_calloc(GW->size2, GW->size2);
+	gsl_matrix* tmp_nv = gsl_matrix_calloc(GW->size1, X_v.matrix.size2);
+	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2,X_v.matrix.size2);
+	gsl_matrix* tmp_sn = gsl_matrix_calloc(GW->size2, GW->size1);
 
-	// Copy G_v into U in preparation for SVD
-	gsl_matrix_memcpy(U, &G_v.matrix);
+	// 1st lets get Z^T*Z
+	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, GW, GW, 0, tmp_ss);
 
-	// perform SVD
-	gsl_linalg_SV_decomp_mod(U, svd_work_m, V, S, svd_work_v);
+	// tmp_nv = X * (X^T * X)^(-1)
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1, &X_v.matrix, _XT_X_inv, 0, tmp_nv);
+	// tmp_sv = GW^T * tmp_nv
+	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1, GW, tmp_nv, 0, tmp_sv);
+	// tmp_sn = tmp_sv * X^T
+	gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1, tmp_sv, &X_v.matrix, 0, tmp_sn);
+	// tmp_ss = tmp_ss - tmp_sn * (GW)
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, -1, tmp_sn, GW, 1, tmp_ss);
 
-	// Now, calculate Z^T * Z -
+	gsl_matrix_free(tmp_sv);
+	gsl_matrix_free(tmp_sn);
+	gsl_matrix_free(tmp_nv);
 
-	// given that, we now compute the quadratic form
+	// OK, now we have to take the eigenvalues of tmp_ss
+	gsl_eigen_symm_workspace* eigen_w = gsl_eigen_symm_alloc(tmp_ss->size1);
+	gsl_vector* eval = gsl_vector_alloc(tmp_ss->size1);
+	gsl_eigen_symm(tmp_ss, eval, eigen_w);
+	gsl_eigen_symm_free(eigen_w);
 
-	return 1;
+	// at this point, I'm doe with EVERYTHING except eval
+	gsl_matrix_free(tmp_ss);
+	gsl_matrix_free(GW);
+
+	// Now, sort the eigenvalues in descending order
+	std::sort(eval->data, eval->data + eval->size, std::greater<double>());
+	// TODO: find where these eigenvalues go to zero and only take those
+	int n_eval = eval->size;
+
+	// I don't feel like doing memory management, so use a vector instead of an array
+	std::vector<double> nct(n_eval, 0);
+	std::vector<int> df(n_eval, 1);
+	std::vector<double> qfc_detail(7);
+	int qfc_err;
+	double pval;
+	int lim=10000;
+	double acc=0.0001;
+	double sigma=0;
+
+	qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+
+	// clean up, please!
+	gsl_vector_free(eval);
+
+	return pval;
 }
 
 
