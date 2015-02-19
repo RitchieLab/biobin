@@ -142,7 +142,12 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 			// print the Bin data
 			if(Main::WriteBinData){
-				std::string filename = reportPrefix + "-" + _pop_mgr.getPhenotypeName(ph.getIndex()) + "-bins.csv";
+				std::string phenoname = _pop_mgr.getPhenotypeName(ph.getIndex());
+				if(phenoname.size() > 0){
+					phenoname = phenoname + "-";
+				}
+
+				std::string filename = reportPrefix + "-" + phenoname + "bins.csv";
 				std::ofstream file(filename.c_str());
 				binData.printBinData(file, Main::OutputDelimiter, c_transpose_bins);
 				file.close();
