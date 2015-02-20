@@ -7,8 +7,8 @@
 
 #include "SKATLinear.h"
 
-#include "qfc.h"
-#include "MatrixUtils.h"
+#include "detail/qfc.h"
+#include "detail/MatrixUtils.h"
 
 #include <vector>
 #include <set>

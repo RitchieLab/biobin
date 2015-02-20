@@ -7,7 +7,7 @@
 
 #include "LinearRegression.h"
 
-#include "MatrixUtils.h"
+#include "detail/MatrixUtils.h"
 
 #include <limits>
 
@@ -27,7 +27,7 @@ namespace Test {
 string LinearRegression::testname = LinearRegression::doRegister("linear");
 
 LinearRegression::LinearRegression() : TestImpl<LinearRegression>(testname),
-		_data(0), _phenos(0), _null_result(0) {
+		Regression(){
 }
 
 LinearRegression::~LinearRegression() {
@@ -46,77 +46,7 @@ LinearRegression::~LinearRegression() {
 
 void LinearRegression::init(){
 
-	// set up matrix of non-missing covariates (note the +2 is for the intercept + bin)
-
-	gsl_matrix* data_tmp = gsl_matrix_alloc(_pop_mgr_ptr->getNumSamples(), _pop_mgr_ptr->getNumCovars() + 2);
-	gsl_vector* pheno_tmp = gsl_vector_alloc(_pop_mgr_ptr->getNumSamples());
-
-	unsigned int i=0;
-	unsigned int s_idx=0;
-
-	for(PopulationManager::const_sample_iterator si = _pop_mgr_ptr->beginSample();
-			si != _pop_mgr_ptr->endSample(); si++){
-		bool missing=false;
-		float status=_pop_mgr_ptr->getPhenotypeVal(*si, *_pheno_ptr);
-		const vector<float>& covars(_pop_mgr_ptr->getCovariates(*si));
-
-		// Note the empty loop here; the exit statement will exit iff we get to
-		// the end of the covariates OR we see a missing value (ie nan).  If we
-		// see a missing value, missing will be TRUE
-		for(vector<float>::const_iterator ci = covars.begin();
-				ci!=covars.end() && !(missing |= isnan(*ci)); ci++);
-
-		missing |= isnan(status);
-
-		if(!missing){
-			gsl_vector_set(pheno_tmp, i, status);
-			gsl_matrix_set(data_tmp, i, 0, 1);
-
-			for(unsigned int j=0; j<covars.size(); j++){
-				gsl_matrix_set(data_tmp, i, j+1, covars[j]);
-			}
-
-			_samp_name.push_back(std::make_pair(*si, s_idx));
-			++i;
-		}
-		++s_idx;
-
-	}
-	// OK, now create the _data and _pheno vars and copy the first i rows
-	_data = gsl_matrix_alloc(i, data_tmp->size2);
-	_phenos = gsl_vector_alloc(i);
-
-	gsl_matrix_const_view data_tmp_view = gsl_matrix_const_submatrix(data_tmp, 0, 0, i, data_tmp->size2);
-	gsl_vector_const_view pheno_tmp_view = gsl_vector_const_subvector(pheno_tmp, 0, i);
-
-	gsl_matrix_memcpy(_data, &data_tmp_view.matrix);
-	gsl_vector_memcpy(_phenos, &pheno_tmp_view.vector);
-
-	gsl_matrix_free(data_tmp);
-	gsl_vector_free(pheno_tmp);
-
-	// first, get a view of the data excluding the missing column
-	gsl_matrix_const_view X_view = gsl_matrix_const_submatrix(_data, 0, 0, _data->size1, _data->size2-1);
-
-	_null_result = calculate(*_phenos, X_view.matrix);
-
-	// if we have colinearity in the null result, let's just drop those
-	// columns entirely
-	if(_null_result->dropped_cols.size() > 0){
-		gsl_matrix* data_new = gsl_matrix_alloc(_data->size1, _data->size2 - _null_result->dropped_cols.size());
-		gsl_matrix* P = gsl_matrix_alloc(X_view.matrix.size2, X_view.matrix.size2);
-		MatrixUtils::getPermuMatrix(_null_result->dropped_cols, P);
-		gsl_matrix* X_tmp = gsl_matrix_alloc(X_view.matrix.size1, X_view.matrix.size2);
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X_view.matrix, P, 0.0, X_tmp);
-
-		gsl_matrix_view data_new_sub = gsl_matrix_submatrix(data_new, 0, 0, data_new->size1, X_tmp->size2);
-		gsl_matrix_memcpy(&data_new_sub.matrix, X_tmp);
-
-		std::swap(data_new, _data);
-		gsl_matrix_free(data_new);
-		gsl_matrix_free(P);
-		gsl_matrix_free(X_tmp);
-	}
+	regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);
 }
 
 double LinearRegression::runTest(const Bin& bin) const{
@@ -141,7 +71,7 @@ double LinearRegression::runTest(const Bin& bin) const{
 	return pval;
 }
 
-LinearRegression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_matrix& X){
+Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_matrix& X) const{
 
 	// these are the variables I need
 	gsl_vector* beta = gsl_vector_alloc(X.size2);

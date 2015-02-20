@@ -28,7 +28,7 @@ private:
 	SKATLinear(const SKATLinear&);
 	SKATLinear& operator=(const SKATLinear&);
 
-public:
+protected:
 	virtual void init();
 	virtual double runTest(const Bin& bin) const;
 

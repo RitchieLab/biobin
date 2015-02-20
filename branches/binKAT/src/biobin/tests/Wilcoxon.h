@@ -19,7 +19,7 @@ public:
 	Wilcoxon() : TestImpl<Wilcoxon>(testname){}
 	virtual ~Wilcoxon() {}
 
-public:
+protected:
 	virtual void init();
 	virtual double runTest(const Bin& bin) const;
 

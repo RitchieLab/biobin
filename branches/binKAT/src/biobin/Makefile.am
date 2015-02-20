@@ -24,14 +24,16 @@ biobin_SOURCES= \
    tests/TestFactory.cpp \
    tests/LinearRegression.h \
    tests/LinearRegression.cpp \
-   tests/MatrixUtils.h \
-   tests/MatrixUtils.cpp \
    tests/SKATLinear.h \
    tests/SKATLinear.cpp \
-   tests/qfc.h \
-   tests/qfc.cpp \
    tests/Wilcoxon.h \
-   tests/Wilcoxon.cpp
+   tests/Wilcoxon.cpp \
+   tests/detail/MatrixUtils.h \
+   tests/detail/MatrixUtils.cpp \
+   tests/detail/qfc.h \
+   tests/detail/qfc.cpp \
+   tests/detail/Regression.h \
+   tests/detail/Regression.cpp
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.odt 
  
