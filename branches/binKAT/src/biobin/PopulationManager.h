@@ -23,6 +23,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "Bin.h"
 
@@ -172,7 +173,7 @@ public:
 	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
 	const std::vector<float>& getCovariates(const std::string& sample) const;
 	float getTotalIndivContrib(const Bin& b, int pos, const Utility::Phenotype& pheno) const;
-	float getLocusWeight(const Knowledge::Locus& loc, const Utility::Phenotype& pheno) const;
+	float getLocusWeight(const Knowledge::Locus& loc, const Utility::Phenotype& pheno, const Knowledge::Region* reg=NULL) const;
 
 	// working with the Knowlede::Information
 	void setInfo(const Knowledge::Information* info) {
@@ -221,7 +222,7 @@ private:
 			boost::unordered_map<std::string, std::vector<float> >& vals_out,
 			const std::string& var_prefix="pheno");
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, const bitset_pair& status, bool useWeights = false, const Knowledge::Region* const reg = NULL) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, const Utility::Phenotype& pheno, bool useWeights = false, const Knowledge::Region* const reg = NULL) const;
 	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
@@ -278,6 +279,7 @@ private:
 	bool _use_custom_weight;
 
 	const Knowledge::Information* _info;
+
 };
 
 template<class T_cont>

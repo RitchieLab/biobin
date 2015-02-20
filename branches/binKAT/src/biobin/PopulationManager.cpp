@@ -152,7 +152,7 @@ float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenot
 	Bin::const_locus_iterator l_itr = b.variantBegin();
 	float bin_count = 0;
 	while(l_itr != b.variantEnd()){
-		bin_count += getIndivContrib(**l_itr, pos, pheno.getStatus(), true, b.getRegion());
+		bin_count += getIndivContrib(**l_itr, pos, pheno, true, b.getRegion());
 		++l_itr;
 	}
 	return bin_count;
@@ -356,15 +356,13 @@ void PopulationManager::parseTraitFile(const string& filename,
 	}
 }
 
-float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset_pair& status, bool useWeights, const Region* const reg) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, const Utility::Phenotype& pheno, bool useWeights, const Region* const reg) const{
 
 	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
 
-	static float weight_cache = 1;
-	static const Locus* loc_cache = 0;
-	float custom_weight = 1;
 	unsigned short n_var = getIndivGeno(loc, pos);
 
+	float wt = 1;
 	if(n_var == missing_geno){
 		n_var = 0;
 	}
@@ -372,17 +370,10 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset
 	// Cache the weights so we aren't wasting so much effort.
 	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
 	if(n_var != 0 && useWeights){
-		if(_use_custom_weight){
-			custom_weight = getCustomWeight(loc, reg);
-		}
-		if(c_use_calc_weight && loc_cache != &loc){
-			loc_cache = &loc;
-			weight_cache = calcWeight(loc, status);
-		}
-
+		wt = getLocusWeight(loc, pheno, reg);
 	}
 
-	return n_var * weight_cache * custom_weight;
+	return n_var * wt;
 }
 
 unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss)  const{
@@ -428,8 +419,20 @@ float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) co
 	//return 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
 }
 
-float PopulationManager::getLocusWeight(const Locus& loc, const Utility::Phenotype& pheno) const{
-	return calcWeight(loc, pheno.getStatus());
+float PopulationManager::getLocusWeight(const Locus& loc, const Phenotype& pheno, const Region* reg) const{
+
+	float wt = 1;
+
+	if(_use_custom_weight){
+		wt *= getCustomWeight(loc, reg);
+	}
+
+	if(c_use_calc_weight){
+		wt *= calcWeight(loc, pheno.getStatus());
+	}
+
+	return wt;
+
 }
 
 float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status) const{

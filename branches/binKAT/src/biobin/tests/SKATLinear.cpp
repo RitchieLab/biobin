@@ -83,7 +83,7 @@ double SKATLinear::runTest(const Bin& bin) const{
 	unsigned int idx=0;
 	while(ci != bin.variantEnd()){
 		avg_geno.push_back(_pop_mgr_ptr->getAvgGenotype(**ci));
-		gsl_matrix_set(weights, idx, idx, _pop_mgr_ptr->getLocusWeight(**ci, *_pheno_ptr));
+		gsl_matrix_set(weights, idx, idx, _pop_mgr_ptr->getLocusWeight(**ci, *_pheno_ptr, bin.getRegion()));
 		++ci;
 		++idx;
 	}
