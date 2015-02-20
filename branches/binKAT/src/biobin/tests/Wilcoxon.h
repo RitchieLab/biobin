@@ -16,18 +16,15 @@ namespace Test {
 
 class Wilcoxon : public TestImpl<Wilcoxon> {
 public:
-	Wilcoxon() : TestImpl<Wilcoxon>(testname), _pop_mgr_ptr(0), _pheno_ptr(0) {}
+	Wilcoxon() : TestImpl<Wilcoxon>(testname){}
 	virtual ~Wilcoxon() {}
 
 public:
-	virtual void init(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
+	virtual void init();
 	virtual double runTest(const Bin& bin) const;
 
 private:
 	static std::string testname;
-
-	const PopulationManager* _pop_mgr_ptr;
-	const Utility::Phenotype* _pheno_ptr;
 };
 
 }

@@ -13,6 +13,12 @@ namespace BioBin {
 
 namespace Test{
 
+void Test::setup(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno){
+	_pop_mgr_ptr = &pop_mgr;
+	_pheno_ptr = &pheno;
+	init();
+}
+
 }
 
 }

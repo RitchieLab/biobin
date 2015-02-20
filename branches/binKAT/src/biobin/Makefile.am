@@ -19,6 +19,7 @@ biobin_SOURCES= \
    util/string_ref_fwd.hpp \
    util/Phenotype.h \
    tests/Test.h \
+   tests/Test.cpp \
    tests/TestFactory.h \
    tests/TestFactory.cpp \
    tests/LinearRegression.h \

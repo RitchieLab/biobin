@@ -39,11 +39,9 @@ SKATLinear::~SKATLinear() {
 
 }
 
-void SKATLinear::init(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno){
-	_base_reg.init(pop_mgr, pheno);
+void SKATLinear::init(){
+	_base_reg.setup(*_pop_mgr_ptr, *_pheno_ptr);
 
-	_pop_mgr_ptr = &pop_mgr;
-	_pheno_ptr = &pheno;
 
 	// get the residual vector from the null model
 	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data, 0,0,

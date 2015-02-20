@@ -25,10 +25,7 @@ namespace Test {
 
 string Wilcoxon::testname = Wilcoxon::doRegister("wilcoxon");
 
-void Wilcoxon::init(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno){
-	_pop_mgr_ptr = &pop_mgr;
-	_pheno_ptr = &pheno;
-
+void Wilcoxon::init(){
 	if(_pop_mgr_ptr->getNumCovars() > 0){
 		std::cerr << "WARNING: The Wilcoxon test ignores covariates, which were given!" << std::endl;
 	}

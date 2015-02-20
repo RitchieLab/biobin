@@ -27,9 +27,7 @@ namespace Test {
 string LinearRegression::testname = LinearRegression::doRegister("linear");
 
 LinearRegression::LinearRegression() : TestImpl<LinearRegression>(testname),
-		pop_mgr_ptr(0), _pheno_ptr(0), _data(0), _phenos(0), _null_result(0) {
-	// TODO Auto-generated constructor stub
-
+		_data(0), _phenos(0), _null_result(0) {
 }
 
 LinearRegression::~LinearRegression() {
@@ -46,22 +44,21 @@ LinearRegression::~LinearRegression() {
 	}
 }
 
-void LinearRegression::init(const PopulationManager& pop_mgr, const Phenotype& pheno){
-	pop_mgr_ptr = &pop_mgr;
-	_pheno_ptr = &pheno;
+void LinearRegression::init(){
 
 	// set up matrix of non-missing covariates (note the +2 is for the intercept + bin)
 
-	gsl_matrix* data_tmp = gsl_matrix_alloc(pop_mgr.getNumSamples(), pop_mgr.getNumCovars() + 2);
-	gsl_vector* pheno_tmp = gsl_vector_alloc(pop_mgr.getNumSamples());
+	gsl_matrix* data_tmp = gsl_matrix_alloc(_pop_mgr_ptr->getNumSamples(), _pop_mgr_ptr->getNumCovars() + 2);
+	gsl_vector* pheno_tmp = gsl_vector_alloc(_pop_mgr_ptr->getNumSamples());
 
 	unsigned int i=0;
 	unsigned int s_idx=0;
 
-	for(PopulationManager::const_sample_iterator si = pop_mgr.beginSample(); si != pop_mgr.endSample(); si++){
+	for(PopulationManager::const_sample_iterator si = _pop_mgr_ptr->beginSample();
+			si != _pop_mgr_ptr->endSample(); si++){
 		bool missing=false;
-		float status=pop_mgr.getPhenotypeVal(*si, pheno);
-		const vector<float>& covars(pop_mgr.getCovariates(*si));
+		float status=_pop_mgr_ptr->getPhenotypeVal(*si, *_pheno_ptr);
+		const vector<float>& covars(_pop_mgr_ptr->getCovariates(*si));
 
 		// Note the empty loop here; the exit statement will exit iff we get to
 		// the end of the covariates OR we see a missing value (ie nan).  If we
@@ -126,7 +123,7 @@ double LinearRegression::runTest(const Bin& bin) const{
 
 	for(unsigned int i=0; i<_samp_name.size(); i++){
 		gsl_matrix_set(_data, i, _data->size2 - 1,
-				pop_mgr_ptr->getTotalIndivContrib(bin, _samp_name[i].second, *_pheno_ptr));
+				_pop_mgr_ptr->getTotalIndivContrib(bin, _samp_name[i].second, *_pheno_ptr));
 	}
 
 	// run the model now

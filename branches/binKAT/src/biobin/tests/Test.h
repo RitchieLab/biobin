@@ -27,7 +27,7 @@ namespace Test{
  */
 class Test {
 public:
-	Test() {}
+	Test() : _pop_mgr_ptr(0), _pheno_ptr(0) {}
 	virtual ~Test() {}
 
 	virtual const std::string& getName() const  = 0;
@@ -38,8 +38,13 @@ public:
 			const Bin_ptr_cont& bins, Pval_cont& pvals_out);
 
 protected:
-	virtual void init(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno) = 0;
+	virtual void init() = 0;
 	virtual double runTest(const Bin& bin) const = 0;
+
+	void setup(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
+
+	const PopulationManager* _pop_mgr_ptr;
+	const Utility::Phenotype* _pheno_ptr;
 };
 
 template <class T>
@@ -65,7 +70,7 @@ template<class Bin_ptr_cont, class Pval_cont>
 void Test::runAllTests(const PopulationManager& pop_mgr,
 		const Utility::Phenotype& pheno, const Bin_ptr_cont& bins,
 		Pval_cont& pvals_out) {
-	init(pop_mgr, pheno);
+	setup(pop_mgr, pheno);
 	pvals_out.clear();
 	typename Bin_ptr_cont::const_iterator bin_itr = bins.begin();
 	while(bin_itr != bins.end()){

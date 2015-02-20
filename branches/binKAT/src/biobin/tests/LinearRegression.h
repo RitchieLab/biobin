@@ -45,7 +45,7 @@ private:
 	LinearRegression& operator=(const LinearRegression&);
 
 public:
-	virtual void init(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
+	virtual void init();
 	virtual double runTest(const Bin& bin) const;
 
 private:
@@ -53,9 +53,6 @@ private:
 	static Result* calculate(const gsl_vector& Y, const gsl_matrix& X);
 
 	static std::string testname;
-
-	const PopulationManager* pop_mgr_ptr;
-	const Utility::Phenotype* _pheno_ptr;
 
 	//! The matrix of covariates + bin
 	gsl_matrix* _data;
