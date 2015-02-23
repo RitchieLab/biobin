@@ -34,12 +34,6 @@ protected:
 
 private:
 
-	static unsigned char popcount(unsigned char v){
-		v = v - ((v >> 1) & 0x55);                // put count of each 2 bits into those 2 bits
-		v = (v & 0x33) + ((v >> 2) & 0x33); // put count of each 4 bits into those 4 bits
-		return (v + ((v >> 4) & 0x0F)); // add the counts of each 4 bit
-	}
-
 	static std::string testname;
 
 	LinearRegression _base_reg;

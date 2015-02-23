@@ -32,6 +32,8 @@ biobin_SOURCES= \
    tests/Wilcoxon.cpp \
    tests/detail/MatrixUtils.h \
    tests/detail/MatrixUtils.cpp \
+   tests/detail/SKATUtils.h \
+   tests/detail/SKATUtils.cpp \
    tests/detail/qfc.h \
    tests/detail/qfc.cpp \
    tests/detail/Regression.h \
