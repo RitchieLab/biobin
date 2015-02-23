@@ -30,6 +30,8 @@ biobin_SOURCES= \
    tests/SKATLinear.cpp \
    tests/Wilcoxon.h \
    tests/Wilcoxon.cpp \
+   tests/SKATLogistic.h \
+   tests/SKATLogistic.cpp \
    tests/detail/MatrixUtils.h \
    tests/detail/MatrixUtils.cpp \
    tests/detail/SKATUtils.h \

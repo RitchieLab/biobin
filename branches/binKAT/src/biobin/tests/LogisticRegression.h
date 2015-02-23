@@ -19,6 +19,8 @@ namespace Test {
 
 class LogisticRegression : public TestImpl<LogisticRegression> , public Regression{
 public:
+	friend class SKATLogistic;
+
 	LogisticRegression() : TestImpl<LogisticRegression>(testname), Regression(),
 		_willfail(false) {
 	}

@@ -56,10 +56,10 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 			unsigned char g = pop_mgr.getIndivGeno(**ci,name_pos[i].second);
 			if(g > 2){
 				missing[j]++;
-				gsl_matrix_set(geno,i,j,avg_geno[j]);
+				gsl_matrix_set(geno_tmp,i,j,avg_geno[j]);
 			} else {
 				n_genos[j] |= (1 << g);
-				gsl_matrix_set(geno,i,j,g);
+				gsl_matrix_set(geno_tmp,i,j,g);
 			}
 		}
 		++ci;
@@ -95,7 +95,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 		// OK, now move the "bad" rows to the end, please!
 		gsl_matrix* G_P = gsl_matrix_alloc(n_row, n_col);
 		// permute the columns of geno into G_P
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, geno, P, 0.0, G_P);
+		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, geno_tmp, P, 0.0, G_P);
 		gsl_matrix_const_view G_v = gsl_matrix_const_submatrix(G_P, 0, 0,
 			G_P->size1, G_P->size2 - bad_idx.size());
 
@@ -108,8 +108,8 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 		// and do the same with the weights
 		gsl_vector* wt_P = gsl_vector_alloc(n_col);
 		gsl_blas_dgemv(CblasNoTrans, 1.0, P, wt_tmp, 0.0, wt_P);
-		std::swap(wt_P, wt_tmp);
-		gsl_vector_free(wt_P);
+		gsl_vector_free(wt_tmp);
+		wt_tmp = wt_P;
 
 	} else {
 		// nothing more to do here, just return as-is!
