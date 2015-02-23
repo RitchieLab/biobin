@@ -31,6 +31,8 @@ protected:
 	virtual double runTest(const Bin& bin) const;
 
 	virtual Regression::Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const;
+	virtual float getPhenotype(const PopulationManager& pop_mgr,
+				const Utility::Phenotype& pheno, const std::string& samp) const;
 
 private:
 	static std::string testname;

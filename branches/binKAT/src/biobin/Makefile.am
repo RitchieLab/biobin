@@ -24,6 +24,8 @@ biobin_SOURCES= \
    tests/TestFactory.cpp \
    tests/LinearRegression.h \
    tests/LinearRegression.cpp \
+   tests/LogisticRegression.h \
+   tests/LogisticRegression.cpp \
    tests/SKATLinear.h \
    tests/SKATLinear.cpp \
    tests/Wilcoxon.h \

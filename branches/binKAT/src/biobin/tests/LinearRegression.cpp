@@ -71,6 +71,11 @@ double LinearRegression::runTest(const Bin& bin) const{
 	return pval;
 }
 
+float LinearRegression::getPhenotype(const PopulationManager& pop_mgr,
+		const Utility::Phenotype& pheno, const std::string& samp) const{
+	return pop_mgr.getPhenotypeVal(samp, pheno);
+}
+
 Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_matrix& X) const{
 
 	// these are the variables I need

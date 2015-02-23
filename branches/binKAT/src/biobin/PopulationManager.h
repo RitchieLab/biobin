@@ -169,6 +169,7 @@ public:
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}
 	unsigned int getNumSamples() const {return _sample_names.size();}
+	unsigned int getSamplePosition(const std::string& s) const;
 	const std::string& getPhenotypeName(unsigned int i) const {return _pheno_names[i];}
 	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
 	const std::vector<float>& getCovariates(const std::string& sample) const;
@@ -252,7 +253,7 @@ private:
 	// s == _sample_names[_positions[s]]
 
 	// mapping of ID -> position in the VCF file
-	boost::unordered_map<std::string, int> _positions;
+	boost::unordered_map<std::string, unsigned int> _positions;
 	// vector of samples, as given in the VCF file
 	std::vector<std::string> _sample_names;
 

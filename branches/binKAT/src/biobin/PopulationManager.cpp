@@ -139,6 +139,15 @@ float PopulationManager::getPhenotypeVal(const string& sample, const Phenotype& 
 
 }
 
+unsigned int PopulationManager::getSamplePosition(const std::string& s) const{
+	unsigned int pos = static_cast<unsigned int>(-1);
+	boost::unordered_map<std::string, unsigned int>::const_iterator pos_itr = _positions.find(s);
+	if (pos_itr != _positions.end()){
+		pos = (*pos_itr).second;
+	}
+	return pos;
+}
+
 const vector<float>& PopulationManager::getCovariates(const string& sample) const{
 	static const vector<float> missing_covars;
 	boost::unordered_map<std::string, std::vector<float> >::const_iterator covar_status = _covars.find(sample);
@@ -209,8 +218,8 @@ void PopulationManager::loadIndividuals(){
 	}
 
 	// Now, we go through and determine who is a case and who is a control
-	boost::unordered_map<string, int>::const_iterator p_itr = _positions.begin();
-	boost::unordered_map<string, int>::const_iterator p_end = _positions.end();
+	boost::unordered_map<string, unsigned int>::const_iterator p_itr = _positions.begin();
+	boost::unordered_map<string, unsigned int>::const_iterator p_end = _positions.end();
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_itr;
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_not_found = _phenos.end();
 	if(allControl){
@@ -581,7 +590,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 	}
 
-	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
 	while(m_itr != _positions.end()){
 		os << sep;
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
@@ -766,8 +775,8 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		os << "\n";
 	}
 
-	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
-	boost::unordered_map<std::string, int>::const_iterator m_end = _positions.end();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions.end();
 
 	int pos;
 	float status;

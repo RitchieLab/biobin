@@ -44,6 +44,8 @@ protected:
 
 	void regressionSetup(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
 	virtual Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const = 0;
+	virtual float getPhenotype(const PopulationManager& pop_mgr,
+			const Utility::Phenotype& pheno, const std::string& samp) const = 0;
 
 	//! The matrix of covariates + bin
 	gsl_matrix* _data;

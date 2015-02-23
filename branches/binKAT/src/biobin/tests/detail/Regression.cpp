@@ -38,7 +38,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 	for(PopulationManager::const_sample_iterator si = pop_mgr.beginSample();
 			si != pop_mgr.endSample(); si++){
 		bool missing=false;
-		float status=pop_mgr.getPhenotypeVal(*si, pheno);
+		float status=getPhenotype(pop_mgr, pheno, *si);
 		const vector<float>& covars(pop_mgr.getCovariates(*si));
 
 		// Note the empty loop here; the exit statement will exit iff we get to
