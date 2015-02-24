@@ -42,7 +42,7 @@ void LogisticRegression::init(){
 		_willfail = true;
 	} else {
 		regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);
-		if(_null_result->_conv){
+		if(!_null_result->_conv){
 			std::cerr << "WARNING: Logistic Regression null model diverged; "
 							<< "Logistic regression will likely fail" << std::endl;
 			_willfail = true;
@@ -115,6 +115,27 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	Regression::Result* r = new Regression::Result(beta, r_cov);
 
+	// Add up all the values in Y
+	// note that since Y holds 0 or 1, we can just sum the absolute values here
+	double sum_Y = gsl_blas_dasum(&Y);
+
+	// get the exponent (and derivative, log and 1-log values) for the
+	// null model (i.e., best fit of the intercept parameter)
+	array<double, 4> null_v = linkFunction(log(sum_Y / (Y.size - sum_Y)));
+
+	// check for an intercept-only model here
+	if(X.size2 == 1){
+		gsl_vector_const_view X_col1 = gsl_matrix_const_column(&X, 0);
+		if(gsl_blas_dasum(&X_col1.vector) == X.size1){
+			// if we're here, it's an intercept-only model - trivial to get
+			gsl_vector_set(beta, 0, null_v[0]);
+			gsl_matrix_set(r_cov, 0, 0, null_v[1]);
+			r->chisq = null_v[1]; // I don't know what to put here - sounds good
+			r->_conv = true;
+			return r;
+		}
+	}
+
 	gsl_vector* weight = gsl_vector_calloc(Y.size);
 	gsl_matrix* P = gsl_matrix_alloc(X.size2,X.size2);
 	// First, let's check for colinearity!
@@ -147,14 +168,6 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	double LLn, LL = 0;
 
 	LLn = 0;
-
-	// Add up all the values in Y
-	// note that since Y holds 0 or 1, we can just sum the absolute values here
-	double sum_Y = gsl_blas_dasum(&Y);
-
-	// get the exponent (and derivative, log and 1-log values) for the
-	// null model (i.e., best fit of the intercept parameter)
-	array<double, 4> null_v = linkFunction(log(sum_Y / (Y.size - sum_Y)));
 
 	for(unsigned int i=0; i<Y.size; i++){
 		LLn -= 2 *(gsl_vector_get(&Y, i) * null_v[2] + (1-gsl_vector_get(&Y, i)) * null_v[3]);

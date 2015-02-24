@@ -45,12 +45,12 @@ public:
 	 * \param P the permutation matrix to be returned
 	 * \return the number of colinear columns
 	 */
-	static unsigned int checkColinear(const gsl_matrix*, gsl_matrix* P);
+	static unsigned int checkColinear(const gsl_matrix*, gsl_matrix* &P);
 
 	// gets a permutation matrix obtained by moving the columns identified
 	// by idx to the end.  We guarantee that the final idx.size() columns
 	// will be those identified by the indices in idx (in no particular order)
-	static void getPermuMatrix(const std::vector<unsigned int>& idx, gsl_matrix* P);
+	static void getPermuMatrix(const std::vector<unsigned int>& idx, gsl_matrix* &P);
 
 };
 

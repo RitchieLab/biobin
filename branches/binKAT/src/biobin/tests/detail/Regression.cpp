@@ -97,6 +97,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 		gsl_matrix_free(data_new);
 		gsl_matrix_free(P);
 		gsl_matrix_free(X_tmp);
+		_null_result->dropped_cols.clear();
 	}
 
 }

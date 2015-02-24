@@ -13,6 +13,7 @@
 #include <vector>
 #include <set>
 
+#include <gsl/gsl_linalg.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_blas.h>
@@ -30,9 +31,14 @@ SKATLinear::~SKATLinear() {
 	if(_resid){
 		gsl_vector_free(_resid);
 	}
-
-	if(_XT_X_inv){
-		gsl_matrix_free(_XT_X_inv);
+	if(X_svd_U){
+		gsl_matrix_free(X_svd_U);
+	}
+	if(X_svd_S){
+		gsl_vector_free(X_svd_S);
+	}
+	if(X_svd_V){
+		gsl_matrix_free(X_svd_V);
 	}
 
 }
@@ -51,15 +57,28 @@ void SKATLinear::init(){
 	gsl_multifit_linear_residuals(&X_v.matrix, _base_reg._phenos,
 			_base_reg._null_result->beta, _resid);
 
-	// now, get the _XT_X_inv matrix from the "cov" matrix of the null regression
-	if(_XT_X_inv){
-		gsl_matrix_free(_XT_X_inv);
-	}
-	_XT_X_inv = gsl_matrix_calloc(_base_reg._null_result->cov->size1, _base_reg._null_result->cov->size2);
-
 	// calculate the (inverse variance) of the residuals
 	resid_inv_var = 1 / gsl_stats_variance(_resid->data, _resid->stride, _resid->size);
-	gsl_matrix_scale(_XT_X_inv, resid_inv_var);
+
+	if(X_svd_U){
+		gsl_matrix_free(X_svd_U);
+	}
+	if(X_svd_S){
+		gsl_vector_free(X_svd_S);
+	}
+	if(X_svd_V){
+		gsl_matrix_free(X_svd_V);
+	}
+	// let's get the SVD of X here
+	X_svd_U = gsl_matrix_alloc(X_v.matrix.size1, X_v.matrix.size2);
+	X_svd_S = gsl_vector_alloc(X_v.matrix.size2);
+	X_svd_V = gsl_matrix_alloc(X_v.matrix.size2, X_v.matrix.size2);
+	gsl_matrix_memcpy(X_svd_U, &X_v.matrix);
+	gsl_vector* svd_vec_ws = gsl_vector_alloc(X_v.matrix.size2);
+	gsl_matrix* svd_mat_ws = gsl_matrix_alloc(X_v.matrix.size2, X_v.matrix.size2);
+	gsl_linalg_SV_decomp_mod(X_svd_U, svd_mat_ws, X_svd_V, X_svd_S, svd_vec_ws);
+	gsl_vector_free(svd_vec_ws);
+	gsl_matrix_free(svd_mat_ws);
 }
 
 double SKATLinear::runTest(const Bin& bin) const{
@@ -108,25 +127,27 @@ double SKATLinear::runTest(const Bin& bin) const{
 	// Now, calculate (GW) * (GW)^T - (GW)^T * X * (X^T * X)^(-1) * X^T * (GW)
 	// or, written another way,
 	gsl_matrix* tmp_ss = gsl_matrix_calloc(GW->size2, GW->size2);
-	gsl_matrix* tmp_nv = gsl_matrix_calloc(GW->size1, X_v.matrix.size2);
+	gsl_matrix* tmp_vs = gsl_matrix_calloc(X_v.matrix.size2,GW->size2);
 	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2,X_v.matrix.size2);
-	gsl_matrix* tmp_sn = gsl_matrix_calloc(GW->size2, GW->size1);
 
 	// 1st lets get Z^T*Z
 	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, GW, GW, 0, tmp_ss);
 
-	// tmp_nv = X * (X^T * X)^(-1)
-	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1, &X_v.matrix, _XT_X_inv, 0, tmp_nv);
-	// tmp_sv = GW^T * tmp_nv
-	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1, GW, tmp_nv, 0, tmp_sv);
-	// tmp_sn = tmp_sv * X^T
-	gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1, tmp_sv, &X_v.matrix, 0, tmp_sn);
-	// tmp_ss = tmp_ss - tmp_sn * (GW)
-	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, -1, tmp_sn, GW, 1, tmp_ss);
+	// and get (GW)^T * X
+	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, GW, &X_v.matrix, 0, tmp_sv);
+
+	// Now, solve X * M = (GW) using the SVD of X
+	for(unsigned int i=0; i<GW->size2; i++){
+		gsl_vector_const_view GW_col = gsl_matrix_const_column(GW, i);
+		gsl_vector_view tmp_vs_col = gsl_matrix_column(tmp_vs, i);
+		gsl_linalg_SV_solve(X_svd_U, X_svd_V, X_svd_S, &GW_col.vector, &tmp_vs_col.vector);
+	}
+
+	// now, tmp_ss = tmp_ss - tmp_sv * tmp_vs
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, -1, tmp_sv, tmp_vs, 1, tmp_ss);
 
 	gsl_matrix_free(tmp_sv);
-	gsl_matrix_free(tmp_sn);
-	gsl_matrix_free(tmp_nv);
+	gsl_matrix_free(tmp_vs);
 	gsl_matrix_free(GW);
 
 	// get the p-value from tmp_ss and the Q statistic

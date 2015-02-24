@@ -21,7 +21,7 @@ namespace Test {
 class SKATLinear : public TestImpl<SKATLinear> {
 public:
 	SKATLinear() : TestImpl<SKATLinear>(testname),
-		_resid(0), resid_inv_var(1), _XT_X_inv(0){}
+		_resid(0), resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0){}
 	virtual ~SKATLinear();
 
 private:
@@ -41,8 +41,9 @@ private:
 	gsl_vector* _resid;
 	double resid_inv_var;
 
-	// The matrix (X^T*X)^(-1), where X is the design matrix of covariates
-	gsl_matrix* _XT_X_inv;
+	gsl_matrix* X_svd_U;
+	gsl_vector* X_svd_S;
+	gsl_matrix* X_svd_V;
 
 };
 

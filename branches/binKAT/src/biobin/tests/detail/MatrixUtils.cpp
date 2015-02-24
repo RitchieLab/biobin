@@ -21,7 +21,8 @@ using std::set;
 namespace BioBin{
 namespace Test{
 
-unsigned int MatrixUtils::checkColinear(const gsl_matrix* X, gsl_matrix* P){
+unsigned int MatrixUtils::checkColinear(const gsl_matrix* X, gsl_matrix* &P){
+
 	unsigned int n_rows = X->size1;
 	unsigned int n_cols = X->size2;
 
@@ -72,7 +73,7 @@ unsigned int MatrixUtils::checkColinear(const gsl_matrix* X, gsl_matrix* P){
 }
 
 
-void MatrixUtils::getPermuMatrix(const vector<unsigned int>& idx_permu, gsl_matrix* P){
+void MatrixUtils::getPermuMatrix(const vector<unsigned int>& idx_permu, gsl_matrix* &P){
 
 	// P is our permutation matrix
 	gsl_matrix_set_identity(P);
@@ -101,11 +102,10 @@ void MatrixUtils::getPermuMatrix(const vector<unsigned int>& idx_permu, gsl_matr
 			gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, P, P_tmp, 0.0, _P_work);
 			std::swap(P, _P_work);
 		}
-		// If I did an odd number of swaps, I need to swap back and copy the results
-		if(idx_permu.size() % 2 != 0){
+		/*if(idx_permu.size() % 2 != 0){
 			std::swap(P, _P_work);
 			gsl_matrix_memcpy(P, _P_work);
-		}
+		}*/
 
 		gsl_matrix_free(P_tmp);
 		gsl_matrix_free(_P_work);

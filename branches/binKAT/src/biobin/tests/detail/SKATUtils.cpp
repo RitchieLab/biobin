@@ -11,6 +11,7 @@
 
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_eigen.h>
+#include <gsl/gsl_linalg.h>
 
 #include "qfc.h"
 #include "MatrixUtils.h"
@@ -129,19 +130,67 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 }
 
 double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
+	gsl_matrix* W_tmp = gsl_matrix_calloc(W->size1, W->size2);
+
+	// find columns (and rows) that are essentially 0 to remove them
+	// they can cause problems in the eigenvalue calculations
+	vector<unsigned int> bad_idx;
+	for(unsigned int i=0; i<W->size2; i++){
+		gsl_vector_const_view W_col = gsl_matrix_const_column(W, i);
+		if(gsl_blas_dasum(&W_col.vector) < std::numeric_limits<float>::epsilon()){
+			bad_idx.push_back(i);
+		}
+	}
+	if(bad_idx.size() > 0){
+		gsl_matrix* P = gsl_matrix_alloc(W->size2, W->size2);
+		MatrixUtils::getPermuMatrix(bad_idx, P);
+		gsl_matrix* W_tmp2 = gsl_matrix_calloc(W->size1, W->size2);
+		// permute columns
+		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, W, P, 0, W_tmp);
+		// permute rows
+		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, P, W_tmp, 0, W_tmp2);
+
+		// create a new
+		gsl_matrix* subW = gsl_matrix_alloc(W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
+		gsl_matrix_const_view W_v = gsl_matrix_const_submatrix(W_tmp2, 0,0, W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
+		gsl_matrix_memcpy(subW, &W_v.matrix);
+		gsl_matrix_free(W_tmp);
+		gsl_matrix_free(W_tmp2);
+		W_tmp = subW;
+	} else {
+		gsl_matrix_memcpy(W_tmp, W);
+	}
+
 	// OK, now we have to take the eigenvalues of tmp_ss
-	gsl_vector* eval = gsl_vector_alloc(W->size1);
-	gsl_eigen_symm_workspace* eigen_w = gsl_eigen_symm_alloc(W->size1);
-	gsl_matrix* W_tmp = gsl_matrix_alloc(W->size1, W->size2);
-	gsl_matrix_memcpy(W_tmp, W);
+	gsl_vector* eval = gsl_vector_alloc(W_tmp->size1);
+	gsl_eigen_symm_workspace* eigen_w = gsl_eigen_symm_alloc(W_tmp->size1);
 	gsl_eigen_symm(W_tmp, eval, eigen_w);
 	gsl_eigen_symm_free(eigen_w);
-	gsl_matrix_free(W_tmp);
-
 	// Now, sort the eigenvalues in descending order
 	std::sort(eval->data, eval->data + eval->size, std::greater<double>());
+
+	int n_eval = 0;
+	while(gsl_vector_get(eval, n_eval) > std::numeric_limits<float>::epsilon()
+			&& static_cast<unsigned int>(++n_eval) < eval->size);
+
+	// try the SVD instead
+	//gsl_matrix* V_tmp = gsl_matrix_alloc(W_tmp->size2, W_tmp->size2);
+	//gsl_vector* eval_sq = gsl_vector_alloc(W_tmp->size2);
+	//gsl_vector* svd_ws = gsl_vector_alloc(W_tmp->size2);
+
+	//gsl_linalg_SV_decomp (W_tmp, V_tmp, eval_sq, svd_ws);
+
+	//gsl_matrix_free(V_tmp);
+	//gsl_vector_free(svd_ws);
+
 	// TODO: find where these eigenvalues go to zero and only take those
-	int n_eval = eval->size;
+	//while(static_cast<unsigned int>(n_eval) < eval_sq->size && gsl_vector_get(eval_sq, n_eval) > std::numeric_limits<float>::epsilon()){
+	//	gsl_vector_set(eval_sq, n_eval, sqrt(gsl_vector_get(eval_sq, n_eval)));
+	//	++n_eval;
+	//}
+
+	gsl_matrix_free(W_tmp);
+
 
 	// I don't feel like doing memory management, so use a vector instead of an array
 	std::vector<double> nct(n_eval, 0);
@@ -154,9 +203,12 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	double sigma=0;
 
 	qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+	//qfc(eval_sq->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+
 
 	// clean up, please!
 	gsl_vector_free(eval);
+	//gsl_vector_free(eval_sq);
 
 	return pval;
 }
