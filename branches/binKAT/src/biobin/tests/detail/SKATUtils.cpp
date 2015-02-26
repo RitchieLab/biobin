@@ -102,7 +102,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 
 		// I'm officially done with "geno" now
 		gsl_matrix_free(geno_tmp);
-		geno = gsl_matrix_alloc(n_row, n_col = bad_idx.size());
+		geno = gsl_matrix_alloc(n_row, n_col - bad_idx.size());
 		gsl_matrix_memcpy(geno, &G_v.matrix);
 		gsl_matrix_free(G_P);
 
