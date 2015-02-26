@@ -110,6 +110,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 		gsl_vector* wt_P = gsl_vector_alloc(n_col);
 		gsl_blas_dgemv(CblasNoTrans, 1.0, P, wt_tmp, 0.0, wt_P);
 		gsl_vector_free(wt_tmp);
+		gsl_matrix_free(P);
 		wt_tmp = wt_P;
 
 	} else {
