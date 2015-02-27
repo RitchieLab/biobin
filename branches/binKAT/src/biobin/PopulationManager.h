@@ -164,7 +164,7 @@ public:
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
 	unsigned short getIndivGeno(const Knowledge::Locus& loc, int position) const;
-	float getAvgGenotype(const Knowledge::Locus& locus) const;
+	float getAvgGenotype(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss_status=0) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}

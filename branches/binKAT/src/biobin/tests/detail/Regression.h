@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
@@ -55,6 +57,8 @@ protected:
 
 	//! The null model result
 	Result* _null_result;
+
+	boost::dynamic_bitset<> _included;
 
 	//! A vector of sample IDs containing completely non-missing covariates + phenotypes
 	//! along with the index of each!

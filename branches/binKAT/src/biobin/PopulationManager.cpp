@@ -75,14 +75,18 @@ unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
 	}
 }
 
-float PopulationManager::getAvgGenotype(const Locus& loc) const{
+float PopulationManager::getAvgGenotype(const Locus& loc, const dynamic_bitset<>* nonmiss_status) const{
 	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
 	unsigned int n_vars = 0;
 	float nonmiss = 1;
 
 	if(itr != _genotypes.end()){
-		n_vars =  getTotalContrib((*itr).second);
-		nonmiss = (~((*itr).second.first & (*itr).second.second)).count();
+		n_vars =  getTotalContrib((*itr).second, nonmiss_status);
+		if(nonmiss_status){
+			nonmiss = (*nonmiss_status & (~((*itr).second.first & (*itr).second.second))).count();
+		} else {
+			nonmiss = (~((*itr).second.first & (*itr).second.second)).count();
+		}
 	}
 
 	// will return 0 for a missing locus

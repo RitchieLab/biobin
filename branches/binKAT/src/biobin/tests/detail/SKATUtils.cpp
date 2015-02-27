@@ -23,9 +23,12 @@ using std::pair;
 namespace BioBin{
 namespace Test{
 
-unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno,
-			const Bin& bin, const vector<pair<string, unsigned int> >& name_pos,
-			gsl_matrix* &geno){
+unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
+		const Utility::Phenotype& pheno,
+		const boost::dynamic_bitset<>& incl,
+		const Bin& bin,
+		const vector<pair<string, unsigned int> >& name_pos,
+		gsl_matrix* &geno){
 
 	unsigned int n_col = bin.getVariantSize();
 	unsigned int n_row = name_pos.size();
@@ -39,7 +42,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 	Bin::const_locus_iterator ci=bin.variantBegin();
 	unsigned int idx=0;
 	while(ci != bin.variantEnd()){
-		avg_geno.push_back(pop_mgr.getAvgGenotype(**ci));
+		avg_geno.push_back(pop_mgr.getAvgGenotype(**ci, &incl));
 		gsl_vector_set(wt_tmp, idx, pop_mgr.getLocusWeight(**ci, pheno, bin.getRegion()));
 		++ci;
 		++idx;
@@ -53,7 +56,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 
 	ci = bin.variantBegin();
 	for(unsigned int j=0; j<n_col; j++){
-		for(unsigned int i=0; i<n_col; i++){
+		for(unsigned int i=0; i<n_row; i++){
 			unsigned char g = pop_mgr.getIndivGeno(**ci,name_pos[i].second);
 			if(g > 2){
 				missing[j]++;
@@ -66,16 +69,21 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr, const U
 		++ci;
 	}
 
+	unsigned int n_miss = 0;
+	unsigned int n_mono = 0;
+
 	vector<unsigned int> bad_idx;
-	// max of 5% missing - perhaps customizeable some day?
-	float missing_thresh = 0.05 * n_row;
+	// max of 15% missing - perhaps customizeable some day?
+	float missing_thresh = 0.15 * n_row;
 	// OK, now let's check the missingness and variation requirements
 	for(unsigned int i=0; i<missing.size(); i++){
 		// too much missingness
 		if(missing[i] > missing_thresh){
+			++n_miss;
 			bad_idx.push_back(i);
 		// not polymorphic
-		} else if( popcount(n_genos[i]) <= 0){
+		} else if( popcount(n_genos[i]) <= 1){
+			++n_mono;
 			bad_idx.push_back(i);
 		}
 	}

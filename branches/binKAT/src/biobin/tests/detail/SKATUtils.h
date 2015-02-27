@@ -12,6 +12,8 @@
 #include <utility>
 #include <string>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
@@ -34,8 +36,11 @@ public:
 	// gets the genotype matrix and weight vector, returning the number of
 	// SNPs in the gentoype matrix.  (Note: you really should check to see
 	// if this is == 0, b/c it will fail!)
-	static unsigned int getGenoWeights(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno,
-			const Bin& bin, const std::vector<std::pair<std::string, unsigned int> >& name_pos,
+	static unsigned int getGenoWeights(const PopulationManager& pop_mgr,
+			const Utility::Phenotype& pheno,
+			const boost::dynamic_bitset<>& incl,
+			const Bin& bin,
+			const std::vector<std::pair<std::string, unsigned int> >& name_pos,
 			gsl_matrix* &geno_wt);
 
 	static double getPvalue(double Q, const gsl_matrix* W);

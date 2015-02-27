@@ -107,19 +107,19 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 			_output_mutex.lock();
 			std::cout << "Phenotype: " << _pop_mgr.getPhenotypeName(ph.getIndex()) << std::endl;
 
-			std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
-						<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
+			std::cout<<"\n   Loci:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+						<<" * Rare Loci:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
 						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.size()<<"\n";
 
 			std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
 					 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
 
 			if (binData.size() > 0 && binData.size() < 100) {
-				std::cout<<"\n\nBin Name\tVariant Count\n";
+				std::cout<<"\n\nBin Name\tVariant Count\tLoci Count" << std::endl;
 				BinManager::const_iterator itr = binData.begin();
 				BinManager::const_iterator end = binData.end();
 				while(itr != end){
-					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\t" << (*itr)->getVariantSize() << "\n";
 					++itr;
 				}
 			}

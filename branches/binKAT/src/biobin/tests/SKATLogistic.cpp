@@ -117,7 +117,7 @@ double SKATLogistic::runTest(const Bin& bin) const{
 
 	gsl_matrix* GW;
 
-	unsigned int n_snp = SKATUtils::getGenoWeights(*_pop_mgr_ptr, *_pheno_ptr,
+	unsigned int n_snp = SKATUtils::getGenoWeights(*_pop_mgr_ptr, *_pheno_ptr, _base_reg._included,
 			bin, _base_reg._samp_name, GW);
 	if(n_snp == 0){
 		// clean up and return 1
