@@ -129,19 +129,14 @@ double SKATLogistic::runTest(const Bin& bin) const{
 	// r*GKG*r, with K == Weights
 	// temporary vectors - we want to keep everyting BLAS lv. 2 at this point
 	gsl_vector* tmp_nsnp = gsl_vector_calloc(GW->size2);
-	gsl_vector* tmp_nind = gsl_vector_calloc(GW->size1);
-
-	// At this point, I'm done with weights and the permuted genotype matrix!
-	// as well as the permutation matrix
 
 	// Now, tmp_nsnp = (GW)^T * resid
 	gsl_blas_dgemv(CblasTrans, 1.0, GW, _resid, 0, tmp_nsnp);
-	// tmp_nind = (GW) * tmp_nsnp2
-	gsl_blas_dgemv(CblasNoTrans, 1.0, GW, tmp_nsnp, 0, tmp_nind);
 
-	// and finally, Q = _resid^T * tmp_nsnp
 	double Q;
-	gsl_blas_ddot(_resid, tmp_nind, &Q);
+	// taking t(tmp_nsnp) %*% tmp_nsnp gives:
+	// resid^T * (GW) * (GW)^T * resid
+	gsl_blas_ddot(tmp_nsnp, tmp_nsnp, &Q);
 
 	// now divide by 2
 	// acutally, multiply by the inverse of the above for a hint of extra speed
@@ -149,7 +144,6 @@ double SKATLogistic::runTest(const Bin& bin) const{
 
 	// get rid of the temporary vectors
 	gsl_vector_free(tmp_nsnp);
-	gsl_vector_free(tmp_nind);
 
 	// And now we get the matrix for calculating the p-value
 	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data,
