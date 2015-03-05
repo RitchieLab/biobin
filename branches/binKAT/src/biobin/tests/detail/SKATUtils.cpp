@@ -169,6 +169,9 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 		gsl_matrix_memcpy(W_tmp, W);
 	}
 
+	// first, divide W_tmp by 2
+	gsl_matrix_scale(W_tmp, 0.5);
+
 	// OK, now we have to take the eigenvalues of tmp_ss
 	gsl_vector* eval = gsl_vector_alloc(W_tmp->size1);
 	gsl_eigen_symm_workspace* eigen_w = gsl_eigen_symm_alloc(W_tmp->size1);
