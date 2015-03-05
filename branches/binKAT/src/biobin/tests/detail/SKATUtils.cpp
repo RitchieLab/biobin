@@ -108,7 +108,6 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 
 		gsl_permutation* permu = MatrixUtils::getPermutation(bad_idx, n_col);
 		MatrixUtils::applyPermutation(geno_tmp, permu, true);
-		gsl_permute_vector(permu, idx_vec);
 		gsl_permute_vector(permu, wt_tmp);
 		gsl_permute(permu->data, &avg_geno[0], 1, avg_geno.size());
 		// done with permutation, please clean up!
