@@ -12,6 +12,8 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
+#include <gsl/gsl_permute_vector.h>
+#include <gsl/gsl_permute.h>
 
 #include "qfc.h"
 #include "MatrixUtils.h"
@@ -37,7 +39,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 	gsl_vector* wt_tmp = gsl_vector_alloc(n_col);
 
 	// get the average genotype (respecting the encoding)
-	vector<float> avg_geno;
+	vector<double> avg_geno;
 	avg_geno.reserve(bin.getVariantSize());
 	Bin::const_locus_iterator ci=bin.variantBegin();
 	unsigned int idx=0;
@@ -81,10 +83,16 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 		if(missing[i] > missing_thresh){
 			++n_miss;
 			bad_idx.push_back(i);
+			for(unsigned int j=0; j<geno_tmp->size1; j++){
+				gsl_matrix_set(geno_tmp, j, i, std::numeric_limits<double>::quiet_NaN());
+			}
 		// not polymorphic
 		} else if( popcount(n_genos[i]) <= 1){
 			++n_mono;
 			bad_idx.push_back(i);
+			for(unsigned int j=0; j<geno_tmp->size1; j++){
+				gsl_matrix_set(geno_tmp, j, i, std::numeric_limits<double>::quiet_NaN());
+			}
 		}
 	}
 
@@ -98,28 +106,22 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 	} else if(bad_idx.size() > 0){
 		// get rid of the "bad" indexes
 
-		gsl_matrix* P = gsl_matrix_alloc(n_col, n_col);
-		MatrixUtils::getPermuMatrix(bad_idx, P);
+		gsl_vector* idx_vec = gsl_vector_alloc(n_col);
+		for(unsigned int i=0; i<n_col; i++){
+			gsl_vector_set(idx_vec, i, i);
+		}
 
-		// OK, now move the "bad" rows to the end, please!
-		gsl_matrix* G_P = gsl_matrix_alloc(n_row, n_col);
-		// permute the columns of geno into G_P
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, geno_tmp, P, 0.0, G_P);
-		gsl_matrix_const_view G_v = gsl_matrix_const_submatrix(G_P, 0, 0,
-			G_P->size1, G_P->size2 - bad_idx.size());
+		gsl_permutation* permu = MatrixUtils::getPermutation(bad_idx, n_col);
+		MatrixUtils::applyPermutation(geno_tmp, permu, true);
+		gsl_permute_vector(permu, idx_vec);
+		gsl_permute_vector(permu, wt_tmp);
+		gsl_permute(permu->data, &avg_geno[0], 1, avg_geno.size());
+		gsl_matrix_const_view G_v = gsl_matrix_const_submatrix(geno_tmp, 0, 0,
+			geno_tmp->size1, geno_tmp->size2 - bad_idx.size());
 
-		// I'm officially done with "geno" now
-		gsl_matrix_free(geno_tmp);
 		geno = gsl_matrix_alloc(n_row, n_col - bad_idx.size());
 		gsl_matrix_memcpy(geno, &G_v.matrix);
-		gsl_matrix_free(G_P);
-
-		// and do the same with the weights
-		gsl_vector* wt_P = gsl_vector_alloc(n_col);
-		gsl_blas_dgemv(CblasNoTrans, 1.0, P, wt_tmp, 0.0, wt_P);
-		gsl_vector_free(wt_tmp);
-		gsl_matrix_free(P);
-		wt_tmp = wt_P;
+		gsl_matrix_free(geno_tmp);
 
 	} else {
 		// nothing more to do here, just return as-is!
@@ -151,20 +153,17 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 		}
 	}
 	if(bad_idx.size() > 0){
-		gsl_matrix* P = gsl_matrix_alloc(W->size2, W->size2);
-		MatrixUtils::getPermuMatrix(bad_idx, P);
-		gsl_matrix* W_tmp2 = gsl_matrix_calloc(W->size1, W->size2);
-		// permute columns
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, W, P, 0, W_tmp);
-		// permute rows
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, P, W_tmp, 0, W_tmp2);
 
-		// create a new
+		gsl_matrix_memcpy(W_tmp, W);
+
+		gsl_permutation* permu = MatrixUtils::getPermutation(bad_idx, W->size2);
+		MatrixUtils::applyPermutation(W_tmp, permu, true);
+		MatrixUtils::applyPermutation(W_tmp, permu, false);
+
 		gsl_matrix* subW = gsl_matrix_alloc(W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
-		gsl_matrix_const_view W_v = gsl_matrix_const_submatrix(W_tmp2, 0,0, W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
+		gsl_matrix_const_view W_v = gsl_matrix_const_submatrix(W_tmp, 0,0, W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
 		gsl_matrix_memcpy(subW, &W_v.matrix);
 		gsl_matrix_free(W_tmp);
-		gsl_matrix_free(W_tmp2);
 		W_tmp = subW;
 	} else {
 		gsl_matrix_memcpy(W_tmp, W);
@@ -219,7 +218,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	gsl_vector_free(eval);
 	//gsl_vector_free(eval_sq);
 
-	return pval;
+	return 1-pval;
 }
 
 }

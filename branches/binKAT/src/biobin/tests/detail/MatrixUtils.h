@@ -9,6 +9,7 @@
 #define BIOBIN_TEST_MATRIXUTILS_H
 
 #include<gsl/gsl_matrix.h>
+#include <gsl/gsl_permutation.h>
 
 #include <vector>
 
@@ -51,6 +52,9 @@ public:
 	// by idx to the end.  We guarantee that the final idx.size() columns
 	// will be those identified by the indices in idx (in no particular order)
 	static void getPermuMatrix(const std::vector<unsigned int>& idx, gsl_matrix* &P);
+
+	static void applyPermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol = true);
+	static gsl_permutation* getPermutation(const std::vector<unsigned int>& idx_permu, unsigned int size);
 
 };
 

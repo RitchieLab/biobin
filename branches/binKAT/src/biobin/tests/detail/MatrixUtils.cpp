@@ -13,6 +13,7 @@
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
+#include <gsl/gsl_permute_vector.h>
 
 using std::vector;
 using std::fabs;
@@ -72,6 +73,29 @@ unsigned int MatrixUtils::checkColinear(const gsl_matrix* X, gsl_matrix* &P){
 	return n_cols - n_indep;
 }
 
+gsl_permutation* MatrixUtils::getPermutation(const vector<unsigned int>& idx_permu, unsigned int size){
+	gsl_permutation* permu = gsl_permutation_calloc(size);
+
+	for(unsigned int i=0; i<idx_permu.size(); i++){
+		// get the permuted index here
+		// swap the permuted index and the n-i'th index
+		gsl_permutation_swap(permu, permu->data[idx_permu[i]], size-1-i);
+	}
+
+	return permu;
+}
+
+void MatrixUtils::applyPermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol){
+	// view_fn will give us a vector to permute
+	gsl_vector_view (*view_fn)(gsl_matrix *, size_t) = byCol ? gsl_matrix_row : gsl_matrix_column;
+	size_t iter = byCol ? mat->size1 : mat->size2;
+
+	for(unsigned int i=0; i<iter; i++){
+		gsl_vector_view vec = view_fn(mat, i);
+		gsl_permute_vector(permu, &vec.vector);
+	}
+
+}
 
 void MatrixUtils::getPermuMatrix(const vector<unsigned int>& idx_permu, gsl_matrix* &P){
 
