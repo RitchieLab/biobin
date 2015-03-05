@@ -106,16 +106,13 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 	} else if(bad_idx.size() > 0){
 		// get rid of the "bad" indexes
 
-		gsl_vector* idx_vec = gsl_vector_alloc(n_col);
-		for(unsigned int i=0; i<n_col; i++){
-			gsl_vector_set(idx_vec, i, i);
-		}
-
 		gsl_permutation* permu = MatrixUtils::getPermutation(bad_idx, n_col);
 		MatrixUtils::applyPermutation(geno_tmp, permu, true);
 		gsl_permute_vector(permu, idx_vec);
 		gsl_permute_vector(permu, wt_tmp);
 		gsl_permute(permu->data, &avg_geno[0], 1, avg_geno.size());
+		// done with permutation, please clean up!
+		gsl_permutation_free(permu);
 		gsl_matrix_const_view G_v = gsl_matrix_const_submatrix(geno_tmp, 0, 0,
 			geno_tmp->size1, geno_tmp->size2 - bad_idx.size());
 
@@ -210,7 +207,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	int qfc_err;
 	double pval;
 	int lim=10000;
-	double acc=0.0001;
+	double acc=std::numeric_limits<float>::epsilon();
 	double sigma=0;
 
 	qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
