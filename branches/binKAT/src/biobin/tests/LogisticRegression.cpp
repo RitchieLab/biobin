@@ -119,7 +119,7 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	// get the exponent (and derivative, log and 1-log values) for the
 	// null model (i.e., best fit of the intercept parameter)
-	double beta_0 = sum_Y / (Y.size - sum_Y);
+	double beta_0 = log(sum_Y / (Y.size - sum_Y));
 	array<double, 4> null_v = linkFunction(beta_0);
 
 	// check for an intercept-only model here
