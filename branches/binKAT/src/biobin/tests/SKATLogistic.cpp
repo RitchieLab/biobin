@@ -23,9 +23,6 @@ namespace Test{
 string SKATLogistic::testname = SKATLogistic::doRegister("SKAT-logistic");
 
 SKATLogistic::~SKATLogistic(){
-	if(_resid){
-		gsl_vector_free(_resid);
-	}
 	if(_resid_wt){
 		gsl_vector_free(_resid_wt);
 	}
@@ -50,12 +47,6 @@ void SKATLogistic::init(){
 	// get the residual vector from the null model
 	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data, 0,0,
 			_base_reg._data->size1, _base_reg._data->size2-1);
-	if(_resid){
-		gsl_vector_free(_resid);
-	}
-	_resid = gsl_vector_alloc(_base_reg._data->size1);
-	gsl_multifit_linear_residuals(&X_v.matrix, _base_reg._phenos,
-			_base_reg._null_result->beta, _resid);
 
 	// now, get the _XT_X_inv matrix
 	// it's a little more complex than in the SKAT_linear - now we need to do a
@@ -65,11 +56,12 @@ void SKATLogistic::init(){
 	}
 
 	// First, get the predicted value
-	_resid_wt = gsl_vector_calloc(_resid->size);
-	gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, _base_reg._null_result->beta, 0, _resid_wt);
+	_resid_wt = gsl_vector_calloc(_base_reg._phenos->size);
+	gsl_vector_memcpy(_resid_wt, _base_reg._phenos);
+	gsl_blas_daxpy(-1, _base_reg._null_result->resid, _resid_wt);
 
 	// now, val * (1-val) for each entry in _resid_wt
-	for(unsigned int i=0; i<_resid->size; i++){
+	for(unsigned int i=0; i<_resid_wt->size; i++){
 		// val is the predicted value
 		double val = gsl_vector_get(_resid_wt, i);
 		gsl_vector_set(_resid_wt, i, val*(1-val));
@@ -131,7 +123,7 @@ double SKATLogistic::runTest(const Bin& bin) const{
 	gsl_vector* tmp_nsnp = gsl_vector_calloc(GW->size2);
 
 	// Now, tmp_nsnp = (GW)^T * resid
-	gsl_blas_dgemv(CblasTrans, 1.0, GW, _resid, 0, tmp_nsnp);
+	gsl_blas_dgemv(CblasTrans, 1.0, GW, _base_reg._null_result->resid, 0, tmp_nsnp);
 
 	double Q;
 	// taking t(tmp_nsnp) %*% tmp_nsnp gives:

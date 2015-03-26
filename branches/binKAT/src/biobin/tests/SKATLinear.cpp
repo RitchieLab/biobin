@@ -28,9 +28,6 @@ namespace Test {
 string SKATLinear::testname = SKATLinear::doRegister("SKAT-linear");
 
 SKATLinear::~SKATLinear() {
-	if(_resid){
-		gsl_vector_free(_resid);
-	}
 	if(X_svd_U){
 		gsl_matrix_free(X_svd_U);
 	}
@@ -46,19 +43,14 @@ SKATLinear::~SKATLinear() {
 void SKATLinear::init(){
 	_base_reg.setup(*_pop_mgr_ptr, *_pheno_ptr);
 
-
 	// get the residual vector from the null model
 	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data, 0,0,
 			_base_reg._data->size1, _base_reg._data->size2-1);
-	if(_resid){
-		gsl_vector_free(_resid);
-	}
-	_resid = gsl_vector_alloc(_base_reg._data->size1);
-	gsl_multifit_linear_residuals(&X_v.matrix, _base_reg._phenos,
-			_base_reg._null_result->beta, _resid);
 
 	// calculate the (inverse variance) of the residuals
-	resid_inv_var = 1 / gsl_stats_variance(_resid->data, _resid->stride, _resid->size);
+	resid_inv_var = 1 / gsl_stats_variance(_base_reg._null_result->resid->data,
+			_base_reg._null_result->resid->stride,
+			_base_reg._null_result->resid->size);
 
 	if(X_svd_U){
 		gsl_matrix_free(X_svd_U);
@@ -100,7 +92,7 @@ double SKATLinear::runTest(const Bin& bin) const{
 	gsl_vector* tmp_nsnp = gsl_vector_calloc(GW->size2);
 
 	// Now, tmp_nsnp = (GW)^T * resid
-	gsl_blas_dgemv(CblasTrans, 1.0, GW, _resid, 0, tmp_nsnp);
+	gsl_blas_dgemv(CblasTrans, 1.0, GW, _base_reg._null_result->resid, 0, tmp_nsnp);
 
 	double Q;
 	// taking t(tmp_nsnp) %*% tmp_nsnp gives:

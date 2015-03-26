@@ -64,8 +64,6 @@ double LinearRegression::runTest(const Bin& bin) const{
 	double c = gsl_vector_get(r->beta, r->beta->size - 1);
 	double pval = 2*gsl_cdf_tdist_Q(fabs(c / se),_data->size1 - _data->size2 + 1);
 
-	gsl_matrix_free(r->cov);
-	gsl_vector_free(r->beta);
 	delete r;
 
 	return pval;
@@ -125,6 +123,9 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 
 	// run the regression now
 	gsl_multifit_linear(&A_v.matrix, &Y, &bv.vector, &cov_mat_view.matrix, &chisq, ws);
+	// set the residuals here
+	r->resid = gsl_vector_alloc(A_v.matrix.size1);
+	gsl_multifit_linear_residuals(&A_v.matrix, &Y, &bv.vector, r->resid);
 
 	// Note: to unpermute, multiply by P transpose!
 	// Also, we need to unpermute both the rows AND columns of cov_mat

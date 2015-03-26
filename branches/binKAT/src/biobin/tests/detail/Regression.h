@@ -33,11 +33,23 @@ public:
 public:
 	class Result{
 	public:
-		Result(gsl_vector* b, gsl_matrix* c) : beta(b), cov(c), chisq(0), _conv(true) {}
+		Result(gsl_vector* b, gsl_matrix* c) : beta(b), cov(c), resid(0), chisq(0), _conv(true) {}
+		~Result(){
+			if(beta){
+				gsl_vector_free(beta);
+			}
+			if(cov){
+				gsl_matrix_free(cov);
+			}
+			if(resid){
+				gsl_vector_free(resid);
+			}
+		}
 
 		std::vector<unsigned int> dropped_cols;
 		gsl_vector* beta;
 		gsl_matrix* cov;
+		gsl_vector* resid;
 		double chisq;
 		bool _conv;
 	};

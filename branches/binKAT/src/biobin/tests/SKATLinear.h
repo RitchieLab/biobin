@@ -21,7 +21,7 @@ namespace Test {
 class SKATLinear : public TestImpl<SKATLinear> {
 public:
 	SKATLinear() : TestImpl<SKATLinear>(testname),
-		_resid(0), resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0){}
+		resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0){}
 	virtual ~SKATLinear();
 
 private:
@@ -38,7 +38,6 @@ private:
 
 	LinearRegression _base_reg;
 
-	gsl_vector* _resid;
 	double resid_inv_var;
 
 	gsl_matrix* X_svd_U;

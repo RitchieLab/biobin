@@ -69,8 +69,6 @@ double LogisticRegression::runTest(const Bin& bin) const {
 	double c = gsl_vector_get(r->beta, r->beta->size - 1);
 	double pval = 2*gsl_cdf_tdist_Q(fabs(c / se),_data->size1 - _data->size2 + 1);
 
-	gsl_matrix_free(r->cov);
-	gsl_vector_free(r->beta);
 	delete r;
 
 	return pval;
@@ -132,6 +130,13 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 			gsl_matrix_set(r_cov, 0, 0, null_v[1]);
 			r->chisq = null_v[1]; // I don't know what to put here - sounds good
 			r->_conv = true;
+			r->resid = gsl_vector_alloc(Y.size);
+			double pred_val = -1 / (1 + exp(-null_v[0]));
+			// set the residual at first to -\mu, where \mu == 1/(1+exp(-\beta_0))
+			gsl_vector_set_all(r->resid, pred_val);
+			// and set resid = Y + resid (i.e., resid = Y + (-\mu)
+			gsl_blas_daxpy(1, &Y, r->resid);
+
 			return r;
 		}
 	}
@@ -238,6 +243,10 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 		LL += 0;
 
 	} // complete iteration
+
+	// set the residuals here
+	r->resid = gsl_vector_alloc(X_v.matrix.size1);
+	gsl_multifit_linear_residuals(&X_v.matrix, rhs, &b.vector, r->resid);
 
 	// nonconvergence happens if:
 	// -Log likelihood is not finite (inf or NaN)

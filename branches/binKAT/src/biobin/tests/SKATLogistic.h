@@ -20,7 +20,7 @@ namespace Test {
 class SKATLogistic : public TestImpl<SKATLogistic> {
 public:
 	SKATLogistic() : TestImpl<SKATLogistic>(testname),
-		_resid(0), _resid_wt(0), X_svd_U(0), X_svd_S(0), X_svd_V(0) {}
+		_resid_wt(0), X_svd_U(0), X_svd_S(0), X_svd_V(0) {}
 
 	virtual ~SKATLogistic();
 
@@ -30,7 +30,6 @@ protected:
 
 private:
 
-	gsl_vector* _resid;
 	// a vector of p*(1-p), where p is the predicted value of the residual
 	gsl_vector* _resid_wt;
 
