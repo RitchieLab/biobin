@@ -119,19 +119,20 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	// get the exponent (and derivative, log and 1-log values) for the
 	// null model (i.e., best fit of the intercept parameter)
-	array<double, 4> null_v = linkFunction(log(sum_Y / (Y.size - sum_Y)));
+	double beta_0 = sum_Y / (Y.size - sum_Y);
+	array<double, 4> null_v = linkFunction(beta_0);
 
 	// check for an intercept-only model here
 	if(X.size2 == 1){
 		gsl_vector_const_view X_col1 = gsl_matrix_const_column(&X, 0);
 		if(gsl_blas_dasum(&X_col1.vector) == X.size1){
 			// if we're here, it's an intercept-only model - trivial to get
-			gsl_vector_set(beta, 0, null_v[0]);
+			gsl_vector_set(beta, 0, beta_0);
 			gsl_matrix_set(r_cov, 0, 0, null_v[1]);
 			r->chisq = null_v[1]; // I don't know what to put here - sounds good
 			r->_conv = true;
 			r->resid = gsl_vector_alloc(Y.size);
-			double pred_val = -1 / (1 + exp(-null_v[0]));
+			double pred_val = - null_v[0];
 			// set the residual at first to -\mu, where \mu == 1/(1+exp(-\beta_0))
 			gsl_vector_set_all(r->resid, pred_val);
 			// and set resid = Y + resid (i.e., resid = Y + (-\mu)
@@ -205,7 +206,6 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 		// add to LL for each row
 		for (unsigned int i = 0; i < Y.size; i++) {
-
 
 			// calculate the value of the exponent for the individual
 			double v = gsl_vector_get(rhs, i);
