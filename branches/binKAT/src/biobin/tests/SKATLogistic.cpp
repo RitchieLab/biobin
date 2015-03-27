@@ -150,10 +150,23 @@ double SKATLogistic::runTest(const Bin& bin) const{
 	// We do this by scaling each row appropriately
 	gsl_matrix* GW_w = gsl_matrix_alloc(GW->size1, GW->size2);
 	gsl_matrix_memcpy(GW_w, GW);
-	for(unsigned int i=0; i<GW->size2; i++){
+	for(unsigned int i=0; i<GW->size1; i++){
 		gsl_vector_view GW_row = gsl_matrix_row(GW_w, i);
 		gsl_vector_scale(&GW_row.vector, gsl_vector_get(_resid_wt, i));
 	}
+
+	/*
+	gsl_vector* gw_norm = gsl_vector_alloc(GW->size2);
+	for (unsigned int i=0; i<GW->size2; i++){
+		gsl_vector_const_view GW_col = gsl_matrix_const_column(GW, i);
+		gsl_vector_set(gw_norm, i, gsl_blas_dnrm2(&GW_col.vector));
+	}
+	gsl_vector* gww_norm = gsl_vector_alloc(GW->size1);
+	for (unsigned int i=0; i<GW->size2; i++){
+		gsl_vector_const_view GW_col = gsl_matrix_const_column(GW_w, i);
+		gsl_vector_set(gww_norm, i, gsl_blas_dnrm2(&GW_col.vector));
+	}
+	*/
 
 	// 1st lets get Z^T*Z
 	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1, GW, GW_w, 0, tmp_ss);
@@ -162,7 +175,7 @@ double SKATLogistic::runTest(const Bin& bin) const{
 
 	// Now, I'm going to need GW scaled by sqrt(_resid_wt) to use the SVD here
 	gsl_matrix_memcpy(GW_w, GW);
-	for(unsigned int i=0; i<GW->size2; i++){
+	for(unsigned int i=0; i<GW->size1; i++){
 		gsl_vector_view GW_row = gsl_matrix_row(GW_w, i);
 		gsl_vector_scale(&GW_row.vector, sqrt(gsl_vector_get(_resid_wt, i)));
 	}
