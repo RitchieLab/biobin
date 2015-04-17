@@ -246,7 +246,23 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	// set the residuals here
 	r->resid = gsl_vector_alloc(X_v.matrix.size1);
-	gsl_multifit_linear_residuals(&X_v.matrix, rhs, &b.vector, r->resid);
+
+	// Let's get the value of the exponent for every person
+	// (we can re-use the rhs vector since we're done with it!)
+	gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
+	for (unsigned int i = 0; i < Y.size; i++) {
+
+		// calculate the value of the exponent for the individual
+		double v = gsl_vector_get(rhs, i);
+
+		// At this point, v is the value of the exponent
+		array<double, 4> v_arr = linkFunction(v);
+
+		// and the residual is Y[i] - predicted_val[i], or Y[i] - v_arr[0]
+		gsl_vector_set(r->resid, i, gsl_vector_get(&Y,i) - v_arr[0]);
+	}
+
+	//gsl_multifit_linear_residuals(&X_v.matrix, rhs, &b.vector, r->resid);
 
 	// nonconvergence happens if:
 	// -Log likelihood is not finite (inf or NaN)
@@ -292,7 +308,7 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 }
 
 array<double, 4> LogisticRegression::linkFunction(double v){
-	// returns val, deriv (val * 1-val), log(val), 1-log(val)
+	// returns predicted value, deriv (val * 1-val), log(val), 1-log(val)
 
 	array<double, 4> retval;
 	// max_val is the maximum value of v above that will not result in
