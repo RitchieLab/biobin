@@ -9,7 +9,11 @@ Features and Changes:
 - Removed Genotype and Frequency reports
 - Removed all allele information from memory storage
 - Added the ability to run statistical tests within BioBin.  Tests included:
-	- linear regression  
+	- linear regression
+	- logistic regression
+	- Wincoxon rank-sum test
+	- SKAT (continuous phenotype)
+	- SKAT (dichotomous phenotype)
 
 == 2.1.1 ==
 
