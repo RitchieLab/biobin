@@ -24,14 +24,6 @@ namespace boost {
     typedef basic_string_ref<char,     std::char_traits<char> >        string_ref;
     typedef basic_string_ref<wchar_t,  std::char_traits<wchar_t> >    wstring_ref;
 
-#ifndef BOOST_NO_CXX11_CHAR16_T
-    typedef basic_string_ref<char16_t, std::char_traits<char16_t> > u16string_ref;
-#endif
-
-#ifndef BOOST_NO_CXX11_CHAR32_T
-    typedef basic_string_ref<char32_t, std::char_traits<char32_t> > u32string_ref;
-#endif
-
 }
 
 #endif
