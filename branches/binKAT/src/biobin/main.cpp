@@ -164,11 +164,11 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 
-		boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
+		/*boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
 		if (!boost::filesystem::is_regular_file(vcf_path)) {
 			std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
 			exit(1);
-		}
+		}*/
 
 		boost::filesystem::path report_path=boost::filesystem::absolute(BioBin::BinApplication::reportPrefix).parent_path();
 
