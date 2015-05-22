@@ -99,7 +99,9 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 	_pheno_mutex.lock();
 		while(ph_itr != _pop_mgr.endPheno()){
+			// use the default copy constructor for Utility::Phenotype
 			Utility::Phenotype ph(*ph_itr);
+			++ph_itr;
 			_pheno_mutex.unlock();
 
 			BinManager binData(_pop_mgr, *regions, dataset, *_info, ph);
@@ -154,9 +156,6 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 			}
 
 			_pheno_mutex.lock();
-			if(ph_itr != _pop_mgr.endPheno()){
-				++ph_itr;
-			}
 		}
 		_pheno_mutex.unlock();
 
