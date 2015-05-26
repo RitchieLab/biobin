@@ -87,7 +87,7 @@ bool Bin::operator<(const Bin& other) const{
 unsigned int Bin::getSize() const{
 	int ret_val = 0;
 	if(!_cached){
-		list<Knowledge::Locus*>::const_iterator itr = _variants.begin();
+		set<Knowledge::Locus*>::const_iterator itr = _variants.begin();
 		while(itr != _variants.end()){
 			ret_val += _pop_mgr.genotypeContribution(**itr);
 			++itr;
