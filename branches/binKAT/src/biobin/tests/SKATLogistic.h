@@ -24,6 +24,8 @@ public:
 
 	virtual ~SKATLogistic();
 
+	virtual Test* clone() {return new SKATLogistic(*this);}
+
 protected:
 	virtual void init();
 	virtual double runTest(const Bin& bin) const;

@@ -22,9 +22,7 @@ public:
 	LinearRegression();
 	virtual ~LinearRegression();
 
-private:
-	LinearRegression(const LinearRegression&);
-	LinearRegression& operator=(const LinearRegression&);
+	virtual Test* clone() {return new LinearRegression(*this);}
 
 protected:
 	virtual void init();

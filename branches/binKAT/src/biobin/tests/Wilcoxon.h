@@ -19,6 +19,8 @@ public:
 	Wilcoxon() : TestImpl<Wilcoxon>(testname){}
 	virtual ~Wilcoxon() {}
 
+	virtual Test* clone() {return new Wilcoxon(*this);}
+
 protected:
 	virtual void init();
 	virtual double runTest(const Bin& bin) const;

@@ -24,9 +24,8 @@ public:
 		resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0){}
 	virtual ~SKATLinear();
 
-private:
-	SKATLinear(const SKATLinear&);
-	SKATLinear& operator=(const SKATLinear&);
+	virtual Test* clone() {return new SKATLinear(*this);}
+
 
 protected:
 	virtual void init();

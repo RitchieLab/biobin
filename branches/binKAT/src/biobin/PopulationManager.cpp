@@ -772,7 +772,9 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 		os << sep << missing_status;
 		vector<double> pvals(bins.size());
-		c_tests[i]->runAllTests(*this, pheno,bins,pvals);
+		Test::Test* t = c_tests[i]->clone();
+		t->runAllTests(*this, pheno,bins,pvals);
+		delete t;
 		for(unsigned int j=0; j<pvals.size(); j++){
 			os << sep << pvals[j];
 		}

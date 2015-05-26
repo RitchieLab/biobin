@@ -26,6 +26,8 @@ public:
 
 	virtual ~LogisticRegression();
 
+	virtual Test* clone() { return new LogisticRegression(*this);}
+
 protected:
 
 	// Inherited from Test

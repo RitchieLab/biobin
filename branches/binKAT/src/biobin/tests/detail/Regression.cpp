@@ -22,7 +22,17 @@ namespace BioBin {
 namespace Test {
 
 Regression::~Regression() {
-	// TODO Auto-generated destructor stub
+	if(_data){
+		gsl_matrix_free(_data);
+	}
+
+	if(_phenos){
+		gsl_vector_free(_phenos);
+	}
+
+	if(_null_result){
+		delete _null_result;
+	}
 }
 
 void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenotype& pheno){
@@ -36,8 +46,10 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 	unsigned int i=0;
 	unsigned int s_idx=0;
 
+	PopulationManager::const_sample_iterator s_end = pop_mgr.endSample();
+
 	for(PopulationManager::const_sample_iterator si = pop_mgr.beginSample();
-			si != pop_mgr.endSample(); si++){
+			si != s_end; si++){
 		bool missing=false;
 		float status=getPhenotype(pop_mgr, pheno, *si);
 		const vector<float>& covars(pop_mgr.getCovariates(*si));
@@ -59,7 +71,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 			}
 
 			_samp_name.push_back(std::make_pair(*si, s_idx));
-			_included.set(i, true);
+			_included.set(s_idx, true);
 			++i;
 		}
 		++s_idx;
