@@ -30,10 +30,6 @@ namespace Test {
 
 string LogisticRegression::testname = LogisticRegression::doRegister("logistic");
 
-LogisticRegression::~LogisticRegression() {
-	// TODO Auto-generated destructor stub
-}
-
 void LogisticRegression::init(){
 	if(_pheno_ptr->getStatus().first.count() == 0 ||
 			_pheno_ptr->getStatus().second.count() == 0){

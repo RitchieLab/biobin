@@ -24,7 +24,7 @@ public:
 	LogisticRegression() : TestImpl<LogisticRegression>(testname), Regression(){
 	}
 
-	virtual ~LogisticRegression();
+	virtual ~LogisticRegression() {}
 
 	virtual Test* clone() { return new LogisticRegression(*this);}
 

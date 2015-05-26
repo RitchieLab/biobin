@@ -19,13 +19,13 @@ class LinearRegression : public TestImpl<LinearRegression>, public Regression {
 	friend class SKATLinear;
 
 public:
-	LinearRegression();
-	virtual ~LinearRegression();
+	LinearRegression() : TestImpl<LinearRegression>(testname), Regression() {}
+	virtual ~LinearRegression() {}
 
 	virtual Test* clone() {return new LinearRegression(*this);}
 
 protected:
-	virtual void init();
+	virtual void init(){regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);}
 	virtual double runTest(const Bin& bin) const;
 
 	virtual Regression::Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const;

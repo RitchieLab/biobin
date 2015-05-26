@@ -26,29 +26,6 @@ namespace Test {
 
 string LinearRegression::testname = LinearRegression::doRegister("linear");
 
-LinearRegression::LinearRegression() : TestImpl<LinearRegression>(testname),
-		Regression(){
-}
-
-LinearRegression::~LinearRegression() {
-	if(_data){
-		gsl_matrix_free(_data);
-	}
-	if(_phenos){
-		gsl_vector_free(_phenos);
-	}
-	if(_null_result){
-		gsl_matrix_free(_null_result->cov);
-		gsl_vector_free(_null_result->beta);
-		delete(_null_result);
-	}
-}
-
-void LinearRegression::init(){
-
-	regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);
-}
-
 double LinearRegression::runTest(const Bin& bin) const{
 
 	if (_willfail) {
