@@ -21,8 +21,7 @@ class LogisticRegression : public TestImpl<LogisticRegression> , public Regressi
 public:
 	friend class SKATLogistic;
 
-	LogisticRegression() : TestImpl<LogisticRegression>(testname), Regression(),
-		_willfail(false) {
+	LogisticRegression() : TestImpl<LogisticRegression>(testname), Regression(){
 	}
 
 	virtual ~LogisticRegression();
@@ -43,8 +42,6 @@ private:
 
 	static boost::array<double, 4> linkFunction(double v);
 
-	// set this in the init if we know that we will fail for some reason
-	bool _willfail;
 };
 
 }

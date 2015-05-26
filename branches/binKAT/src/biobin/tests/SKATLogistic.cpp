@@ -42,6 +42,7 @@ void SKATLogistic::init(){
 
 	if(_base_reg._willfail){
 		std::cerr << "WARNING: Base Logistic regression will fail, so will SKAT logistic." << std::endl;
+		return;
 	}
 
 	// get the residual vector from the null model

@@ -26,7 +26,7 @@ namespace Test {
 
 class Regression {
 public:
-	Regression() : _data(0), _phenos(0), _null_result(0){
+	Regression() : _data(0), _phenos(0), _null_result(0), _willfail(false){
 	}
 	virtual ~Regression();
 
@@ -75,6 +75,9 @@ protected:
 	//! A vector of sample IDs containing completely non-missing covariates + phenotypes
 	//! along with the index of each!
 	std::vector<std::pair<std::string, unsigned int> > _samp_name;
+
+	// set this in the init if we know that we will fail for some reason
+	bool _willfail;
 
 };
 

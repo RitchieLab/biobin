@@ -51,6 +51,10 @@ void LinearRegression::init(){
 
 double LinearRegression::runTest(const Bin& bin) const{
 
+	if (_willfail) {
+		return 1;
+	}
+
 	for(unsigned int i=0; i<_samp_name.size(); i++){
 		gsl_matrix_set(_data, i, _data->size2 - 1,
 				_pop_mgr_ptr->getTotalIndivContrib(bin, _samp_name[i].second, *_pheno_ptr));

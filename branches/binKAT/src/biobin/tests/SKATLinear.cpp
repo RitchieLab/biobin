@@ -43,6 +43,11 @@ SKATLinear::~SKATLinear() {
 void SKATLinear::init(){
 	_base_reg.setup(*_pop_mgr_ptr, *_pheno_ptr);
 
+	if(_base_reg._willfail){
+		std::cerr << "WARNING: Base linear regression will fail, so will SKAT linear." << std::endl;
+		return;
+	}
+
 	// get the residual vector from the null model
 	gsl_matrix_const_view X_v = gsl_matrix_const_submatrix(_base_reg._data, 0,0,
 			_base_reg._data->size1, _base_reg._data->size2-1);
@@ -74,6 +79,12 @@ void SKATLinear::init(){
 }
 
 double SKATLinear::runTest(const Bin& bin) const{
+
+	// check for guaranteed failure to begin with...
+	if(_base_reg._willfail){
+		return 1;
+	}
+
 	// first things first, let's set up the genotype matrix
 
 	gsl_matrix* GW;

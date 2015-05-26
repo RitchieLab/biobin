@@ -81,6 +81,13 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 	// first, get a view of the data excluding the missing column
 	gsl_matrix_const_view X_view = gsl_matrix_const_submatrix(_data, 0, 0, _data->size1, _data->size2-1);
 
+	// test for more columns than rows - guaranteed to fail!
+	if (_data->size1 < _data->size2){
+		std::cerr << "WARNING: Not enough samples; regression will fail!" << std::endl;
+		_willfail = true;
+		return;
+	}
+
 	_null_result = calculate(*_phenos, X_view.matrix);
 
 	// if we have colinearity in the null result, let's just drop those
