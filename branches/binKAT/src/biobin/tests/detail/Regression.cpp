@@ -31,8 +31,6 @@ Regression::~Regression() {
 	}
 
 	if(_null_result){
-		gsl_matrix_free(_null_result->cov);
-		gsl_vector_free(_null_result->beta);
 		delete _null_result;
 	}
 }
