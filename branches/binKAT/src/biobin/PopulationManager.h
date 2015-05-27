@@ -202,7 +202,7 @@ public:
 	static DiseaseModel c_model;
 	static WeightModel c_weight_type;
 
-	static std::vector<Test::Test*> c_tests;
+	static std::vector<const Test::Test*> c_tests;
 
 	const static unsigned short missing_geno = static_cast<unsigned short>(-1);
 

@@ -37,7 +37,7 @@ public:
 			const Utility::Phenotype& pheno,
 			const Bin_ptr_cont& bins, Pval_cont& pvals_out);
 
-	virtual Test* clone() = 0;
+	virtual Test* clone() const = 0;
 
 protected:
 	virtual void init() = 0;

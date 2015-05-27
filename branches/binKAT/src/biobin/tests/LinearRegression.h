@@ -22,7 +22,7 @@ public:
 	LinearRegression() : TestImpl<LinearRegression>(testname), Regression() {}
 	virtual ~LinearRegression() {}
 
-	virtual Test* clone() {return new LinearRegression(*this);}
+	virtual Test* clone() const {return new LinearRegression(*this);}
 
 protected:
 	virtual void init(){regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);}

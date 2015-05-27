@@ -13,6 +13,7 @@
 #include <string>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/thread.hpp>
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
@@ -51,6 +52,8 @@ private:
 		v = (v & 0x33) + ((v >> 2) & 0x33); // put count of each 4 bits into those 4 bits
 		return (v + ((v >> 4) & 0x0F)); // add the counts of each 4 bit
 	}
+
+	static boost::mutex _qfc_lock;
 };
 
 }

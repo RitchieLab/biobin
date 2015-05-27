@@ -55,7 +55,7 @@ PopulationManager::DiseaseModel PopulationManager::c_model =
 		PopulationManager::ADDITIVE;
 PopulationManager::WeightModel PopulationManager::c_weight_type =
 		PopulationManager::MAX;
-vector<BioBin::Test::Test*> PopulationManager::c_tests;
+vector<const BioBin::Test::Test*> PopulationManager::c_tests;
 
 bool PopulationManager::RareCaseControl = true;
 bool PopulationManager::c_use_calc_weight = false;
@@ -625,7 +625,9 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 	vector<vector<double> > test_pvals(c_tests.size());
 	for(unsigned int i=0; i<c_tests.size(); i++){
 		test_pvals[i].reserve(bins.size());
-		c_tests[i]->runAllTests(*this, pheno,bins,test_pvals[i]);
+		Test::Test* t = c_tests[i]->clone();
+		t->runAllTests(*this, pheno,bins,test_pvals[i]);
+		delete t;
 	}
 
 	unsigned int i=0;

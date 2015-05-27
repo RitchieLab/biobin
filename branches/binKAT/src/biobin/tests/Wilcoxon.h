@@ -19,7 +19,7 @@ public:
 	Wilcoxon() : TestImpl<Wilcoxon>(testname){}
 	virtual ~Wilcoxon() {}
 
-	virtual Test* clone() {return new Wilcoxon(*this);}
+	virtual Test* clone() const {return new Wilcoxon(*this);}
 
 protected:
 	virtual void init();

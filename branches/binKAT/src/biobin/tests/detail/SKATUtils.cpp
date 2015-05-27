@@ -22,8 +22,11 @@ using std::vector;
 using std::string;
 using std::pair;
 
+
 namespace BioBin{
 namespace Test{
+
+boost::mutex SKATUtils::_qfc_lock;
 
 unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 		const Utility::Phenotype& pheno,
@@ -209,7 +212,11 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	double acc=std::numeric_limits<float>::epsilon();
 	double sigma=0;
 
+
+	// qfc is NOT thread-safe (or even reentrant!)
+	_qfc_lock.lock();
 	qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+	_qfc_lock.unlock();
 	//qfc(eval_sq->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
 
 

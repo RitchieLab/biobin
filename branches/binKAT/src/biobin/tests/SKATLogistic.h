@@ -24,7 +24,7 @@ public:
 
 	virtual ~SKATLogistic();
 
-	virtual Test* clone() {return new SKATLogistic(*this);}
+	virtual Test* clone() const {return new SKATLogistic(*this);}
 
 protected:
 	virtual void init();

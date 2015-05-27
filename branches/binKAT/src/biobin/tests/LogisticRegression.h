@@ -26,7 +26,7 @@ public:
 
 	virtual ~LogisticRegression() {}
 
-	virtual Test* clone() { return new LogisticRegression(*this);}
+	virtual Test* clone() const { return new LogisticRegression(*this);}
 
 protected:
 
