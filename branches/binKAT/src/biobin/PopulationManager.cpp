@@ -58,6 +58,7 @@ PopulationManager::WeightModel PopulationManager::c_weight_type =
 vector<const BioBin::Test::Test*> PopulationManager::c_tests;
 
 bool PopulationManager::RareCaseControl = true;
+bool PopulationManager::c_keep_monomorphic = false;
 bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::NoSummary = false;
 

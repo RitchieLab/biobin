@@ -195,6 +195,7 @@ public:
 	static bool RareCaseControl;
 	static bool NoSummary;
 
+	static bool c_keep_monomorphic;
 	static bool c_use_calc_weight;
 
 	static float c_min_control_frac;
@@ -473,10 +474,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 						// again, make sure it isn't monomorphic with regards to the
 						// disease encoding
-						if(getTotalContrib(curr_geno) == 0){
+						if(!c_keep_monomorphic && getTotalContrib(curr_geno) == 0){
 							delete loc;
 						} else {
 							loci_out.insert(loci_out.end(), loc);
+
 							_genotypes.insert(std::make_pair(loc, curr_geno));
 						}
 					}

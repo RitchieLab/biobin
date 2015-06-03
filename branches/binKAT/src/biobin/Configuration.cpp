@@ -63,6 +63,8 @@ void Configuration::initGeneric(){
 				"The maximum minor allele frequency to consider eligible for bin inclusion")
 		("maf-threshold", value<float>(&BinManager::mafThreshold)->default_value(0, "0"),
 				"The minimum minor allele frequency to consider eligible for bin inclusion")
+		("keep-monomorphic", value<Bool>()->default_value(false),
+				"Keep monomorphic markers (will not contribute to any bin)")
 		("bin-minimum-size,m", value<uint>(&BinManager::MinBinSize)->default_value(5),
 				"The minimum size of any bin")
 		("bin-expand-size,e", value<uint>(&BinManager::BinTraverseThreshold)->default_value(50),
@@ -259,6 +261,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	}
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
 	PopulationManager::c_use_calc_weight = vm["weight-loci"].as<Bool>();
+	PopulationManager::c_keep_monomorphic = vm["keep-monomorphic"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();

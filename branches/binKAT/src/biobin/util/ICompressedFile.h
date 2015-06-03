@@ -32,7 +32,7 @@ public:
 private:
 	void openCompressed(const char* fn);
 
-	boost::iostreams::filtering_stream<boost::iostreams::input> _infile;
+	boost::iostreams::filtering_istream _infile;
 	std::ifstream _base_f;
 
 
