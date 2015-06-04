@@ -326,7 +326,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 	//boost::char_separator<char> vcf_sep("\t");
 
-	while(getline(vcf_f, curr_line)){
+	while(vcf_f.good()){
+		getline(vcf_f, curr_line);
 		++lineno;
 		fields.clear();
 		if(curr_line.size() > 2 && curr_line[0] != '#'){
