@@ -218,6 +218,10 @@ void PopulationManager::loadIndividuals(){
 	bool allControl = false;
 	if(c_phenotype_file != ""){
 		parseTraitFile(c_phenotype_file, _pheno_names, _phenos, "pheno");
+		if(_pheno_names.size() == 0){
+			std::cerr << "WARNING: All phenotypes were completely missing, assigning all samples as control" << std::endl;
+			allControl = true;
+		}
 	} else {
 		allControl = true;
 	}
@@ -379,10 +383,19 @@ void PopulationManager::parseTraitFile(const string& filename,
 		if(nonmiss[i] == 0){
 			std::cerr << "WARNING: '" << names_out[i-n_del] << "' has no non-missing entries, deleting this variable" << std::endl;
 
+			// NOTE: this is incredibly costly, as we need to essentially shuffle
+			// all of the memory around.  My best advice: don't give me completely
+			// missing covariates/phenotypes; it's a silly thing to do!
+
 			// remove from the vals_out map
-			vals_out.erase(names_out[i-n_del]);
+			for(unordered_map<string, vector<float> >::iterator m_itr = vals_out.begin();
+			    m_itr != vals_out.end(); m_itr++){
+				(*m_itr).second.erase((*m_itr).second.begin() + (i-n_del));
+			}
 			// remove from the names_out map
 			names_out.erase(names_out.begin() + (i-n_del));
+
+			n_del++;
 		}
 	}
 }
