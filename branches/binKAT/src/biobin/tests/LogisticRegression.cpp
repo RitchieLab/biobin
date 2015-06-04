@@ -61,11 +61,14 @@ double LogisticRegression::runTest(const Bin& bin) const {
 	Regression::Result* r = calculate(*_phenos, *_data);
 
 	// Get the p-value of the last term
-	double se = sqrt(gsl_matrix_get(r->cov, r->cov->size1 - 1, r->cov->size2 - 1));
-	double c = gsl_vector_get(r->beta, r->beta->size - 1);
-	double pval = 2*gsl_cdf_tdist_Q(fabs(c / se),_data->size1 - _data->size2 + 1);
 
-	delete r;
+	double pval = 1;
+	if(r){
+		double se = sqrt(gsl_matrix_get(r->cov, r->cov->size1 - 1, r->cov->size2 - 1));
+		double c = gsl_vector_get(r->beta, r->beta->size - 1);
+		pval = 2*gsl_cdf_tdist_Q(fabs(c / se),_data->size1 - _data->size2 + 1);
+		delete r;
+	}
 
 	return pval;
 

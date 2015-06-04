@@ -9,6 +9,7 @@
 #include "MatrixUtils.h"
 
 #include <vector>
+#include <iostream>
 
 #include <gsl/gsl_blas.h>
 
@@ -77,6 +78,17 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 		++s_idx;
 
 	}
+
+	if(i == 0){
+		std::cerr << "WARNING: All samples dropped due to missingness, regression will fail!" << std::endl;
+		gsl_matrix_free(data_tmp);
+		gsl_vector_free(pheno_tmp);
+		_willfail = true;
+
+		// bail out now!
+		return;
+	}
+
 	// OK, now create the _data and _pheno vars and copy the first i rows
 	_data = gsl_matrix_alloc(i, data_tmp->size2);
 	_phenos = gsl_vector_alloc(i);
