@@ -316,6 +316,8 @@ void PopulationManager::parseTraitFile(const string& filename,
 		return;
 	}
 
+	vector<unsigned int> nonmiss;
+
 	// Read the definition of the meta-group
 	string line;
 	vector<string> result;
@@ -333,6 +335,7 @@ void PopulationManager::parseTraitFile(const string& filename,
 				for(unsigned int i=1; i<result.size(); i++){
 					names_out.push_back(result[i]);
 				}
+				nonmiss.resize(names_out.size(), 0);
 			} else if(line[0] != '#'){
 				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 
@@ -347,6 +350,7 @@ void PopulationManager::parseTraitFile(const string& filename,
 					}else{
 						names_out.push_back("");
 					}
+					nonmiss.resize(names_out.size(), 0);
 				}
 
 				if (result.size() != names_out.size() + 1){
@@ -359,6 +363,7 @@ void PopulationManager::parseTraitFile(const string& filename,
 					for(unsigned int i=1; i<result.size(); i++){
 						try{
 							vals_out[result[0]].push_back(lexical_cast<float>(result[i]));
+							nonmiss[i-1]++;
 						}catch(bad_lexical_cast&){
 							vals_out[result[0]].push_back(std::numeric_limits<float>::quiet_NaN());
 						}
@@ -366,6 +371,18 @@ void PopulationManager::parseTraitFile(const string& filename,
 				}
 			}
 			header_read = true;
+		}
+	}
+
+	unsigned int n_del = 0;
+	for(unsigned int i=0; i<nonmiss.size(); i++){
+		if(nonmiss[i] == 0){
+			std::cerr << "WARNING: '" << names_out[i-n_del] << "' has no non-missing entries, deleting this variable" << std::endl;
+
+			// remove from the vals_out map
+			vals_out.erase(names_out[i-n_del]);
+			// remove from the names_out map
+			names_out.erase(names_out.begin() + (i-n_del));
 		}
 	}
 }
