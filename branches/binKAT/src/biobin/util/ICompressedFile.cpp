@@ -16,10 +16,10 @@
 namespace BioBin {
 namespace Utility {
 
-ICompressedFile::ICompressedFile() : std::istream(0) {}
+ICompressedFile::ICompressedFile() : std::ios(), std::istream(&_infile){}
 
 ICompressedFile::ICompressedFile(const char* fn, std::ios_base::openmode mode)
-	: std::istream(0) {
+	: std::ios(), std::istream(&_infile) {
 	this->open(fn, mode);
 }
 
@@ -35,18 +35,13 @@ void ICompressedFile::open(const char* fn, std::ios_base::openmode mode){
 	if(_base_f.rdstate() != std::ios_base::failbit && (isgz || isbz)){
 
 		if(isgz){
-			_infile.push(boost::iostreams::gzip_decompressor());
+			_infile.push(boost::iostreams::bgzip_decompressor());
 		} else if(isbz){
 			_infile.push(boost::iostreams::bzip2_decompressor());
 		}
-
-		_infile.push(_base_f);
-
-		this->rdbuf(_infile.rdbuf());
-	} else {
-		this->rdbuf(_base_f.rdbuf());
-		this->setstate(_base_f.rdstate());
 	}
+
+	_infile.push(_base_f);
 
 }
 

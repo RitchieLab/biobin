@@ -337,6 +337,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			if(fields.size() != n_fields){
 				std::cerr << "ERROR: Mismatched number of fields on line "
 						<< lineno << std::endl;
+				std::cerr << "Expected # of fields: "<<n_fields << std::endl;
+				std::cerr << "Seen # of fields: " << fields.size() << std::endl;
+				std::cerr << "Line size: " << curr_line.size() << std::endl;
+				std::cerr << "Last field: " << fields[fields.size() - 1] << std::endl;
+				std::cerr << "2nd to Last field: " << fields[fields.size() - 2] << std::endl;
 				// throw exception here
 				throw std::runtime_error("Mismatched number of fields in VCF file");
 			}
