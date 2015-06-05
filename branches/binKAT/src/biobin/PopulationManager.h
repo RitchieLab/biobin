@@ -459,7 +459,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 					// let's make sure that this isn't monoporphic
 					std::sort(call_count.begin(), call_count.end());
-					if(call_count.size() < 2 || call_count[call_count.size() - 2] == 0){
+					if(!c_keep_monomorphic && (call_count.size() < 2 || call_count[call_count.size() - 2] == 0)){
 						delete loc;
 					} else {
 
