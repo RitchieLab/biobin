@@ -23,6 +23,8 @@ public:
 
 	// default copy/assignment ctors OK here!
 
+	static const unsigned short UNKNOWN_CHR_RETURN=static_cast<unsigned short>(-1);
+
 private:
 	struct chrpos{
 		unsigned int _chr : 5;
@@ -30,7 +32,6 @@ private:
 	} _data;
 
 	static const unsigned short UNKNOWN_CHR=31;
-	static const unsigned short UNKNOWN_CHR_RETURN=static_cast<unsigned short>(-1);
 };
 
 }

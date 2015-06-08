@@ -638,7 +638,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	sqlite3_stmt* zone_ins_stmt;
 	sqlite3_prepare_v2(_db, zone_insert_query.c_str(), -1, &zone_ins_stmt, NULL);
 
-	for (int i=minPos; i <= maxPos; i++){
+	for (int i=minPos; i < maxPos; i++){
 		sqlite3_bind_int(zone_ins_stmt, 1, i);
 		while(sqlite3_step(zone_ins_stmt) == SQLITE_ROW){}
 		sqlite3_reset(zone_ins_stmt);
