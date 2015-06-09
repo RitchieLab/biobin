@@ -79,9 +79,6 @@ namespace boost {
         BOOST_CONSTEXPR basic_string_ref(const charT* str, size_type len)
             : ptr_(str), len_(len) {}
 
-        template<typename Str_Itr>
-        basic_string_ref(const Str_Itr& b, const Str_Itr& e)
-        	: ptr_(&(*b)), len_(e-b) {}
 
 #ifndef BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
         template<typename Allocator>

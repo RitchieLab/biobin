@@ -23,12 +23,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/range/iterator_range_core.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "Bin.h"
 
 #include "util/ICompressedFile.h"
-#include "util/string_ref.hpp"
+//#include "util/string_ref.hpp"
 #include "util/Phenotype.h"
 
 #include "knowledge/Locus.h"
@@ -234,7 +235,8 @@ private:
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
 	 */
-	unsigned short fast_atoi(const boost::string_ref& r){
+	template <typename Str_Ref>
+	unsigned short fast_atoi(const Str_Ref& r){
 		unsigned short value_ = 0;
 		unsigned int len = r.size();
 		switch(len){
@@ -309,10 +311,12 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	unsigned int max_count;
 	bool lift_warn = false;
 	std::ofstream unlift_out;
-	std::vector<boost::string_ref> geno_list;
-	std::vector<boost::string_ref> fields;
+	std::vector<boost::iterator_range<std::string::iterator> > geno_list;
+	//std::vector<boost::string_ref> fields;
+	//std::vector<std::pair<string::iterator, string::iterator> > fields;
+	std::vector<boost::iterator_range<std::string::iterator> > fields;
 	std::vector<std::string> alleles;
-	std::vector<boost::string_ref> call_list;
+	std::vector<boost::iterator_range<std::string::iterator> > call_list;
 	std::vector<std::string> format_list;
 	std::vector<std::pair<unsigned short, unsigned short> > calls;
 	std::pair<unsigned short, unsigned short> curr_call;
@@ -347,7 +351,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			}
 
 			chr = std::string(fields[0].begin(), fields[0].end());
-			bploc = boost::lexical_cast<unsigned int>(fields[1]);
+			bploc = boost::lexical_cast<unsigned int>(std::string(fields[1].begin(), fields[1].end()));
 			id = std::string(fields[2].begin(), fields[2].end());
 			ref = std::string(fields[3].begin(), fields[3].end());
 			alt = std::string(fields[4].begin(), fields[4].end());
@@ -376,7 +380,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 						}
 						loc->print(unlift_out, sep);
 						unlift_out << std::endl;
-
+						if(new_loc){
+							delete new_loc;
+							new_loc = 0;
+						}
 						delete loc;
 						loc = 0;
 					}else{
@@ -432,7 +439,9 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 								calls.push_back(std::make_pair(missing_geno, missing_geno));
 							} else {
 								unsigned short g1, g2;
-								if(call_list[0] != "." && call_list[1] != "."){
+								//boost::string_ref c1(&*call_list[0].begin(), call_list[0].size());
+								//boost::string_ref c2(&*call_list[1].begin(), call_list[1].size());
+								if(*call_list[0].begin() != '.' && *call_list[1].begin() != '.'){
 									g1 = fast_atoi(call_list[0]);
 									g2 = fast_atoi(call_list[1]);
 									calls.push_back(std::make_pair(g1, g2));

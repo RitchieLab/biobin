@@ -618,7 +618,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter
 
 	// Find the minimum and maximum zone sizes
-	int minPos, maxPos = 0;
+	int minPos=0, maxPos = 0;
 	string min_pos_sql = "SELECT MIN(posMin) FROM " + tbl_name;
 	string max_pos_sql = "SELECT MAX(posMax) FROM " + tbl_name;
 
@@ -626,7 +626,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	sqlite3_exec(_db, max_pos_sql.c_str(), &parseSingleIntQuery, &maxPos, NULL);
 
 	minPos = minPos / zone_size;
-	maxPos = maxPos / zone_size + 1;
+	maxPos = maxPos / zone_size + (maxPos % zone_size != 0);
 
 	// Insert all zones needed into a temporary table
 	string tmp_zone_tbl = "__zone_tmp";
@@ -638,7 +638,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	sqlite3_stmt* zone_ins_stmt;
 	sqlite3_prepare_v2(_db, zone_insert_query.c_str(), -1, &zone_ins_stmt, NULL);
 
-	for (int i=minPos; i < maxPos; i++){
+	for (int i=minPos; i <= maxPos; i++){
 		sqlite3_bind_int(zone_ins_stmt, 1, i);
 		while(sqlite3_step(zone_ins_stmt) == SQLITE_ROW){}
 		sqlite3_reset(zone_ins_stmt);
@@ -851,7 +851,13 @@ int InformationSQLite::parseSingleIntQuery(void* obj, int n_cols,
 	}
 	if(col_vals[0]){
 		int* ret_int_p = (int*) (obj);
-		(*ret_int_p) = atoi(col_vals[0]);
+		errno=0;
+		char* pEnd;
+		(*ret_int_p) = strtol(col_vals[0], &pEnd, 10);
+		if((*pEnd) != '\0'){
+			(*ret_int_p) = 0;
+			errno = 0;
+		}
 	}
 	return 0;
 }
