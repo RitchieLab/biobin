@@ -23,7 +23,6 @@ libknowledge_la_SOURCES=\
 	InformationSQLite.cpp \
 	Configuration.h \
 	Configuration.cpp \
-	LocusPosition.h \
 	liftover/Chain.h \
 	liftover/Chain.cpp \
 	liftover/Converter.h \

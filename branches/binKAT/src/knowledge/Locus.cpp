@@ -72,7 +72,7 @@ void Locus::operator delete(void* deadObj, size_t size) {
 }
 
 Locus::Locus(short chrom, uint pos, const string& id, const string& ref):
-		_chrpos(chrom, pos), _id(id){
+		_chrom(chrom), _pos(pos), _id(id){
 	if (id.size() == 0 || _id == "."){
 		createID(ref);
 	}
@@ -80,20 +80,20 @@ Locus::Locus(short chrom, uint pos, const string& id, const string& ref):
 }
 
 Locus::Locus(const string& chrom_str, uint pos, const string& id, const string& ref):
-		_chrpos(getChrom(chrom_str), pos), _id(id){
+		_chrom(getChrom(chrom_str)), _pos(pos), _id(id){
 	if (_id.size() == 0 || _id == "."){
 		createID(ref);
 	}
 }
 
 bool Locus::operator <(const Locus& other) const{
-	return _chrpos.getChrom()==other._chrpos.getChrom() ?
-			_chrpos.getPos() < other._chrpos.getPos() :
-			_chrpos.getChrom() < other._chrpos.getChrom();
+	return _chrom == other._chrom ?
+			_pos < other._pos :
+			_chrom < other._chrom;
 }
 
-uint Locus::distance(const Locus& other) const{
-	return _chrpos.getChrom()==other._chrpos.getChrom() ? abs(other._chrpos.getPos() - _chrpos.getPos()) : -1;
+unsigned int Locus::distance(const Locus& other) const{
+	return _chrom == other._chrom ?	abs(_pos - other._pos) : -1;
 }
 
 const string& Locus::getChromStr(unsigned short chrom){
@@ -125,7 +125,7 @@ unsigned short Locus::getChrom(const string& chrom_str){
 
 	// If this is true, we did not find an exact match, return -1
 	if (chr_pos == _chrom_list.end()){
-		return -1;
+		return UNKNOWN_CHROM;
 	}else{
 		return chr_pos - _chrom_list.begin() + 1;
 	}
@@ -134,7 +134,7 @@ unsigned short Locus::getChrom(const string& chrom_str){
 
 void Locus::createID(const string& ref){
 	std::stringstream ss;
-	ss << "chr" << getChromStr(_chrpos.getChrom()) << "-" << _chrpos.getPos();
+	ss << "chr" << getChromStr(_chrom) << "-" << _pos;
 	if(!ref.empty()){
 		ss << "-" << ref;
 	}
@@ -142,7 +142,7 @@ void Locus::createID(const string& ref){
 }
 
 void Locus::print(ostream& o, const string& sep) const{
-	o << getChromStr() << sep << _chrpos.getPos() << sep << _id;
+	o << getChromStr() << sep << _pos << sep << _id;
 }
 /*
 void Locus::printAlleles(ostream& o, const string& sep) const{

@@ -15,6 +15,9 @@ Features and Changes:
 	- SKAT (continuous phenotype)
 	- SKAT (dichotomous phenotype)
 
+Bug Fixes:
+- Consider loci that lift to non-standard chromosomes as "unlifted" 
+
 == 2.1.1 ==
 
 - Fixed bug that yields NaN for some bins when using locus weighting

@@ -366,7 +366,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 				if(conv){
 					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
 					// make sure to drop loci that lift to unknown chromosomes, too!
-					if (! new_loc || new_loc->getChrom() == Knowledge::LocusPosition::UNKNOWN_CHR_RETURN){
+					if (! new_loc || new_loc->getChrom() == Knowledge::Locus::UNKNOWN_CHROM){
 						if(!lift_warn){
 							std::string fn(prefix + "-unlifted.csv");
 							unlift_out.open(fn.c_str());
