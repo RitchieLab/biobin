@@ -15,8 +15,6 @@ biobin_SOURCES= \
    Configuration.cpp \
    util/ICompressedFile.h \
    util/ICompressedFile.cpp \
-   util/string_ref.hpp \
-   util/string_ref_fwd.hpp \
    util/Phenotype.h \
    tests/Test.h \
    tests/Test.cpp \
