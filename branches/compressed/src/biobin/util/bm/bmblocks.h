@@ -646,8 +646,8 @@ public:
             init_tree();
         } 
         volatile const char* vp = _copyright<true>::_p;
-        char c = *vp;
-        c = 0;
+        //char c = *vp;
+        //c = 0;
     }
 
     blocks_manager(const blocks_manager& blockman)

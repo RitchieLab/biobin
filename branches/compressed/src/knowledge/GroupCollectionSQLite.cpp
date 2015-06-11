@@ -161,8 +161,8 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 			uint group_id = static_cast<uint>(sqlite3_column_int(group_stmt, 0));
 			if(id_list.size() == 0 || id_list.find(group_id) != id_list.end()){
 				Group* gp;
-				unordered_map<uint, Group*>::const_iterator test_itr = _group_map.find(group_id);
-				unordered_map<uint, Group*>::const_iterator test_end = _group_map.end();
+				//unordered_map<uint, Group*>::const_iterator test_itr = _group_map.find(group_id);
+				//unordered_map<uint, Group*>::const_iterator test_end = _group_map.end();
 				if (_group_map.find(group_id) == _group_map.end()){
 					child_groups.push_back(group_id);
 					gp = addGroup(group_stmt);
