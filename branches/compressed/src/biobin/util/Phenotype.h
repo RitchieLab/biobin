@@ -8,14 +8,15 @@
 #ifndef BIOBIN_UTILITY_PHENOTYPE_H
 #define BIOBIN_UTILITY_PHENOTYPE_H
 
-#include <boost/dynamic_bitset.hpp>
+//#include <boost/dynamic_bitset.hpp>
+#include "biobin/util/bm/bm.h"
 
 namespace BioBin {
 namespace Utility {
 
 class Phenotype {
 public:
-	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
+	typedef std::pair<bm::bvector<>, bm::bvector<> > bitset_pair;
 
 	Phenotype(unsigned int idx, const bitset_pair& status) :
 		_idx(idx), _status(&status) {

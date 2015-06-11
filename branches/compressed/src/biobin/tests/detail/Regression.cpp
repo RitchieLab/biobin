@@ -42,7 +42,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 
 	gsl_matrix* data_tmp = gsl_matrix_alloc(pop_mgr.getNumSamples(), pop_mgr.getNumCovars() + 2);
 	gsl_vector* pheno_tmp = gsl_vector_alloc(pop_mgr.getNumSamples());
-	_included.resize(pop_mgr.getNumSamples(),false);
+	//_included.resize(pop_mgr.getNumSamples(),false);
 
 	unsigned int i=0;
 	unsigned int s_idx=0;
@@ -62,6 +62,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 				ci!=covars.end() && !(missing |= isnan(*ci)); ci++);
 
 		missing |= isnan(status);
+		_included.set(s_idx, !missing);
 
 		if(!missing){
 			gsl_vector_set(pheno_tmp, i, status);
@@ -72,7 +73,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 			}
 
 			_samp_name.push_back(std::make_pair(*si, s_idx));
-			_included.set(s_idx, true);
+			//_included.set(s_idx, true);
 			++i;
 		}
 		++s_idx;

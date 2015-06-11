@@ -18,7 +18,9 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/array.hpp>
-#include <boost/dynamic_bitset.hpp>
+//#include <boost/dynamic_bitset.hpp>
+#include "util/bm/bm.h"
+
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -107,7 +109,7 @@ public:
 		Weight_ENUM _data;
 	};
 
-	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
+	typedef std::pair<bm::bvector<>, bm::bvector<> > bitset_pair;
 
 	class const_pheno_iterator: public boost::iterator_facade<
 			const_pheno_iterator, Utility::Phenotype const,
@@ -165,7 +167,7 @@ public:
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
 	unsigned short getIndivGeno(const Knowledge::Locus& loc, int position) const;
-	float getAvgGenotype(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss_status=0) const;
+	float getAvgGenotype(const Knowledge::Locus& locus, const bm::bvector<>* nonmiss_status=0) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}
@@ -226,8 +228,8 @@ private:
 			const std::string& var_prefix="pheno");
 
 	float getIndivContrib(const Knowledge::Locus& loc, int position, const Utility::Phenotype& pheno, bool useWeights = false, const Knowledge::Region* const reg = NULL) const;
-	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
-	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
+	unsigned int getTotalContrib(const bitset_pair& geno, const bm::bvector<>* nonmiss=0) const;
+	float getMAF(const bitset_pair& geno, const bm::bvector<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
@@ -473,7 +475,9 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 						delete loc;
 					} else {
 
-						bitset_pair curr_geno(std::make_pair(boost::dynamic_bitset<>(calls.size()), boost::dynamic_bitset<>(calls.size())));
+						bitset_pair curr_geno(std::make_pair(
+								bm::bvector<>(calls.size(), bm::BM_GAP),
+								bm::bvector<>(calls.size(), bm::BM_GAP)));
 
 						for(unsigned int i=0; i<calls.size(); i++){
 							curr_call = calls[i];

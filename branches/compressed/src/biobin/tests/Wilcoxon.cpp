@@ -11,7 +11,8 @@
 #include <utility>
 #include <algorithm>
 
-#include <boost/dynamic_bitset.hpp>
+//#include <boost/dynamic_bitset.hpp>
+#include "util/bm/bm.h"
 
 #include <gsl/gsl_cdf.h>
 
@@ -36,7 +37,7 @@ double Wilcoxon::runTest(const Bin& bin) const{
 	// let's get the values for all non-missing samples
 	const Utility::Phenotype::bitset_pair& status = _pheno_ptr->getStatus();
 
-	boost::dynamic_bitset<> nonmiss = status.first | status.second;
+	bm::bvector<> nonmiss = status.first | status.second;
 
 	vector<std::pair<float, unsigned int> > data;
 	data.reserve(status.first.size());

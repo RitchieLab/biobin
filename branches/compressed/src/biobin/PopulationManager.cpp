@@ -28,7 +28,7 @@ using std::ostream;
 using std::ifstream;
 //using boost::array;
 using boost::unordered_map;
-using boost::dynamic_bitset;
+//using boost::dynamic_bitset;
 
 using Knowledge::Locus;
 using Knowledge::Region;
@@ -76,7 +76,7 @@ unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
 	}
 }
 
-float PopulationManager::getAvgGenotype(const Locus& loc, const dynamic_bitset<>* nonmiss_status) const{
+float PopulationManager::getAvgGenotype(const Locus& loc, const bm::bvector<>* nonmiss_status) const{
 	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
 	unsigned int n_vars = 0;
 	float nonmiss = 1;
@@ -238,15 +238,15 @@ void PopulationManager::loadIndividuals(){
 			_phenos[(*p_itr).first].push_back(0);
 			++p_itr;
 		}
-		dynamic_bitset<> cab = dynamic_bitset<>(_positions.size());
-		dynamic_bitset<> cob = dynamic_bitset<>(_positions.size());
+		bm::bvector<> cab = bm::bvector<>(_positions.size());
+		bm::bvector<> cob = bm::bvector<>(_positions.size());
 		cob.set();
 		_pheno_status.push_back(std::make_pair(cob, cab));
 	} else {
 
 		// push back all phenotypes that consists of "all missing"
-		dynamic_bitset<> cab(_positions.size());
-		dynamic_bitset<> cob(_positions.size());
+		bm::bvector<> cab(_positions.size());
+		bm::bvector<> cob(_positions.size());
 		_pheno_status.reserve(_pheno_names.size());
 		for(unsigned int i=0; i<_pheno_names.size(); i++){
 			_pheno_status.push_back(std::make_pair(cob, cab));
@@ -420,9 +420,9 @@ float PopulationManager::getIndivContrib(const Locus& loc, int pos, const Utilit
 	return n_var * wt;
 }
 
-unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss)  const{
+unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const bm::bvector<>* nonmiss)  const{
 
-	boost::dynamic_bitset<> nonmissing = ~(geno.first & geno.second);
+	bm::bvector<> nonmissing = ~(geno.first & geno.second);
 	if(nonmiss != 0){
 		nonmissing &= *nonmiss;
 	}
@@ -441,8 +441,8 @@ unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const b
 	}
 }
 
-float PopulationManager::getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss) const{
-	boost::dynamic_bitset<> nonmissing = ~(geno.first & geno.second);
+float PopulationManager::getMAF(const bitset_pair& geno, const bm::bvector<>* nonmiss) const{
+	bm::bvector<> nonmissing = ~(geno.first & geno.second);
 	if(nonmiss != 0){
 		nonmissing &= *nonmiss;
 	}
@@ -482,8 +482,8 @@ float PopulationManager::getLocusWeight(const Locus& loc, const Phenotype& pheno
 float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status) const{
 	// *_a = Affected (cases), *_u = Unaffected (controls)
 	// N_* = Number (population), F_* = Frequency
-	const boost::dynamic_bitset<>& control_bitset=status.first;
-	const boost::dynamic_bitset<>& case_bitset=status.second;
+	const bm::bvector<>& control_bitset=status.first;
+	const bm::bvector<>& case_bitset=status.second;
 
 	int N_a, N_u, N;
 	int M_a, M_u, M;
@@ -496,7 +496,7 @@ float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status)
 		return 1;
 	}
 
-	dynamic_bitset<> nonmissing = ~((*it).second.first & (*it).second.second);
+	bm::bvector<> nonmissing = ~((*it).second.first & (*it).second.second);
 
 	N_u = (nonmissing & control_bitset).count() ;
 	N_a = (nonmissing & case_bitset).count();
@@ -559,8 +559,8 @@ float PopulationManager::getCustomWeight(const Locus& loc, const Region* const r
 
 boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin, const bitset_pair& status) const {
 
-	const boost::dynamic_bitset<>& control_bitset=status.first;
-	const boost::dynamic_bitset<>& case_bitset=status.second;
+	const bm::bvector<>& control_bitset=status.first;
+	const bm::bvector<>& case_bitset=status.second;
 	Bin::const_locus_iterator b_itr = bin.variantBegin();
 	Bin::const_locus_iterator b_end = bin.variantEnd();
 	boost::array<unsigned int, 2> capacity;
@@ -573,7 +573,7 @@ boost::array<unsigned int, 2> PopulationManager::getBinCapacity(Bin& bin, const 
 
 		l_itr = _genotypes.find(*b_itr);
 		if (l_itr != l_end) {
-			dynamic_bitset<> nonmiss = ~((*l_itr).second.first & (*l_itr).second.second);
+			bm::bvector<> nonmiss = ~((*l_itr).second.first & (*l_itr).second.second);
 			capacity[0] += (nonmiss & control_bitset).count();
 			capacity[1] += (nonmiss & case_bitset).count();
 		}

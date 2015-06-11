@@ -30,7 +30,7 @@ boost::mutex SKATUtils::_qfc_lock;
 
 unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 		const Utility::Phenotype& pheno,
-		const boost::dynamic_bitset<>& incl,
+		const bm::bvector<>& incl,
 		const Bin& bin,
 		const vector<pair<string, unsigned int> >& name_pos,
 		gsl_matrix* &geno){

@@ -12,7 +12,7 @@
 #include <utility>
 #include <string>
 
-#include <boost/dynamic_bitset.hpp>
+//#include <boost/dynamic_bitset.hpp>
 #include <boost/thread.hpp>
 
 #include <gsl/gsl_matrix.h>
@@ -20,7 +20,7 @@
 
 #include "biobin/PopulationManager.h"
 #include "biobin/util/Phenotype.h"
-
+#include "biobin/util/bm/bm.h"
 
 namespace BioBin {
 
@@ -39,7 +39,7 @@ public:
 	// if this is == 0, b/c it will fail!)
 	static unsigned int getGenoWeights(const PopulationManager& pop_mgr,
 			const Utility::Phenotype& pheno,
-			const boost::dynamic_bitset<>& incl,
+			const bm::bvector<>& incl,
 			const Bin& bin,
 			const std::vector<std::pair<std::string, unsigned int> >& name_pos,
 			gsl_matrix* &geno_wt);

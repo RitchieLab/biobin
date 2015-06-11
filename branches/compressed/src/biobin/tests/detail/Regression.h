@@ -12,13 +12,14 @@
 #include <string>
 #include <utility>
 
-#include <boost/dynamic_bitset.hpp>
+//#include <boost/dynamic_bitset.hpp>
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
 #include "biobin/PopulationManager.h"
 #include "biobin/util/Phenotype.h"
+#include "biobin/util/bm/bm.h"
 
 namespace BioBin {
 
@@ -70,7 +71,7 @@ protected:
 	//! The null model result
 	Result* _null_result;
 
-	boost::dynamic_bitset<> _included;
+	bm::bvector<> _included;
 
 	//! A vector of sample IDs containing completely non-missing covariates + phenotypes
 	//! along with the index of each!
