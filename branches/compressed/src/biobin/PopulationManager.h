@@ -476,8 +476,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 					} else {
 
 						bitset_pair curr_geno(std::make_pair(
-								bm::bvector<>(calls.size(), bm::BM_GAP),
-								bm::bvector<>(calls.size(), bm::BM_GAP)));
+								bm::bvector<>(calls.size(), bm::BM_GAP,  bm::gap_len_table_min<true>::_len),
+								bm::bvector<>(calls.size(), bm::BM_GAP,  bm::gap_len_table_min<true>::_len)));
 
 						for(unsigned int i=0; i<calls.size(); i++){
 							curr_call = calls[i];
