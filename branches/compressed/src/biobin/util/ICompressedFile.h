@@ -13,10 +13,49 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/version.hpp>
+
+// Workaround needed to access + change header_.state_ and header_.flags_
+// NOTE: this is a REALLY bad idea!!
+#if BOOST_VERSION < 104900
+
+namespace private_access{
+template <class Tag>
+struct stowed
+{
+     static typename Tag::type value;
+};
+template <class Tag>
+typename Tag::type stowed<Tag>::value;
+
+// Generate a static data member whose constructor initializes
+// stowed<Tag>::value.  This type will only be named in an explicit
+// instantiation, where it is legal to pass the address of a private
+// member.
+template <class Tag, typename Tag::type x>
+struct stow_private
+{
+     stow_private() { stowed<Tag>::value = x; }
+     static stow_private instance;
+};
+template <class Tag, typename Tag::type x>
+stow_private<Tag,x> stow_private<Tag,x>::instance;
+
+}
+#endif
 
 
 namespace boost{
 namespace iostreams{
+
+#if BOOST_VERSION < 104900
+struct hdr_flag {typedef int (detail::gzip_header::*type);};
+struct hdr_state {typedef int (detail::gzip_header::*type);};
+
+template class access::stow_private<hdr_flag, &detail::gzip_header::flag_>;
+template class access::stow_private<hdr_flag, &detail::gzip_header::state_>;
+#endif
+
 //------------------Definition of basic_bgzip_decompressor---------------------//
 
 //
@@ -53,6 +92,18 @@ public:
             if (state_ == s_header) {
                 int c = s[result++];
                 header_.process(c);
+// Workaround bug# 5908 for boost versions <= 1.48
+#if BOOST_VERSION < 104900
+                // after the 10th byte is read (the OS byte), we need to check
+                // to see if the extra bit is set in header_.flags_
+                // if it is, set the header_.state_ == s_xlen
+                if(result == 10){
+
+                	if(header_.*stowed<hdr_flag>::value & gzip::flags::extra){
+                		--(header_.*stowed<hdr_state>::value);
+                	}
+                }
+#endif
                 if (header_.done())
                     state_ = s_body;
             } else if (state_ == s_body) {
