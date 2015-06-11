@@ -645,7 +645,7 @@ public:
             top_block_size_ = compute_top_block_size(max_bits);
             init_tree();
         } 
-        volatile const char* vp = _copyright<true>::_p;
+        //volatile const char* vp = _copyright<true>::_p;
         //char c = *vp;
         //c = 0;
     }
