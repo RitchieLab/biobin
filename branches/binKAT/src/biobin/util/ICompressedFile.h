@@ -13,10 +13,49 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/version.hpp>
+
+// Workaround needed to access + change header_.state_ and header_.flags_
+// NOTE: this is a REALLY bad idea!!
+#if BOOST_VERSION < 104900
+
+namespace private_access{
+template <class Tag>
+struct stowed
+{
+     static typename Tag::type value;
+};
+template <class Tag>
+typename Tag::type stowed<Tag>::value;
+
+// Generate a static data member whose constructor initializes
+// stowed<Tag>::value.  This type will only be named in an explicit
+// instantiation, where it is legal to pass the address of a private
+// member.
+template <class Tag, typename Tag::type x>
+struct stow_private
+{
+     stow_private() { stowed<Tag>::value = x; }
+     static stow_private instance;
+};
+template <class Tag, typename Tag::type x>
+stow_private<Tag,x> stow_private<Tag,x>::instance;
+
+}
+
+struct hdr_flag {typedef int (boost::iostreams::detail::gzip_header::*type);};
+struct hdr_state {typedef int (boost::iostreams::detail::gzip_header::*type);};
+
+template class private_access::stow_private<hdr_flag, &boost::iostreams::detail::gzip_header::flags_>;
+template class private_access::stow_private<hdr_state, &boost::iostreams::detail::gzip_header::state_>;
+#endif
 
 
 namespace boost{
 namespace iostreams{
+
+
+
 //------------------Definition of basic_bgzip_decompressor---------------------//
 
 //
@@ -90,10 +129,12 @@ public:
         typedef char_traits<char>  traits_type;
         std::streamsize            result = 0;
         peekable_source<Source>    peek(src, putback_);
+        int hdr_bytes_read = 0;
         while (result < n && state_ != s_done) {
             if (state_ == s_start) {
                 state_ = s_header;
                 header_.reset();
+                hdr_bytes_read = 0;
                 footer_.reset();
             }
             if (state_ == s_header) {
@@ -104,6 +145,19 @@ public:
                     break;
                 }
                 header_.process(c);
+                ++hdr_bytes_read;
+                // Workaround bug# 5908 for boost versions <= 1.48
+#if BOOST_VERSION < 104900
+				// after the 10th byte is read (the OS byte), we need to check
+				// to see if the extra bit is set in header_.flags_
+				// if it is, set the header_.state_ == s_xlen
+				if(hdr_bytes_read == 10){
+
+					if(header_.*private_access::stowed<hdr_flag>::value & gzip::flags::extra){
+						--(header_.*private_access::stowed<hdr_state>::value);
+					}
+				}
+#endif
                 if (header_.done())
                     state_ = s_body;
             } else if (state_ == s_body) {
