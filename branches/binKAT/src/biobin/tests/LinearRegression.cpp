@@ -14,6 +14,8 @@
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_blas.h>
+#include <gsl/gsl_permute_vector.h>
+
 
 using std::string;
 using std::vector;
@@ -67,41 +69,43 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	double chisq;
 	Result* r = new Result(beta, cov_mat);
 
-	// permutation matrix checking for colinearity
-	gsl_matrix* P = gsl_matrix_alloc(X.size2, X.size2);
+	gsl_permutation* permu = gsl_permutation_alloc(X.size2);
 
-	unsigned int n_colinear = MatrixUtils::checkColinear(&X, P);
+	// permutation matrix checking for colinearity
+	unsigned int n_colinear = MatrixUtils::checkColinear(&X, permu);
+
 	// If we have colinearity, find them
 	if(n_colinear > 0){
 		gsl_vector* idx_vec = gsl_vector_alloc(X.size2);
 		for(unsigned int i=0; i<idx_vec->size; i++){
 			gsl_vector_set(idx_vec, i, i);
 		}
-		gsl_vector* idx_res = gsl_vector_calloc(idx_vec->size);
-		gsl_blas_dgemv(CblasNoTrans, 1.0, P, idx_vec, 0, idx_res);
+		gsl_permute_vector(permu, idx_vec);
+
 		r->dropped_cols.reserve(n_colinear);
 		for(unsigned int i=0; i<n_colinear; i++){
-			r->dropped_cols.push_back(gsl_vector_get(idx_res, idx_res->size - i - 1));
+			r->dropped_cols.push_back(gsl_vector_get(idx_vec, idx_vec->size - i - 1));
 		}
 
 		// sort this from smallest to largest so I'll get a consistent
 		// permutation vector when needed
 		std::sort(r->dropped_cols.begin(), r->dropped_cols.end());
 		gsl_vector_free(idx_vec);
-		gsl_vector_free(idx_res);
 	}
 
 	unsigned int n_indep = X.size2 - n_colinear;
 
 	// set A = X*P
 	gsl_matrix* A = gsl_matrix_alloc(X.size1, X.size2);
-	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
+	gsl_matrix_memcpy(A, &X);
+	MatrixUtils::applyPermutation(A, permu);
+	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
 
 	// get a matrix view of the first n-#colinear columns
 	gsl_matrix_const_view A_v = gsl_matrix_const_submatrix(A, 0,0, X.size1, n_indep);
-	gsl_vector_view bv = gsl_vector_subvector(beta, 0, n_indep);
+	gsl_vector_view bv = gsl_vector_subvector(r->beta, 0, n_indep);
 
-	gsl_matrix_view cov_mat_view = gsl_matrix_submatrix(cov_mat, 0, 0, n_indep, n_indep);
+	gsl_matrix_view cov_mat_view = gsl_matrix_submatrix(r->cov, 0, 0, n_indep, n_indep);
 
 	gsl_multifit_linear_workspace* ws = gsl_multifit_linear_alloc(X.size1, n_indep);
 
@@ -113,25 +117,19 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 
 	// Note: to unpermute, multiply by P transpose!
 	// Also, we need to unpermute both the rows AND columns of cov_mat
-	//bv = gsl_vector_view_array(r->beta_vec, n_cols);
-	gsl_matrix* _cov_work = gsl_matrix_calloc(X.size2, X.size2);
 	// permute columns
-	gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, cov_mat, P, 0.0, _cov_work);
+	MatrixUtils::applyInversePermutation(r->cov, permu, true);
 	// permute rows
-	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, P, _cov_work, 0.0, cov_mat);
-	gsl_matrix_free(_cov_work);
+	MatrixUtils::applyInversePermutation(r->cov, permu, false);
 
-	gsl_vector* _bv_work = gsl_vector_alloc(X.size2);
-	gsl_vector_memcpy(_bv_work, beta);
-	gsl_blas_dgemv(CblasTrans, 1.0, P, _bv_work, 0.0, beta);
-	gsl_vector_free(_bv_work);
+	gsl_permute_vector_inverse(permu, r->beta);
 
 	r->chisq = chisq;
 
 	// And free everything... no memory leaks please!!
-	gsl_matrix_free(P);
 	gsl_matrix_free(A);
 	gsl_multifit_linear_free(ws);
+	gsl_permutation_free(permu);
 
 	return r;
 }

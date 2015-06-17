@@ -117,19 +117,24 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 	// if we have colinearity in the null result, let's just drop those
 	// columns entirely
 	if(_null_result->dropped_cols.size() > 0){
+
+		// allocate a new matrix to be used for _data
 		gsl_matrix* data_new = gsl_matrix_alloc(_data->size1, _data->size2 - _null_result->dropped_cols.size());
-		gsl_matrix* P = gsl_matrix_alloc(X_view.matrix.size2, X_view.matrix.size2);
-		MatrixUtils::getPermuMatrix(_null_result->dropped_cols, P);
-		gsl_matrix* X_tmp = gsl_matrix_alloc(X_view.matrix.size1, X_view.matrix.size2);
-		gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X_view.matrix, P, 0.0, X_tmp);
 
-		gsl_matrix_view data_new_sub = gsl_matrix_submatrix(data_new, 0, 0, data_new->size1, X_tmp->size2);
-		gsl_matrix_memcpy(&data_new_sub.matrix, X_tmp);
+		// permute the columns in _data
+		gsl_permutation* permu = MatrixUtils::getPermutation(_null_result->dropped_cols, _data->size2);
+		MatrixUtils::applyPermutation(_data, permu);
 
+		// get a matrix view of the 1st collumns of _data (corresponding to dimensions of data_new)
+		gsl_matrix_const_view indep_view = gsl_matrix_const_submatrix(_data, 0, 0, data_new->size1, data_new->size2);
+		gsl_matrix_memcpy(data_new, &indep_view.matrix);
+
+		// switch out the data_new and _data pointers
 		std::swap(data_new, _data);
+
+		// free the data_new structure (which was the "old" _data)
 		gsl_matrix_free(data_new);
-		gsl_matrix_free(P);
-		gsl_matrix_free(X_tmp);
+		gsl_permutation_free(permu);
 		_null_result->dropped_cols.clear();
 	}
 

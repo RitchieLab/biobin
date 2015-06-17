@@ -14,6 +14,7 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit.h>
+#include <gsl/gsl_permute_vector.h>
 
 #include "detail/MatrixUtils.h"
 
@@ -142,9 +143,10 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	}
 
 	gsl_vector* weight = gsl_vector_calloc(Y.size);
-	gsl_matrix* P = gsl_matrix_alloc(X.size2,X.size2);
+	//gsl_matrix* P = gsl_matrix_alloc(X.size2,X.size2);
 	// First, let's check for colinearity!
-	unsigned int n_drop = MatrixUtils::checkColinear(&X, P);
+	gsl_permutation* permu = gsl_permutation_alloc(X.size2);
+	unsigned int n_drop = MatrixUtils::checkColinear(&X, permu);
 	unsigned int n_indep = X.size2 - n_drop;
 
 	// Right-hand side of the IRLS equation.  Defined to be X*w_t + S_t^-1*(y-mu_t)
@@ -159,8 +161,11 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	gsl_matrix* A = gsl_matrix_calloc(Y.size, X.size2);
 	double tmp_chisq;
 
-	// Let's perform our permutation ans set A = data * P
-	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
+	// Let's permute the columns of A
+	gsl_matrix_memcpy(A, &X);
+	MatrixUtils::applyPermutation(A, permu);
+
+	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
 
 	// this is the previous beta vector, for checking convergence
 	gsl_vector* b_prev = gsl_vector_alloc(n_indep);
@@ -284,24 +289,14 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	// OK, now time to unpermute everything!
 	// Note: to unpermute, multiply by P transpose!
 	// Also, we need to unpermute both the rows AND columns of cov_mat
-	//b = gsl_vector_view_array(r->beta_vec, n_cols);
-	gsl_matrix* _cov_work = gsl_matrix_calloc(X.size2, X.size2);
 	// permute columns
-	gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, r->cov, P, 0.0, _cov_work);
+	MatrixUtils::applyInversePermutation(r->cov, permu, true);
 	// permute rows
-	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, P, _cov_work, 0.0, r->cov);
-	gsl_matrix_free(_cov_work);
+	MatrixUtils::applyInversePermutation(r->cov, permu, false);
 
-	gsl_vector* _bv_work = gsl_vector_alloc(X.size2);
-	gsl_vector_memcpy(_bv_work, r->beta);
-	gsl_blas_dgemv(CblasTrans, 1.0, P, _bv_work, 0.0, r->beta);
+	gsl_permute_vector_inverse(permu, r->beta);
 
-	// create a set of all of the removed indices
-	// I'm going to re-use _bv_work from earlier to save a few bytes of memory
-	gsl_vector_free(_bv_work);
-
-	gsl_matrix_free(P);
-
+	gsl_permutation_free(permu);
 
 	return r;
 }
