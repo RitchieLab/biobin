@@ -104,7 +104,7 @@ void MatrixUtils::setPermutation(const vector<unsigned int>& idx_permu, gsl_perm
 	for(unsigned int i=0; i<idx_permu.size(); i++){
 		// get the permuted index here
 		// swap the permuted index and the n-i'th index
-		gsl_permutation_swap(permu, permu->data[idx_permu[i]], idx_permu.size()-1-i);
+		gsl_permutation_swap(permu, permu->data[idx_permu[i]], permu->size-1-i);
 	}
 }
 
