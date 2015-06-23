@@ -75,7 +75,7 @@ void Configuration::initGeneric(){
 				"Flag indicating desire to filter by unknown role")
 		("keep-unknown-role",value<Bool>()->default_value(false),
 				"When filtering by bin role, if true, keep only unknown role bins, if false, drop unknown role bins")
-		("bin-pathways",value<Bool>()->default_value(true),
+		("bin-pathways",value<Bool>()->default_value(false),
 				"Flag indicating not to include pathways in the analysis")
 		("bin-regions",value<Bool>()->default_value(true),
 				"Flag indicating not to include genes in the analysis")
