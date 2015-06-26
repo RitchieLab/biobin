@@ -227,7 +227,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	gsl_vector_free(eval);
 	//gsl_vector_free(eval_sq);
 
-	return 1-pval;
+	return qfc_err == 0 ? 1-pval : 1+qfc_err;
 }
 
 }
