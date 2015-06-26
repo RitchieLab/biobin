@@ -206,7 +206,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	std::vector<double> nct(n_eval, 0);
 	std::vector<int> df(n_eval, 1);
 	std::vector<double> qfc_detail(7);
-	int qfc_err;
+	int qfc_err = 1;
 	double pval;
 	int lim=10000;
 	double acc=std::numeric_limits<float>::epsilon();
@@ -215,7 +215,10 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 
 	// qfc is NOT thread-safe (or even reentrant!)
 	_qfc_lock.lock();
-	qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+	while(qfc_err == 1 && acc < 0.001){
+		qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
+		acc *= 2;
+	}
 	_qfc_lock.unlock();
 	//qfc(eval_sq->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
 
