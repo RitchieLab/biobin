@@ -292,10 +292,10 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 					// TODO: liftover here
 					if(n_chain){
-						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax+1);
 						chr = newReg.first;
 						posMin = newReg.second.first;
-						posMax = newReg.second.second;
+						posMax = newReg.second.second - (newReg.second.second != 0);
 					}
 
 					int role_id;
@@ -497,10 +497,10 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 
 					// TODO: liftover here
 					if(n_chain){
-						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax+1);
 						chr = newReg.first;
 						posMin = newReg.second.first;
-						posMax = newReg.second.second;
+						posMax = newReg.second.second - (newReg.second.second != 0);
 					}
 
 					char* str_end;
