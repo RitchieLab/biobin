@@ -386,10 +386,12 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 							}
 						}
-					} else {
-						std:: cerr << "WARNING: Improperly formatted role file\n";
+					}else {
+						std:: cerr << "WARNING: Unable to lift region \n";
 					}
 
+				} else if(result.size() > 0) {
+					std:: cerr << "WARNING: Improperly formatted role file\n";
 				}
 			}
 			data_file.close();
