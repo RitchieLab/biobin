@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
 	try{
 		store(po::command_line_parser(argc,argv).options(cmd_options).positional(pos).run(), vm);
 		notify(vm);
-	}catch(...){
-		std::cout << "Error processing command line arguments\n";
-		std::cout << cmd;
+	}catch(std::exception& e){
+		std::cerr << "Error processing command line arguments, please see the --help option for more details\n";
+		std::cerr << "Error: " << e.what() << std::endl;
 		return 2;
 	}
 
