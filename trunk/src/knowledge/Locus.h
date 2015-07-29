@@ -17,8 +17,8 @@
 #include <boost/pool/pool.hpp>
 #include <new>
 
-#include "Allele.h"
-#include "LocusPosition.h"
+//#include "Allele.h"
+//#include "LocusPosition.h"
 
 namespace Knowledge {
 
@@ -87,7 +87,7 @@ public:
 	 * \return The chromosome string of the Locus.
 	 */
 	const std::string& getChromStr() const {
-		return getChromStr(_chrpos.getChrom());
+		return getChromStr(_chrom);
 	}
 	;
 
@@ -97,7 +97,7 @@ public:
 	 * \return The cromosome index of the Locus.
 	 */
 	unsigned short getChrom() const {
-		return _chrpos.getChrom();
+		return _chrom; //_chrpos.getChrom();
 	}
 	;
 
@@ -106,7 +106,7 @@ public:
 	 *
 	 * \return The base pair location of this Locus.
 	 */
-	unsigned int getPos() const { return _chrpos.getPos(); }
+	unsigned int getPos() const { return _pos;  }
 
 	/*!
 	 * \brief Returns the distance to another Locus.
@@ -160,6 +160,8 @@ public:
 	// Special flag for invalid chromosome (bad string or bad position)
 	static const std::string invalid_chrom;
 
+	static const unsigned short UNKNOWN_CHROM = static_cast<unsigned short>(-1);
+
 private:
 	// No copying or assigning - use pointers, please!
 	Locus(const Locus&);
@@ -172,12 +174,12 @@ private:
 	 */
 	void createID(const std::string& ref="");
 
-	LocusPosition _chrpos;
+	//LocusPosition _chrpos;
 
 	// index into list of chromosomes
-	//short _chrom;
+	unsigned short _chrom;
 	// Position on the chromosome
-	//unsigned int _pos;
+	unsigned int _pos;
 	// Identifier of this Locus (could be a RSID or anything)
 	std::string _id;
 
@@ -188,24 +190,6 @@ private:
 	static boost::pool<> s_locus_pool;
 
 };
-/*
-template<class Allele_itr>
-void Locus::addAlleles(Allele_itr begin, const Allele_itr& end) {
-	while (begin != end) {
-		_alleles.push_back(*begin);
-		++begin;
-	}
-}
-
-template<class Str_itr>
-void Locus::addAllelesStr(Str_itr begin, const Str_itr& end){
-	unsigned short i=0;
-	while (begin != end) {
-		_alleles.push_back(Allele(*begin, i++));
-		++begin;
-	}
-}
-*/
 
 }
 

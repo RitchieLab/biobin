@@ -28,6 +28,8 @@
 #include "knowledge/Group.h"
 #include "knowledge/Locus.h"
 
+#include "util/Phenotype.h"
+
 #include "Bin.h"
 #include "PopulationManager.h"
 
@@ -37,17 +39,17 @@ class Information;
 
 namespace BioBin {
 
-class PopulationManager;
+//class PopulationManager;
 
 class BinManager {
 public:
 	typedef std::set<Bin*>::const_iterator const_iterator;
 
-	BinManager(const PopulationManager& pop_mgr,
+	BinManager(const BioBin::PopulationManager& pop_mgr,
 			const Knowledge::RegionCollection& regions,
 			const std::deque<Knowledge::Locus*>& loci,
 			const Knowledge::Information& info,
-			const PopulationManager::Phenotype& pheno);
+			const Utility::Phenotype& pheno);
 
 	virtual ~BinManager();
 	//BinManager(const BinManager& orig);
@@ -55,7 +57,7 @@ public:
 	void InitBins(const std::deque<Knowledge::Locus*>& loci);
 
 	int numRareVariants() const { return _rare_variants;}
-	int numBins() const {return _bin_list.size();}
+	int size() const {return _bin_list.size();}
 	//int numTotalVariants() const {return _total_variants;}
 
 	const_iterator begin() const {return _bin_list.begin();}
@@ -65,7 +67,7 @@ public:
 
 	// create a temporary file (using tmpfile) and
 	template <class L_cont>
-	FILE* printLocusBins(const L_cont& loci, const std::string& sep="|") const;
+	FILE* printLocusBins(const L_cont& loci, const std::string& pheno_name, const std::string& sep="|") const;
 	void printBins(std::ostream& os, Knowledge::Locus* locus, const std::string& sep="|") const;
 	void printLocusBinCount(std::ostream& os, float pct=0.1) const;
 
@@ -115,17 +117,17 @@ private:
 	const Knowledge::RegionCollection& _regions;
 	const Knowledge::Information& _info;
 
-	const PopulationManager::Phenotype& _pheno;
+	const Utility::Phenotype& _pheno;
 };
 
 
 template <class L_cont>
-FILE* BinManager::printLocusBins(const L_cont& loci, const std::string& sep) const{
+FILE* BinManager::printLocusBins(const L_cont& loci, const std::string& pheno_name, const std::string& sep) const{
 	FILE* tmpf = std::tmpfile();
 	boost::iostreams::stream<boost::iostreams::file_descriptor> tmp_stream(boost::iostreams::file_descriptor(fileno(tmpf)),
 					std::ios_base::binary | std::ios_base::out);
 
-	tmp_stream << _pop_mgr.getPhenotypeName(_pheno.getIndex());
+	tmp_stream << pheno_name;
 	typename L_cont::const_iterator l_itr = loci.begin();
 	while(l_itr != loci.end()){
 		tmp_stream << "\n";

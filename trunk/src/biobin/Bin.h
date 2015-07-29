@@ -24,8 +24,8 @@ class Bin{
 
 public:
 	//! Typedef to hide implementation details of the Locus containment
-	typedef std::list<Knowledge::Locus*>::const_iterator const_locus_iterator;
-	typedef std::list<Knowledge::Locus*>::iterator locus_iterator;
+	typedef std::set<Knowledge::Locus*>::const_iterator const_locus_iterator;
+	typedef std::set<Knowledge::Locus*>::iterator locus_iterator;
 
 	/*!
 	 * \brief Construct a bin representing a Group (or Pathway)
@@ -99,7 +99,7 @@ public:
 	bool isIntergenic() const {return _is_intergenic;}
 	short getChrom() const {return _chrom;}
 
-	void addLocus(Knowledge::Locus* to_ins) {_variants.push_back(to_ins);}
+	void addLocus(Knowledge::Locus* to_ins) {_variants.insert(to_ins);}
 
 	/**
 	 * Strict ordering is given by Groups, then Regions, then Intergenic, which
@@ -122,7 +122,7 @@ public:
 	 *
 	 * \param itr The iterator pointing to the element to erase
 	 */
-	locus_iterator erase(locus_iterator itr) {_cached = false; return _variants.erase(itr); }
+	locus_iterator erase(locus_iterator itr) {_cached = false; _variants.erase(itr++); return itr; }
 
 	/*!
 	 * \brief Adds extraconversion data to the bin.
@@ -154,7 +154,7 @@ private:
 	std::string _name;
 	std::vector<std::string> _extra_data;
 
-	std::list<Knowledge::Locus*> _variants;
+	std::set<Knowledge::Locus*> _variants;
 
 	const PopulationManager& _pop_mgr;
 };

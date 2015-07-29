@@ -12,6 +12,8 @@ namespace Knowledge {
 
 class LocusPosition {
 public:
+	static const unsigned short UNKNOWN_CHR_RETURN=static_cast<unsigned short>(-1);
+
 	LocusPosition(unsigned short chr, unsigned int pos){
 		_data._chr = chr & UNKNOWN_CHR;
 		_data._pos = pos;
@@ -24,13 +26,14 @@ public:
 	// default copy/assignment ctors OK here!
 
 private:
+
+
 	struct chrpos{
-		unsigned int _chr : 5;
-		unsigned int _pos : 27;
+		unsigned short _chr ;
+		unsigned int _pos ;
 	} _data;
 
-	static const unsigned short UNKNOWN_CHR=31;
-	static const unsigned short UNKNOWN_CHR_RETURN=static_cast<unsigned short>(-1);
+	static const unsigned short UNKNOWN_CHR=static_cast<unsigned short>(-1);
 };
 
 }

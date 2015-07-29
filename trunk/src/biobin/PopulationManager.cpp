@@ -10,6 +10,8 @@
 #include "binapplication.h"
 #include "binmanager.h"
 
+#include "tests/Test.h"
+
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -32,6 +34,9 @@ using Knowledge::Locus;
 using Knowledge::Region;
 using Knowledge::Information;
 
+using BioBin::Test::Test;
+using BioBin::Utility::Phenotype;
+
 using boost::program_options::validation_error;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
@@ -44,18 +49,69 @@ namespace BioBin{
 
 float PopulationManager::c_phenotype_control = 0;
 string PopulationManager::c_phenotype_file = "";
+string PopulationManager::c_covariate_file = "";
 float PopulationManager::c_min_control_frac = 0.125;
 PopulationManager::DiseaseModel PopulationManager::c_model =
 		PopulationManager::ADDITIVE;
 PopulationManager::WeightModel PopulationManager::c_weight_type =
 		PopulationManager::MAX;
+vector<const BioBin::Test::Test*> PopulationManager::c_tests;
 
 bool PopulationManager::RareCaseControl = true;
+bool PopulationManager::c_keep_monomorphic = false;
 bool PopulationManager::c_use_calc_weight = false;
-bool PopulationManager::_use_custom_weight = false;
 bool PopulationManager::NoSummary = false;
 
-PopulationManager::PopulationManager(const string& vcf_fn) : _vcf_fn(vcf_fn){
+PopulationManager::PopulationManager(const string& vcf_fn) :
+		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
+}
+
+unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
+	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
+
+	if(itr != _genotypes.end()){
+		return getTotalContrib((*itr).second);
+	} else {
+		return 0;
+	}
+}
+
+float PopulationManager::getAvgGenotype(const Locus& loc, const dynamic_bitset<>* nonmiss_status) const{
+	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
+	unsigned int n_vars = 0;
+	float nonmiss = 1;
+
+	if(itr != _genotypes.end()){
+		n_vars =  getTotalContrib((*itr).second, nonmiss_status);
+		if(nonmiss_status){
+			nonmiss = (*nonmiss_status & (~((*itr).second.first & (*itr).second.second))).count();
+		} else {
+			nonmiss = (~((*itr).second.first & (*itr).second.second)).count();
+		}
+	}
+
+	// will return 0 for a missing locus
+	return n_vars / nonmiss;
+}
+
+unsigned short PopulationManager::getIndivGeno(const Locus& loc, int pos) const{
+	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
+	if(it == _genotypes.end()){
+		return missing_geno;
+	}
+
+	unsigned short n_var = 2*(*it).second.first[pos] + (*it).second.second[pos];
+
+	if(n_var == 3){
+		// if we're here, then we had both bits set to 1, which means missing
+		n_var = missing_geno;
+	}else if(c_model == DOMINANT){
+		n_var = n_var > 0;
+	} else if (c_model == RECESSIVE){
+		n_var = n_var > 1;
+	}
+
+	return n_var;
 
 }
 
@@ -75,6 +131,45 @@ bool PopulationManager::isRare(const Locus& locus, const bitset_pair& status, fl
 	}
 
 	return rare;
+}
+
+float PopulationManager::getPhenotypeVal(const string& sample, const Phenotype& pheno) const{
+	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status = _phenos.find(sample);
+	float status = missing_status;
+	if (pheno_status != _phenos.end()){
+		status = (*pheno_status).second[pheno.getIndex()];
+	}
+	return status;
+
+}
+
+unsigned int PopulationManager::getSamplePosition(const std::string& s) const{
+	unsigned int pos = static_cast<unsigned int>(-1);
+	boost::unordered_map<std::string, unsigned int>::const_iterator pos_itr = _positions.find(s);
+	if (pos_itr != _positions.end()){
+		pos = (*pos_itr).second;
+	}
+	return pos;
+}
+
+const vector<float>& PopulationManager::getCovariates(const string& sample) const{
+	static const vector<float> missing_covars;
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator covar_status = _covars.find(sample);
+
+	return ( (covar_status == _covars.end()) ? missing_covars : (*covar_status).second );
+
+}
+
+float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenotype& pheno) const {
+	// Accumulate the contribution of this person in this bin
+	Bin::const_locus_iterator l_itr = b.variantBegin();
+	float bin_count = 0;
+	while(l_itr != b.variantEnd()){
+		bin_count += getIndivContrib(**l_itr, pos, pheno, true, b.getRegion());
+		++l_itr;
+	}
+	return bin_count;
 }
 
 unsigned int PopulationManager::readVCFHeader(std::istream& v){
@@ -102,6 +197,7 @@ unsigned int PopulationManager::readVCFHeader(std::istream& v){
 				throw std::runtime_error("VCF Header malformed");
 			}
 
+			_sample_names.insert(_sample_names.end(), fields.begin() + 9, fields.end());
 			for(unsigned int i=0; i<fields.size()-9; i++){
 				_positions.insert(std::make_pair(fields[i+9], i));
 			}
@@ -115,16 +211,24 @@ unsigned int PopulationManager::readVCFHeader(std::istream& v){
 
 void PopulationManager::loadIndividuals(){
 
+	if(c_covariate_file != ""){
+		parseTraitFile(c_covariate_file, _covar_names, _covars, "covar");
+	}
+
 	bool allControl = false;
 	if(c_phenotype_file != ""){
-		parsePhenotypeFile(c_phenotype_file);
+		parseTraitFile(c_phenotype_file, _pheno_names, _phenos, "pheno");
+		if(_pheno_names.size() == 0){
+			std::cerr << "WARNING: All phenotypes were completely missing, assigning all samples as control" << std::endl;
+			allControl = true;
+		}
 	} else {
 		allControl = true;
 	}
 
 	// Now, we go through and determine who is a case and who is a control
-	boost::unordered_map<string, int>::const_iterator p_itr = _positions.begin();
-	boost::unordered_map<string, int>::const_iterator p_end = _positions.end();
+	boost::unordered_map<string, unsigned int>::const_iterator p_itr = _positions.begin();
+	boost::unordered_map<string, unsigned int>::const_iterator p_end = _positions.end();
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_itr;
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_not_found = _phenos.end();
 	if(allControl){
@@ -204,7 +308,10 @@ void PopulationManager::loadIndividuals(){
 	}
 }
 
-void PopulationManager::parsePhenotypeFile(const string& filename){
+void PopulationManager::parseTraitFile(const string& filename,
+		vector<string>& names_out,
+		unordered_map<string, vector<float> >& vals_out,
+		const string& var_prefix){
 
 	// Open the file
 	ifstream data_file(filename.c_str());
@@ -212,6 +319,8 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 		std::cerr<<"WARNING: cannot find " << filename <<", ignoring.";
 		return;
 	}
+
+	vector<unsigned int> nonmiss;
 
 	// Read the definition of the meta-group
 	string line;
@@ -228,35 +337,39 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 			if(!header_read && line[0] == '#'){
 				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 				for(unsigned int i=1; i<result.size(); i++){
-					_pheno_names.push_back(result[i]);
+					names_out.push_back(result[i]);
 				}
+				nonmiss.resize(names_out.size(), 0);
 			} else if(line[0] != '#'){
 				split(result, line, is_any_of(" \n\t"), boost::token_compress_on);
 
 				// if we haven't read the header, just assign arbitrary phenotype names
 				if(!header_read){
 					if(result.size() > 2){
-						std::cerr << "WARNING: No header given for multiple phenotypes, assigning sequential phenotype names" << std::endl;
+						std::cerr << "WARNING: No header given for multiple traits, "
+								<< "assigning sequential names" << std::endl;
 						for(unsigned int i=1; i<result.size(); i++){
-							_pheno_names.push_back("pheno_" + boost::lexical_cast<string>(i));
+							names_out.push_back(var_prefix + "_" + boost::lexical_cast<string>(i));
 						}
 					}else{
-						_pheno_names.push_back("");
+						names_out.push_back("");
 					}
+					nonmiss.resize(names_out.size(), 0);
 				}
 
-				if (result.size() != _pheno_names.size() + 1){
-					std::cerr << "WARNING: improperly formatted phenotype file "
-							  << "on line " << line_no << ", ignoring." << std::endl;
+				if (result.size() != names_out.size() + 1){
+					std::cerr << "WARNING: improperly formatted trait file " << filename
+							  << " on line " << line_no << ", ignoring." << std::endl;
 				}else if (_positions.find(result[0]) == _positions.end()){
 						std::cerr << "WARNING: cannot find " << result[0] << " in VCF file." << std::endl;
 				} else {
-					_phenos[result[0]].reserve(_pheno_names.size());
+					vals_out[result[0]].reserve(names_out.size());
 					for(unsigned int i=1; i<result.size(); i++){
 						try{
-							_phenos[result[0]].push_back(lexical_cast<float>(result[i]));
+							vals_out[result[0]].push_back(lexical_cast<float>(result[i]));
+							nonmiss[i-1]++;
 						}catch(bad_lexical_cast&){
-							_phenos[result[0]].push_back(std::numeric_limits<float>::quiet_NaN());
+							vals_out[result[0]].push_back(std::numeric_limits<float>::quiet_NaN());
 						}
 					}
 				}
@@ -264,55 +377,47 @@ void PopulationManager::parsePhenotypeFile(const string& filename){
 			header_read = true;
 		}
 	}
-}
 
-unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
-	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
+	unsigned int n_del = 0;
+	for(unsigned int i=0; i<nonmiss.size(); i++){
+		if(nonmiss[i] == 0){
+			std::cerr << "WARNING: '" << names_out[i-n_del] << "' has no non-missing entries, deleting this variable" << std::endl;
 
-	if(itr != _genotypes.end()){
-		return getTotalContrib((*itr).second);
-	} else {
-		return 0;
+			// NOTE: this is incredibly costly, as we need to essentially shuffle
+			// all of the memory around.  My best advice: don't give me completely
+			// missing covariates/phenotypes; it's a silly thing to do!
+
+			// remove from the vals_out map
+			for(unordered_map<string, vector<float> >::iterator m_itr = vals_out.begin();
+			    m_itr != vals_out.end(); m_itr++){
+				(*m_itr).second.erase((*m_itr).second.begin() + (i-n_del));
+			}
+			// remove from the names_out map
+			names_out.erase(names_out.begin() + (i-n_del));
+
+			n_del++;
+		}
 	}
 }
 
-float PopulationManager::getIndivContrib(const Locus& loc, int pos, const bitset_pair& status, bool useWeights, const Information* const info, const Region* const reg) const{
+float PopulationManager::getIndivContrib(const Locus& loc, int pos, const Utility::Phenotype& pheno, bool useWeights, const Region* const reg) const{
 
 	unordered_map<const Knowledge::Locus*, bitset_pair>::const_iterator it = _genotypes.find(&loc);
 
-	static float weight_cache = 1;
-	static const Locus* loc_cache = 0;
-	float custom_weight = 1;
-	unsigned int n_var = 0;
+	unsigned short n_var = getIndivGeno(loc, pos);
 
-	if(it == _genotypes.end()){
-		return 0;
-	}
-
-	bool g1 = (*it).second.first[pos];
-	bool g2 = (*it).second.second[pos];
-	n_var = (g1 && g2) ? 0 : 2*g1 + g2;
-
-	if(c_model == DOMINANT){
-		n_var = n_var > 0;
-	} else if (c_model == RECESSIVE){
-		n_var = n_var > 1;
+	float wt = 1;
+	if(n_var == missing_geno){
+		n_var = 0;
 	}
 
 	// Cache the weights so we aren't wasting so much effort.
 	// Also, only calculate the weight if n_var > 0 (o/w will multiply out to 0)
 	if(n_var != 0 && useWeights){
-		if(_use_custom_weight && info){
-			custom_weight = getCustomWeight(loc, *info, reg);
-		}
-		if(c_use_calc_weight && loc_cache != &loc){
-			loc_cache = &loc;
-			weight_cache = calcWeight(loc, status);
-		}
-
+		wt = getLocusWeight(loc, pheno, reg);
 	}
 
-	return n_var * weight_cache * custom_weight;
+	return n_var * wt;
 }
 
 unsigned int PopulationManager::getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss)  const{
@@ -356,6 +461,22 @@ float PopulationManager::calcBrowningWeight(unsigned long N, unsigned long M) co
 
 	// If given the frequency as opposed to the number of mutations:
 	//return 2*sqrt((1+N)*(1+N)/(N+2*N*N+4*F*(1-F)*N*N*N));
+}
+
+float PopulationManager::getLocusWeight(const Locus& loc, const Phenotype& pheno, const Region* reg) const{
+
+	float wt = 1;
+
+	if(_use_custom_weight){
+		wt *= getCustomWeight(loc, reg);
+	}
+
+	if(c_use_calc_weight){
+		wt *= calcWeight(loc, pheno.getStatus());
+	}
+
+	return wt;
+
 }
 
 float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status) const{
@@ -420,17 +541,19 @@ float PopulationManager::calcWeight(const Locus& loc, const bitset_pair& status)
 	return weight;
 }
 
-float PopulationManager::getCustomWeight(const Locus& loc, const Information& info, const Region* const reg) const{
+float PopulationManager::getCustomWeight(const Locus& loc, const Region* const reg) const{
 	static float weight_cache = 1;
 	static const Locus* loc_cache = 0;
 	static const Region* reg_cache = 0;
 
-	if(&loc != loc_cache || reg != reg_cache){
-		loc_cache = &loc;
-		reg_cache = reg;
-		weight_cache = info.getSNPWeight(loc, reg);
-	}
 
+	if(_info){
+		if(&loc != loc_cache || reg != reg_cache){
+			loc_cache = &loc;
+			reg_cache = reg;
+			weight_cache = _info->getSNPWeight(loc, reg);
+		}
+	}
 	return weight_cache;
 }
 
@@ -474,6 +597,251 @@ string PopulationManager::getEscapeString(const string& sep) const{
 	}
 	return sep_repl;
 }
+
+void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const std::string& sep) const{
+	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
+
+	std::string sep_repl = getEscapeString(sep);
+
+	// Print 1st line
+	printEscapedString(os, "Bin Name", sep, sep_repl);
+	os << sep;
+	if (!NoSummary) {
+		printEscapedString(os, "Total Variants", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Loci Totals", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+	}
+
+	for(unsigned int i=0; i<c_tests.size(); i++){
+		os << sep;
+		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
+	}
+
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
+	while(m_itr != _positions.end()){
+		os << sep;
+		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+		++m_itr;
+	}
+
+	os << "\n";
+
+	printEscapedString(os, "Status", sep, sep_repl);
+	os << sep;
+	if(!NoSummary){
+		os << missing_status << sep << missing_status << sep << missing_status
+		   << sep << missing_status << sep << missing_status << sep << missing_status;
+	}
+
+	m_itr = _positions.begin();
+	while(m_itr != _positions.end()){
+		os << sep << getPhenotypeVal((*m_itr).first, pheno);
+		++m_itr;
+	}
+
+	os << "\n";
+
+	BinManager::const_iterator b_itr = bins.begin();
+	Bin::const_locus_iterator l_itr;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
+
+	vector<vector<double> > test_pvals(c_tests.size());
+	for(unsigned int i=0; i<c_tests.size(); i++){
+		test_pvals[i].reserve(bins.size());
+		Test::Test* t = c_tests[i]->clone();
+		t->runAllTests(*this, pheno,bins,test_pvals[i]);
+		delete t;
+	}
+
+	unsigned int i=0;
+	while (b_itr != bins.end()) {
+		// Print bin name
+		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
+
+		if (!NoSummary) {
+			// print total var
+			os << sep << (*b_itr)->getSize();
+
+			// print total loci
+			os << sep << (*b_itr)->getVariantSize();
+
+			// print case/control loci
+			boost::array<unsigned int, 2> num_loci;
+			num_loci[0] = 0;
+			num_loci[1] = 0;
+			l_itr = (*b_itr)->variantBegin();
+			while (l_itr != (*b_itr)->variantEnd()) {
+				loc_itr = _genotypes.find((*l_itr));
+				if (loc_itr != _genotypes.end()) {
+					num_loci[0] += getTotalContrib((*loc_itr).second, & pheno.getStatus().first);
+					num_loci[1] += getTotalContrib((*loc_itr).second, & pheno.getStatus().second);
+				}
+				++l_itr;
+			}
+
+			os << sep << num_loci[0] << sep << num_loci[1];
+
+			// print case/control capacity
+			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());
+			os << sep << capacity[0] << sep << capacity[1];
+		} // End summary info
+
+		// start test info
+		for(unsigned int j=0; j<c_tests.size(); j++){
+			os << sep;
+			os << test_pvals[j][i];
+		}
+
+
+		// print for each person
+		m_itr = _positions.begin();
+		while (m_itr != _positions.end()) {
+			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno);
+			++m_itr;
+		}
+		os << "\n";
+		++b_itr;
+		++i;
+	}
+}
+
+void PopulationManager::printBins(std::ostream& os, const BinManager& bins, const Phenotype& pheno, const std::string& sep) const{
+	std::string sep_repl = getEscapeString(sep);
+	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
+
+	BinManager::const_iterator b_itr = bins.begin();
+	BinManager::const_iterator b_end = bins.end();
+
+	// Print first line
+	printEscapedString(os, "ID", sep, sep_repl);
+	os << sep;
+	printEscapedString(os, "Status", sep, sep_repl);
+	while(b_itr != b_end){
+		os << sep;
+		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
+		++b_itr;
+	}
+	os << "\n";
+
+	Bin::const_locus_iterator l_itr;
+	Bin::const_locus_iterator l_end;
+
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
+	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_not_found =
+			_genotypes.end();
+
+	if(!NoSummary){
+
+		// Print second Line (totals)
+		printEscapedString(os, "Total Variants", sep, sep_repl);
+		os << sep << missing_status;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep << (*b_itr)->getSize();
+			++b_itr;
+		}
+		os << "\n";
+
+		// Print third line (variant totals)
+		printEscapedString(os, "Total Loci", sep, sep_repl);
+		os << sep << missing_status;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep << (*b_itr)->getVariantSize();
+			++b_itr;
+		}
+		os << "\n";
+
+		int locus_count = 0;
+		// Print 4th + 5th lines (variant totals for cases + controls
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
+			os << sep << missing_status;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				l_itr = (*b_itr)->variantBegin();
+				l_end = (*b_itr)->variantEnd();
+				locus_count = 0;
+				while(l_itr != l_end){
+					loc_itr = _genotypes.find((*l_itr));
+					if (loc_itr != loc_not_found){
+						locus_count += getTotalContrib((*loc_itr).second, &(i ? pheno.getStatus().second : pheno.getStatus().first));
+					}
+					++l_itr;
+				}
+				os << sep << locus_count;
+				++b_itr;
+			}
+			os << "\n";
+		}
+
+		// Print 6th + 7th Lines (bin capacities for cases and controls)
+		for(int i=0; i<2; i++){
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
+			os << sep << missing_status;
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				os << sep << getBinCapacity(**b_itr, pheno.getStatus())[i];
+				++b_itr;
+			}
+			os << "\n";
+		}
+	}
+
+	// Print the results of the tests
+	for(unsigned int i=0; i<c_tests.size(); i++){
+		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
+		os << sep << missing_status;
+		vector<double> pvals(bins.size());
+		Test::Test* t = c_tests[i]->clone();
+		t->runAllTests(*this, pheno,bins,pvals);
+		delete t;
+		for(unsigned int j=0; j<pvals.size(); j++){
+			os << sep << pvals[j];
+		}
+		os << "\n";
+	}
+
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions.end();
+
+	int pos;
+	float status;
+
+	while (m_itr != m_end){
+		b_itr = bins.begin();
+		b_end = bins.end();
+
+		pos = (*m_itr).second;
+		status = getPhenotypeVal((*m_itr).first, pheno);
+
+		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+
+		os << sep << status;
+
+		while(b_itr != b_end){
+			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, pos, pheno);
+			++b_itr;
+		}
+
+		os << "\n";
+		++m_itr;
+	}
+}
+
+
 
 
 

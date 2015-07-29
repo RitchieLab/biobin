@@ -19,6 +19,8 @@
 #include "knowledge/InformationSQLite.h"
 #include "knowledge/RegionCollectionSQLite.h"
 
+#include "util/Phenotype.h"
+
 using std::string;
 using std::vector;
 using std::map;
@@ -49,6 +51,8 @@ BinApplication::BinApplication(const string& db_fn, const string& vcf_file) :
 			_pop_mgr(vcf_file) {
 
 	Init(db_fn, true);
+
+	_pop_mgr.setInfo(_info);
 
 	if (c_print_populations) {
 		_info->printPopulations(std::cout);
@@ -95,7 +99,9 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 	_pheno_mutex.lock();
 		while(ph_itr != _pop_mgr.endPheno()){
-			PopulationManager::Phenotype ph(*ph_itr);
+			// use the default copy constructor for Utility::Phenotype
+			Utility::Phenotype ph(*ph_itr);
+			++ph_itr;
 			_pheno_mutex.unlock();
 
 			BinManager binData(_pop_mgr, *regions, dataset, *_info, ph);
@@ -103,19 +109,19 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 			_output_mutex.lock();
 			std::cout << "Phenotype: " << _pop_mgr.getPhenotypeName(ph.getIndex()) << std::endl;
 
-			std::cout<<"\n   Variants:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
-						<<" * Rare Variants:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
-						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.numBins()<<"\n";
+			std::cout<<"\n   Loci:     "<<std::setw(10)<<std::right<<dataset.size()<<"\n"
+						<<" * Rare Loci:"<<std::setw(10)<<std::right<<binData.numRareVariants()<<"\n"
+						<<"   Total Bins:   "<<std::setw(10)<<std::right<<binData.size()<<"\n";
 
 			std::cout<<"\n   * Rare variants are those whose minor allele frequency is below "
 					 <<BinManager::mafCutoff<<" and above "<<BinManager::mafThreshold<<"\n\n";
 
-			if (binData.numBins() > 0 && binData.numBins() < 500) {
-				std::cout<<"\n\nBin Name\tVariant Count\n";
+			if (binData.size() > 0 && binData.size() < 100) {
+				std::cout<<"\n\nBin Name\tVariant Count\tLoci Count" << std::endl;
 				BinManager::const_iterator itr = binData.begin();
 				BinManager::const_iterator end = binData.end();
 				while(itr != end){
-					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\n";
+					std::cout << (*itr)->getName() << "\t" << (*itr)->getSize() << "\t" << (*itr)->getVariantSize() << "\n";
 					++itr;
 				}
 			}
@@ -128,7 +134,8 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 
 			// If we are creating a locus report, print all bin data for each locus
 			if(Main::WriteLociData){
-				FILE* fp = binData.printLocusBins(dataset);
+				FILE* fp = binData.printLocusBins(dataset,
+						_pop_mgr.getPhenotypeName(ph.getIndex()));
 
 				_data_mutex.lock();
 				_locus_bins[ph.getIndex()] = fp;
@@ -149,9 +156,6 @@ void BinApplication::binPhenotypes(PopulationManager::const_pheno_iterator& ph_i
 			}
 
 			_pheno_mutex.lock();
-			if(ph_itr != _pop_mgr.endPheno()){
-				++ph_itr;
-			}
 		}
 		_pheno_mutex.unlock();
 

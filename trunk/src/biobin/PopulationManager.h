@@ -23,11 +23,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/range/iterator_range_core.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "Bin.h"
 
 #include "util/ICompressedFile.h"
-#include "util/string_ref.hpp"
+//#include "util/string_ref.hpp"
+#include "util/Phenotype.h"
 
 #include "knowledge/Locus.h"
 #include "knowledge/liftover/Converter.h"
@@ -35,6 +38,12 @@
 #include "knowledge/Region.h"
 
 namespace BioBin{
+
+class BinManager;
+
+namespace Test{
+class Test;
+}
 
 /**
  * This is a class to manage all of the people in a given population so we can
@@ -100,35 +109,44 @@ public:
 
 	typedef std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<> > bitset_pair;
 
-	class Phenotype{
-	public:
-		Phenotype(unsigned int idx, const bitset_pair& status) : _idx(idx), _status(&status) {}
-		const bitset_pair& getStatus() const {return *_status;}
-		unsigned int getIndex() const {return _idx;}
-
-	private:
-		unsigned int _idx;
-		const bitset_pair* _status;
-	};
-
-	class const_pheno_iterator : public boost::iterator_facade<const_pheno_iterator, Phenotype const, boost::forward_traversal_tag>{
+	class const_pheno_iterator: public boost::iterator_facade<
+			const_pheno_iterator, Utility::Phenotype const,
+			boost::forward_traversal_tag> {
 
 	public:
-		const_pheno_iterator(unsigned int i, const PopulationManager& pop_mgr) : _idx(i), _mgr(pop_mgr), _itr(i, pop_mgr._pheno_status[i]){}
+		const_pheno_iterator(unsigned int i, const PopulationManager& pop_mgr) :
+			_idx(i), _mgr(pop_mgr), _itr(i, pop_mgr._pheno_status[i]) {
+		}
 
 	private:
 		friend class boost::iterator_core_access;
 
-		void increment() { ++_idx;}
-		bool equal(const const_pheno_iterator& other) const { return _idx == other._idx;}
-		Phenotype const& dereference() const {_itr = Phenotype(_idx, _mgr._pheno_status[_idx]); return _itr;}
+		void increment() {
+			++_idx;
+		}
+		bool equal(const const_pheno_iterator& other) const {
+			return _idx == other._idx;
+		}
+		Utility::Phenotype const& dereference() const {
+			_itr = Utility::Phenotype(_idx, _mgr._pheno_status[_idx]);
+			return _itr;
+		}
 
 		unsigned int _idx;
 		const PopulationManager& _mgr;
-		mutable Phenotype _itr;
+		mutable Utility::Phenotype _itr;
 
 	};
 
+
+	typedef std::vector<std::string>::const_iterator const_sample_iterator;
+	const_sample_iterator beginSample() const{
+		return _sample_names.begin();
+	}
+
+	const_sample_iterator endSample() const{
+		return _sample_names.end();
+	}
 
 	const_pheno_iterator beginPheno() const{
 		return const_pheno_iterator(0, *this);
@@ -146,30 +164,49 @@ public:
 
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
+	unsigned short getIndivGeno(const Knowledge::Locus& loc, int position) const;
+	float getAvgGenotype(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss_status=0) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
+	unsigned int getNumCovars() const {return _covar_names.size();}
+	unsigned int getNumSamples() const {return _sample_names.size();}
+	unsigned int getSamplePosition(const std::string& s) const;
 	const std::string& getPhenotypeName(unsigned int i) const {return _pheno_names[i];}
+	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
+	const std::vector<float>& getCovariates(const std::string& sample) const;
+	float getTotalIndivContrib(const Bin& b, int pos, const Utility::Phenotype& pheno) const;
+	float getLocusWeight(const Knowledge::Locus& loc, const Utility::Phenotype& pheno, const Knowledge::Region* reg=NULL) const;
+
+	// working with the Knowlede::Information
+	void setInfo(const Knowledge::Information* info) {
+		_info = info;
+		_use_custom_weight = _info && _info->c_weight_files.size() > 0;
+	}
+	const Knowledge::Information* getInfo() const { return _info;}
 
 	// Printing functions
-	template <class Bin_cont>
-	void printBins(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
-	template <class Bin_cont>
-	void printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep=",") const;
+	void printBins(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const std::string& sep=",") const;
+	void printBinsTranspose(std::ostream& os, const BinManager& bins, const Utility::Phenotype& pheno, const std::string& sep=",") const;
 
 	static float c_phenotype_control;
 	static std::string c_phenotype_file;
+	static std::string c_covariate_file;
 
 	// determine rarity of a variant by either case or control status
 	static bool RareCaseControl;
 	static bool NoSummary;
 
+	static bool c_keep_monomorphic;
 	static bool c_use_calc_weight;
-	static bool _use_custom_weight;
 
 	static float c_min_control_frac;
 
 	static DiseaseModel c_model;
 	static WeightModel c_weight_type;
+
+	static std::vector<const Test::Test*> c_tests;
+
+	const static unsigned short missing_geno = static_cast<unsigned short>(-1);
 
 private:
 
@@ -183,19 +220,23 @@ private:
 	// Loading functions
 	unsigned int readVCFHeader(std::istream& v);
 	void loadIndividuals();
-	void parsePhenotypeFile(const std::string& filename);
+	void parseTraitFile(const std::string& fn,
+			std::vector<std::string>& names_out,
+			boost::unordered_map<std::string, std::vector<float> >& vals_out,
+			const std::string& var_prefix="pheno");
 
-	float getIndivContrib(const Knowledge::Locus& loc, int position, const bitset_pair& status, bool useWeights = false, const Knowledge::Information* const info = NULL, const Knowledge::Region* const reg = NULL) const;
+	float getIndivContrib(const Knowledge::Locus& loc, int position, const Utility::Phenotype& pheno, bool useWeights = false, const Knowledge::Region* const reg = NULL) const;
 	unsigned int getTotalContrib(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float getMAF(const bitset_pair& geno, const boost::dynamic_bitset<>* nonmiss=0) const;
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
-	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Information& info, const Knowledge::Region* const reg = NULL) const;
+	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
 
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
 	 */
-	unsigned short fast_atoi(const boost::string_ref& r){
+	template <typename Str_Ref>
+	unsigned short fast_atoi(const Str_Ref& r){
 		unsigned short value_ = 0;
 		unsigned int len = r.size();
 		switch(len){
@@ -210,8 +251,15 @@ private:
 
 	boost::array<unsigned int, 2> getBinCapacity(Bin& bin, const bitset_pair& status) const;
 
+	// Note: thefollowing 2 variables are inverses of each other, so:
+	// i == _positions[_sample_names[i]]
+	// s == _sample_names[_positions[s]]
+
 	// mapping of ID -> position in the VCF file
-	boost::unordered_map<std::string, int> _positions;
+	boost::unordered_map<std::string, unsigned int> _positions;
+	// vector of samples, as given in the VCF file
+	std::vector<std::string> _sample_names;
+
 	// names of multiple phenotypes
 	std::vector<std::string> _pheno_names;
 	// the actual phenotypes as read from the phenotype file
@@ -219,255 +267,24 @@ private:
 	// phenotypes converted to case/control status
 	std::vector<bitset_pair> _pheno_status;
 
+	// names of the covariates
+	std::vector<std::string> _covar_names;
+	//unsigned int _num_covars;
+	// covariates as read in the covariate file(s)
+	boost::unordered_map<std::string, std::vector<float> > _covars;
+
 	// the actual genotypes included in the VCF file
 	// NOTE: this should eventually be a class that caches its results to a
 	// temporary file for better use of memory!
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair > _genotypes;
 
 	std::string _vcf_fn;
+
+	bool _use_custom_weight;
+
+	const Knowledge::Information* _info;
+
 };
-
-template <class Bin_cont>
-void PopulationManager::printBinsTranspose(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
-
-	_use_custom_weight = (info.c_weight_files.size() > 0);
-	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
-
-	std::string sep_repl = getEscapeString(sep);
-
-	// Print 1st line
-	printEscapedString(os, "Bin Name", sep, sep_repl);
-	os << sep;
-	if (!NoSummary) {
-		printEscapedString(os, "Total Variants", sep, sep_repl);
-		os << sep;
-		printEscapedString(os, "Total Loci", sep, sep_repl);
-		os << sep;
-		printEscapedString(os, "Control Loci Totals", sep, sep_repl);
-		os << sep;
-		printEscapedString(os, "Case Loci Totals", sep, sep_repl);
-		os << sep;
-		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
-		os << sep;
-		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
-	}
-
-	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
-	while(m_itr != _positions.end()){
-		os << sep;
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
-		++m_itr;
-	}
-
-	os << "\n";
-
-	printEscapedString(os, "Status", sep, sep_repl);
-	os << sep;
-	if(!NoSummary){
-		os << missing_status << sep << missing_status << sep << missing_status
-		   << sep << missing_status << sep << missing_status << sep << missing_status;
-	}
-
-	m_itr = _positions.begin();
-	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status;
-	while(m_itr != _positions.end()){
-		float status = missing_status;
-		pheno_status = _phenos.find((*m_itr).first);
-		if (pheno_status != _phenos.end()){
-			status = (*pheno_status).second[pheno.getIndex()];
-		}
-		os << sep << status;
-		++m_itr;
-	}
-
-	os << "\n";
-
-	typename Bin_cont::const_iterator b_itr = bins.begin();
-	Bin::const_locus_iterator l_itr;
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
-
-	while (b_itr != bins.end()) {
-		// Print bin name
-		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
-
-		if (!NoSummary) {
-			// print total var
-			os << sep << (*b_itr)->getSize();
-
-			// print total loci
-			os << sep << (*b_itr)->getVariantSize();
-
-			// print case/control loci
-			boost::array<unsigned int, 2> num_loci;
-			num_loci[0] = 0;
-			num_loci[1] = 0;
-			l_itr = (*b_itr)->variantBegin();
-			while (l_itr != (*b_itr)->variantEnd()) {
-				loc_itr = _genotypes.find((*l_itr));
-				if (loc_itr != _genotypes.end()) {
-					num_loci[0] += getTotalContrib((*loc_itr).second, & pheno.getStatus().first);
-					num_loci[1] += getTotalContrib((*loc_itr).second, & pheno.getStatus().second);
-				}
-				++l_itr;
-			}
-
-			os << sep << num_loci[0] << sep << num_loci[1];
-
-			// print case/control capacity
-			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());
-			os << sep << capacity[0] << sep << capacity[1];
-		} // End summary info
-
-		// print for each person
-		float bin_count = 0;
-		m_itr = _positions.begin();
-		while (m_itr != _positions.end()) {
-			l_itr = (*b_itr)->variantBegin();
-			bin_count = 0;
-			while (l_itr != (*b_itr)->variantEnd()) {
-				bin_count += getIndivContrib(**l_itr, (*m_itr).second, pheno.getStatus(), true, &info, (*b_itr)->getRegion());
-				++l_itr;
-			}
-			os << sep << std::setprecision(4) << bin_count;
-			++m_itr;
-		}
-		os << "\n";
-		++b_itr;
-	}
-}
-
-template <class Bin_cont>
-void PopulationManager::printBins(std::ostream& os, const Bin_cont& bins, const Phenotype& pheno, const Knowledge::Information& info, const std::string& sep) const{
-	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
-	std::string sep_repl = getEscapeString(sep);
-
-	_use_custom_weight = (info.c_weight_files.size() > 0);
-
-	typename Bin_cont::const_iterator b_itr = bins.begin();
-	typename Bin_cont::const_iterator b_end = bins.end();
-
-	// Print first line
-	printEscapedString(os, "ID", sep, sep_repl);
-	os << sep;
-	printEscapedString(os, "Status", sep, sep_repl);
-	while(b_itr != b_end){
-		os << sep;
-		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
-		++b_itr;
-	}
-	os << "\n";
-
-	Bin::const_locus_iterator l_itr;
-	Bin::const_locus_iterator l_end;
-
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
-	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_not_found =
-			_genotypes.end();
-
-	if(!NoSummary){
-
-		// Print second Line (totals)
-		printEscapedString(os, "Total Variants", sep, sep_repl);
-		os << sep << missing_status;
-		b_itr = bins.begin();
-		b_end = bins.end();
-		while(b_itr != b_end){
-			os << sep << (*b_itr)->getSize();
-			++b_itr;
-		}
-		os << "\n";
-
-		// Print third line (variant totals)
-		printEscapedString(os, "Total Loci", sep, sep_repl);
-		os << sep << missing_status;
-		b_itr = bins.begin();
-		b_end = bins.end();
-		while(b_itr != b_end){
-			os << sep << (*b_itr)->getVariantSize();
-			++b_itr;
-		}
-		os << "\n";
-
-		int locus_count = 0;
-		// Print 4th + 5th lines (variant totals for cases + controls
-		for(int i=0; i<2; i++){
-			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
-			os << sep << missing_status;
-			b_itr = bins.begin();
-			b_end = bins.end();
-			while(b_itr != b_end){
-				l_itr = (*b_itr)->variantBegin();
-				l_end = (*b_itr)->variantEnd();
-				locus_count = 0;
-				while(l_itr != l_end){
-					loc_itr = _genotypes.find((*l_itr));
-					if (loc_itr != loc_not_found){
-						locus_count += getTotalContrib((*loc_itr).second, &(i ? pheno.getStatus().second : pheno.getStatus().first));
-					}
-					++l_itr;
-				}
-				os << sep << locus_count;
-				++b_itr;
-			}
-			os << "\n";
-		}
-
-		// Print 6th + 7th Lines (bin capacities for cases and controls)
-		for(int i=0; i<2; i++){
-			printEscapedString(os, std::string(i ? "Case" : "Control") + " Bin Capacity", sep, sep_repl);
-			os << sep << missing_status;
-			b_itr = bins.begin();
-			b_end = bins.end();
-			while(b_itr != b_end){
-				os << sep << getBinCapacity(**b_itr, pheno.getStatus())[i];
-				++b_itr;
-			}
-			os << "\n";
-		}
-	}
-
-	boost::unordered_map<std::string, int>::const_iterator m_itr = _positions.begin();
-	boost::unordered_map<std::string, int>::const_iterator m_end = _positions.end();
-
-	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status;
-	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_end = _phenos.end();
-
-	int pos;
-	float status;
-	float bin_count;
-
-	while (m_itr != m_end){
-		b_itr = bins.begin();
-		b_end = bins.end();
-
-		pos = (*m_itr).second;
-		pheno_status = _phenos.find((*m_itr).first);
-		status = missing_status;
-		if (pheno_status != pheno_end){
-			status = (*pheno_status).second[pheno.getIndex()];
-		}
-
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
-
-		os << sep << status;
-
-		while(b_itr != b_end){
-			// Accumulate the contribution of this person in this bin
-			l_itr = (*b_itr)->variantBegin();
-			l_end = (*b_itr)->variantEnd();
-			bin_count = 0;
-			while(l_itr != l_end){
-				bin_count += getIndivContrib(**l_itr, pos, pheno.getStatus(), true, &info, (*b_itr)->getRegion());
-				++l_itr;
-			}
-			os << sep << std::setprecision(4) << bin_count;
-			++b_itr;
-		}
-
-		os << "\n";
-		++m_itr;
-	}
-}
 
 template<class T_cont>
 void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv){
@@ -494,10 +311,12 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	unsigned int max_count;
 	bool lift_warn = false;
 	std::ofstream unlift_out;
-	std::vector<boost::string_ref> geno_list;
-	std::vector<boost::string_ref> fields;
+	std::vector<boost::iterator_range<std::string::iterator> > geno_list;
+	//std::vector<boost::string_ref> fields;
+	//std::vector<std::pair<string::iterator, string::iterator> > fields;
+	std::vector<boost::iterator_range<std::string::iterator> > fields;
 	std::vector<std::string> alleles;
-	std::vector<boost::string_ref> call_list;
+	std::vector<boost::iterator_range<std::string::iterator> > call_list;
 	std::vector<std::string> format_list;
 	std::vector<std::pair<unsigned short, unsigned short> > calls;
 	std::pair<unsigned short, unsigned short> curr_call;
@@ -511,7 +330,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 	//boost::char_separator<char> vcf_sep("\t");
 
-	while(getline(vcf_f, curr_line)){
+	while(vcf_f.good()){
+		getline(vcf_f, curr_line);
 		++lineno;
 		fields.clear();
 		if(curr_line.size() > 2 && curr_line[0] != '#'){
@@ -521,12 +341,17 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			if(fields.size() != n_fields){
 				std::cerr << "ERROR: Mismatched number of fields on line "
 						<< lineno << std::endl;
+				std::cerr << "Expected # of fields: "<<n_fields << std::endl;
+				std::cerr << "Seen # of fields: " << fields.size() << std::endl;
+				std::cerr << "Line size: " << curr_line.size() << std::endl;
+				std::cerr << "Last field: " << fields[fields.size() - 1] << std::endl;
+				std::cerr << "2nd to Last field: " << fields[fields.size() - 2] << std::endl;
 				// throw exception here
 				throw std::runtime_error("Mismatched number of fields in VCF file");
 			}
 
 			chr = std::string(fields[0].begin(), fields[0].end());
-			bploc = boost::lexical_cast<unsigned int>(fields[1]);
+			bploc = boost::lexical_cast<unsigned int>(std::string(fields[1].begin(), fields[1].end()));
 			id = std::string(fields[2].begin(), fields[2].end());
 			ref = std::string(fields[3].begin(), fields[3].end());
 			alt = std::string(fields[4].begin(), fields[4].end());
@@ -537,10 +362,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 			if(filter == "." || filter == "PASS"){
 
 				// construct a locus object and lift over, if necessary
-				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id, ref);
+				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id,ref);
 				if(conv){
 					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
-					if (! new_loc){
+					// make sure to drop loci that lift to unknown chromosomes, too!
+					if (! new_loc || new_loc->getChrom() == Knowledge::Locus::UNKNOWN_CHROM){
 						if(!lift_warn){
 							std::string fn(prefix + "-unlifted.csv");
 							unlift_out.open(fn.c_str());
@@ -554,7 +380,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 						}
 						loc->print(unlift_out, sep);
 						unlift_out << std::endl;
-
+						if(new_loc){
+							delete new_loc;
+							new_loc = 0;
+						}
 						delete loc;
 						loc = 0;
 					}else{
@@ -610,7 +439,9 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 								calls.push_back(std::make_pair(missing_geno, missing_geno));
 							} else {
 								unsigned short g1, g2;
-								if(call_list[0] != "." && call_list[1] != "."){
+								//boost::string_ref c1(&*call_list[0].begin(), call_list[0].size());
+								//boost::string_ref c2(&*call_list[1].begin(), call_list[1].size());
+								if(*call_list[0].begin() != '.' && *call_list[1].begin() != '.'){
 									g1 = fast_atoi(call_list[0]);
 									g2 = fast_atoi(call_list[1]);
 									calls.push_back(std::make_pair(g1, g2));
@@ -638,7 +469,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 					// let's make sure that this isn't monoporphic
 					std::sort(call_count.begin(), call_count.end());
-					if(call_count.size() < 2 || call_count[call_count.size() - 2] == 0){
+					if(!c_keep_monomorphic && (call_count.size() < 2 || call_count[call_count.size() - 2] == 0)){
 						delete loc;
 					} else {
 
@@ -659,10 +490,11 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 						// again, make sure it isn't monomorphic with regards to the
 						// disease encoding
-						if(getTotalContrib(curr_geno) == 0){
+						if(!c_keep_monomorphic && getTotalContrib(curr_geno) == 0){
 							delete loc;
 						} else {
 							loci_out.insert(loci_out.end(), loc);
+
 							_genotypes.insert(std::make_pair(loc, curr_geno));
 						}
 					}

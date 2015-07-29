@@ -162,10 +162,10 @@ void RegionCollectionSQLite::loadFile(const string& fn){
 
 				// TODO: convert chr posMin and posMax here
 				if(n_chains > 0){
-					std::pair<short, std::pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+					std::pair<short, std::pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax + 1);
 					chr = newReg.first;
 					posMin = newReg.second.first;
-					posMax = newReg.second.second;
+					posMax = newReg.second.second - (newReg.second.second != 0);
 				}
 
 				if(chr != -1 && posMin && posMax){

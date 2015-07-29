@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
 	try{
 		store(po::command_line_parser(argc,argv).options(cmd_options).positional(pos).run(), vm);
 		notify(vm);
-	}catch(...){
-		std::cout << "Error processing command line arguments\n";
-		std::cout << cmd;
+	}catch(std::exception& e){
+		std::cerr << "Error processing command line arguments, please see the --help option for more details\n";
+		std::cerr << "Error: " << e.what() << std::endl;
 		return 2;
 	}
 
@@ -164,11 +164,11 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 
-		boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
+		/*boost::filesystem::path vcf_path = boost::filesystem::path(BioBin::Main::c_vcf_file);
 		if (!boost::filesystem::is_regular_file(vcf_path)) {
 			std::cerr<<"ERROR: Could not find VCF file at " << vcf_path << "\n";
 			exit(1);
-		}
+		}*/
 
 		boost::filesystem::path report_path=boost::filesystem::absolute(BioBin::BinApplication::reportPrefix).parent_path();
 

@@ -292,10 +292,10 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 					// TODO: liftover here
 					if(n_chain){
-						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax+1);
 						chr = newReg.first;
 						posMin = newReg.second.first;
-						posMax = newReg.second.second;
+						posMax = newReg.second.second - (newReg.second.second != 0);
 					}
 
 					int role_id;
@@ -386,10 +386,12 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 
 							}
 						}
-					} else {
-						std:: cerr << "WARNING: Improperly formatted role file\n";
+					}else {
+						std:: cerr << "WARNING: Unable to lift region \n";
 					}
 
+				} else if(result.size() > 0) {
+					std:: cerr << "WARNING: Improperly formatted role file\n";
 				}
 			}
 			data_file.close();
@@ -497,10 +499,10 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 
 					// TODO: liftover here
 					if(n_chain){
-						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax);
+						pair<short, pair<int, int> > newReg = cnv.convertRegion(chr, posMin, posMax+1);
 						chr = newReg.first;
 						posMin = newReg.second.first;
-						posMax = newReg.second.second;
+						posMax = newReg.second.second - (newReg.second.second != 0);
 					}
 
 					char* str_end;
@@ -618,7 +620,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter
 
 	// Find the minimum and maximum zone sizes
-	int minPos, maxPos = 0;
+	int minPos=0, maxPos = 0;
 	string min_pos_sql = "SELECT MIN(posMin) FROM " + tbl_name;
 	string max_pos_sql = "SELECT MAX(posMax) FROM " + tbl_name;
 
@@ -626,7 +628,7 @@ void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zo
 	sqlite3_exec(_db, max_pos_sql.c_str(), &parseSingleIntQuery, &maxPos, NULL);
 
 	minPos = minPos / zone_size;
-	maxPos = maxPos / zone_size + 1;
+	maxPos = maxPos / zone_size + (maxPos % zone_size != 0);
 
 	// Insert all zones needed into a temporary table
 	string tmp_zone_tbl = "__zone_tmp";
@@ -851,7 +853,13 @@ int InformationSQLite::parseSingleIntQuery(void* obj, int n_cols,
 	}
 	if(col_vals[0]){
 		int* ret_int_p = (int*) (obj);
-		(*ret_int_p) = atoi(col_vals[0]);
+		errno=0;
+		char* pEnd;
+		(*ret_int_p) = strtol(col_vals[0], &pEnd, 10);
+		if((*pEnd) != '\0'){
+			(*ret_int_p) = 0;
+			errno = 0;
+		}
 	}
 	return 0;
 }
