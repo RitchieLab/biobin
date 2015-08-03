@@ -723,7 +723,7 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 	// Print first line
 	printEscapedString(os, "ID", sep, sep_repl);
 	os << sep;
-	printEscapedString(os, "Status", sep, sep_repl);
+	printEscapedString(os, getPhenotypeName(pheno.getIndex()), sep, sep_repl);
 	while(b_itr != b_end){
 		os << sep;
 		printEscapedString(os, (*b_itr)->getName(), sep, sep_repl);
