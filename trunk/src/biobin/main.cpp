@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
@@ -91,24 +92,23 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 #ifdef HAVE_GCC_ABI_DEMANGLE
 		// Here, we're able to demangle the names, so let's do that!
 		// first, find the position of the first open paren
-		int paren_pos=5;
 		char* tok = strchr(ptr[idx], '(');
 		int paren_pos = tok - ptr[idx];
 
 		// convert the open paren to a NUL
-		ptr[idx][paren_pos] = '\0'
+		ptr[idx][paren_pos] = '\0';
 
 		// Now, find the position of the first "+" to occur after the open paren
-		tok = strchr(ptr[idx] + (paren_pos+1), '+')
+		tok = strchr(ptr[idx] + (paren_pos+1), '+');
 		int plus_pos = tok - ptr[idx];
 
 		// convert that plus sign to a NUL
-		ptr[idx][plus_pos] = '\0'
+		ptr[idx][plus_pos] = '\0';
 
 		// great! now, we can get that string and demangle it
 		char* demangled_name = NULL;
 		int status;
-		int demangled_buflen;
+		size_t demangled_buflen;
 
 		demangled_name = abi::__cxa_demangle(ptr[idx] + (paren_pos+1), demangled_name, &demangled_buflen, &status);
 
@@ -119,7 +119,6 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 		}else{
 			cerr << ptr[idx] << "(" << ptr[idx] + (paren_pos+1) << "+" << ptr[idx] + (plus_pos+1);
 		}
-	}
 #else
 		cerr << ptr[idx];
 #endif
