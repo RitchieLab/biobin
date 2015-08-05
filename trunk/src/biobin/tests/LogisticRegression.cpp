@@ -15,6 +15,7 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_permute_vector.h>
+#include <gsl/gsl_errno.h>
 
 #include "detail/MatrixUtils.h"
 
@@ -98,6 +99,8 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	static const unsigned int maxIterations = 30;
 
+	int errcode = GSL_SUCCESS;
+
 	// val is the value of the logit function
 	// deriv is the derivative of the logit
 	// log_val and log_val_c are log(val) and log(1-val), respectively.
@@ -136,7 +139,7 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 			// set the residual at first to -\mu, where \mu == 1/(1+exp(-\beta_0))
 			gsl_vector_set_all(r->resid, pred_val);
 			// and set resid = Y + resid (i.e., resid = Y + (-\mu)
-			gsl_blas_daxpy(1, &Y, r->resid);
+			errcode |= gsl_blas_daxpy(1, &Y, r->resid);
 
 			return r;
 		}
@@ -162,7 +165,7 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	double tmp_chisq;
 
 	// Let's permute the columns of A
-	gsl_matrix_memcpy(A, &X);
+	errcode |= gsl_matrix_memcpy(A, &X);
 	MatrixUtils::applyPermutation(A, permu);
 
 	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
@@ -195,15 +198,16 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	// 1a) convergence of the beta vector (distance stored in b_prev)
 	// 2) divergence of one (or more) coefficients
 	// 3) maximum number of iterations
-	while ((fabs(LLp - LL) > TOL*LLn || gsl_blas_dasum(b_prev) > TOL*n_indep*gsl_blas_dasum(&b.vector)) &&
+	while (errcode == GSL_SUCCESS &&
+		  (fabs(LLp - LL) > TOL*LLn || gsl_blas_dasum(b_prev) > TOL*n_indep*gsl_blas_dasum(&b.vector)) &&
 		   gsl_blas_dasum(&b.vector) < MAX_vec &&
 		   ++numIterations < maxIterations ) {
 
 		// save the old beta vector in b_prev
-		gsl_vector_memcpy(b_prev, &b.vector);
+		errcode |= gsl_vector_memcpy(b_prev, &b.vector);
 
 		// First, let's initialize the RHS to X*beta_t (rhs = 1 * X * b + 0* rhs)
-		gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
+		errcode |= gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
 
 		LLp = LL;
 		LL = 0;
@@ -229,15 +233,15 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 		}
 
 		// Look, magic!
-		gsl_multifit_wlinear(&X_v.matrix, weight, rhs, &b.vector, cov, &tmp_chisq, ws);
+		errcode |= gsl_multifit_wlinear(&X_v.matrix, weight, rhs, &b.vector, cov, &tmp_chisq, ws);
 
 		// check for NaNs here
 		if(std::isfinite(gsl_blas_dasum(&b.vector))){
 			// get the difference between the old beta and the new beta
-			gsl_vector_sub(b_prev, &b.vector);
+			errcode |= gsl_vector_sub(b_prev, &b.vector);
 		} else {
 			// terminate the iteration, giving us the previous beta
-			gsl_vector_memcpy(&b.vector, b_prev);
+			errcode |= gsl_vector_memcpy(&b.vector, b_prev);
 			// and set the "difference" to 0
 			gsl_vector_set_zero(b_prev);
 			// set loglikelihood to NaN
@@ -253,7 +257,7 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	// Let's get the value of the exponent for every person
 	// (we can re-use the rhs vector since we're done with it!)
-	gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
+	errcode |= gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
 	for (unsigned int i = 0; i < Y.size; i++) {
 
 		// calculate the value of the exponent for the individual
@@ -272,7 +276,8 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	// -Log likelihood is not finite (inf or NaN)
 	// too many iteratons
 	// The current log likelihood is less than the null model
-	if(!std::isfinite(LL) ||
+	if(errcode != GSL_SUCCESS ||
+	   !std::isfinite(LL) ||
 	   numIterations >= maxIterations ||
 	   LL-LLn > 0 ){
 		r->_conv = false;

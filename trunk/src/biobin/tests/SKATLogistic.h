@@ -20,7 +20,7 @@ namespace Test {
 class SKATLogistic : public TestImpl<SKATLogistic> {
 public:
 	SKATLogistic() : TestImpl<SKATLogistic>(testname),
-		_resid_wt(0), X_svd_U(0), X_svd_S(0), X_svd_V(0) {}
+		_resid_wt(0), X_svd_U(0), X_svd_S(0), X_svd_V(0), _willfail(false) {}
 
 	virtual ~SKATLogistic();
 
@@ -42,6 +42,8 @@ private:
 	LogisticRegression _base_reg;
 
 	static std::string testname;
+
+	bool _willfail;
 
 };
 

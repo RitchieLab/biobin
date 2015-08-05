@@ -36,6 +36,9 @@ public:
 	// does the actual biobin work (only called if configuration is A-OK
 	void RunCommands();
 
+	// a GSL Error handler that prints a backtrace (if available) and does NOT abort
+	static void gsl_tracer(const char* reason, const char* filename, int line, int gsl_errno);
+
 	//! The name of the VCF file containing info on variants
 	static std::string c_vcf_file;
 	//! The name of the SQLite LOKI database

@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <iostream>
+#include <cstring>
 
 #include "Configuration.h"
 #include "knowledge/Configuration.h"
@@ -10,8 +11,17 @@
 
 // Use the boost filesystem library to work with OS-independent paths
 #include <boost/filesystem.hpp>
-
 #include <boost/program_options.hpp>
+
+// We'll need this to set the GSL error handler
+#include <gsl/gsl_errno.h>
+#ifdef HAVE_EXECINFO
+#include <execinfo.h>
+#endif
+#ifdef HAVE_GCC_ABI_DEMANGLE
+#include <cxxabi.h>
+#endif
+
 
 namespace po=boost::program_options;
 
@@ -20,6 +30,7 @@ using std::string;
 using std::vector;
 using std::multimap;
 using std::ifstream;
+using std::cerr;
 
 
 namespace BioBin {
@@ -65,10 +76,70 @@ void Main::RunCommands() {
 
 }
 
+void Main::gsl_tracer(const char* reason, const char* filename, int line, int gsl_error){
+	cerr<<"WARNING: GSL Error " << gsl_error << " detected:" << std::endl;
+	cerr << reason << " in " << filename << ", line " << line << std::endl;
+#ifdef HAVE_EXECINFO
+	const unsigned int buf_size=50;
+	void* buffer[buf_size];
+	int n_buf = backtrace(buffer, buf_size);
+	cerr << "Backtrace (maximum depth of " << buf_size << "):" << std::endl;
+	char** ptr = backtrace_symbols(buffer, n_buf);
+
+	for(int idx=0; idx<n_buf; idx++){
+		cerr << idx << ":";
+#ifdef HAVE_GCC_ABI_DEMANGLE
+		// Here, we're able to demangle the names, so let's do that!
+		// first, find the position of the first open paren
+		int paren_pos=5;
+		char* tok = strchr(ptr[idx], '(');
+		int paren_pos = tok - ptr[idx];
+
+		// convert the open paren to a NUL
+		ptr[idx][paren_pos] = '\0'
+
+		// Now, find the position of the first "+" to occur after the open paren
+		tok = strchr(ptr[idx] + (paren_pos+1), '+')
+		int plus_pos = tok - ptr[idx];
+
+		// convert that plus sign to a NUL
+		ptr[idx][plus_pos] = '\0'
+
+		// great! now, we can get that string and demangle it
+		char* demangled_name = NULL;
+		int status;
+		int demangled_buflen;
+
+		demangled_name = abi::__cxa_demangle(ptr[idx] + (paren_pos+1), demangled_name, &demangled_buflen, &status);
+
+		if(status == 0){
+			// print up to (not including) the first paren, the demangled name, then everything after the '+'
+			cerr << ptr[idx] << "(" << demangled_name << "+" << ptr[idx][plus_pos];
+			free(demangled_name);
+		}else{
+			cerr << ptr[idx] << "(" << ptr[idx] + (paren_pos+1) << "+" << ptr[idx] + (plus_pos+1);
+		}
+	}
+#else
+		cerr << ptr[idx];
+#endif
+		cerr << std::endl;
+
+	}
+
+	free(ptr);
+#else
+	cerr << "No backtrace available" << std::endl;
+#endif
+}
+
 }
 
 
 int main(int argc, char *argv[]) {
+	// first things first, let's set that GSL handler!
+	gsl_error_handler_t *old_handler = gsl_set_error_handler(&BioBin::Main::gsl_tracer);
+
 	std::string cfgFilename;
 
 	po::options_description cmd("General Options");
@@ -196,6 +267,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	delete app;
+
+	// unset the GSL handler here, please!
+	gsl_set_error_handler(old_handler);
 
 	return 0;
 }

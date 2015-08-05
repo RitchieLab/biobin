@@ -14,6 +14,7 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_permute_vector.h>
 #include <gsl/gsl_permute.h>
+#include <gsl/gsl_errno.h>
 
 #include "qfc.h"
 #include "MatrixUtils.h"
@@ -140,6 +141,8 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 }
 
 double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
+	int errcode = GSL_SUCCESS;
+
 	gsl_matrix* W_tmp = gsl_matrix_calloc(W->size1, W->size2);
 
 	// find columns (and rows) that are essentially 0 to remove them
@@ -153,7 +156,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	}
 	if(bad_idx.size() > 0){
 
-		gsl_matrix_memcpy(W_tmp, W);
+		errcode |= gsl_matrix_memcpy(W_tmp, W);
 
 		gsl_permutation* permu = MatrixUtils::getPermutation(bad_idx, W->size2);
 		MatrixUtils::applyPermutation(W_tmp, permu, true);
@@ -161,23 +164,25 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 
 		gsl_matrix* subW = gsl_matrix_alloc(W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
 		gsl_matrix_const_view W_v = gsl_matrix_const_submatrix(W_tmp, 0,0, W->size1 - bad_idx.size(), W->size2 - bad_idx.size());
-		gsl_matrix_memcpy(subW, &W_v.matrix);
+		errcode |= gsl_matrix_memcpy(subW, &W_v.matrix);
 		gsl_matrix_free(W_tmp);
 		W_tmp = subW;
 	} else {
-		gsl_matrix_memcpy(W_tmp, W);
+		errcode |= gsl_matrix_memcpy(W_tmp, W);
 	}
 
 	// first, divide W_tmp by 2
-	gsl_matrix_scale(W_tmp, 0.5);
+	errcode |= gsl_matrix_scale(W_tmp, 0.5);
 
 	// OK, now we have to take the eigenvalues of tmp_ss
 	gsl_vector* eval = gsl_vector_alloc(W_tmp->size1);
 	gsl_eigen_symm_workspace* eigen_w = gsl_eigen_symm_alloc(W_tmp->size1);
-	gsl_eigen_symm(W_tmp, eval, eigen_w);
+	errcode |= gsl_eigen_symm(W_tmp, eval, eigen_w);
 	gsl_eigen_symm_free(eigen_w);
 	// Now, sort the eigenvalues in descending order
-	std::sort(eval->data, eval->data + eval->size, std::greater<double>());
+	if(errcode == GSL_SUCCESS){
+		std::sort(eval->data, eval->data + eval->size, std::greater<double>());
+	}
 
 	int n_eval = 0;
 	while(gsl_vector_get(eval, n_eval) > std::numeric_limits<float>::epsilon()
@@ -226,6 +231,9 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	// clean up, please!
 	gsl_vector_free(eval);
 	//gsl_vector_free(eval_sq);
+	if(errcode != GSL_SUCCESS){
+		return -1;
+	}
 
 	return qfc_err == 0 ? 1-pval : 1+qfc_err;
 }

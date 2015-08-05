@@ -116,7 +116,7 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 
 	// if we have colinearity in the null result, let's just drop those
 	// columns entirely
-	if(_null_result->dropped_cols.size() > 0){
+	if(_null_result && _null_result->dropped_cols.size() > 0){
 
 		// allocate a new matrix to be used for _data
 		gsl_matrix* data_new = gsl_matrix_alloc(_data->size1, _data->size2 - _null_result->dropped_cols.size());
@@ -136,6 +136,11 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 		gsl_matrix_free(data_new);
 		gsl_permutation_free(permu);
 		_null_result->dropped_cols.clear();
+	}
+
+	// If the null result didn't converge, something went horribly wrong!
+	if(!_null_result || !_null_result->_conv){
+		_willfail = true;
 	}
 
 }

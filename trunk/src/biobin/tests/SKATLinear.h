@@ -21,7 +21,7 @@ namespace Test {
 class SKATLinear : public TestImpl<SKATLinear> {
 public:
 	SKATLinear() : TestImpl<SKATLinear>(testname),
-		resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0){}
+		resid_inv_var(1), X_svd_U(0), X_svd_S(0), X_svd_V(0), _willfail(false){}
 	virtual ~SKATLinear();
 
 	virtual Test* clone() const {return new SKATLinear(*this);}
@@ -42,6 +42,8 @@ private:
 	gsl_matrix* X_svd_U;
 	gsl_vector* X_svd_S;
 	gsl_matrix* X_svd_V;
+
+	bool _willfail;
 
 };
 

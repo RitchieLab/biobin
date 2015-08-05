@@ -15,6 +15,7 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_permute_vector.h>
+#include <gsl/gsl_errno.h>
 
 
 using std::string;
@@ -43,7 +44,7 @@ double LinearRegression::runTest(const Bin& bin) const{
 	Result* r = calculate(*_phenos, *_data);
 
 	double pval = 1;
-	if(r){
+	if(r && r->_conv){
 	// Get the p-value of the last term
 		double se = sqrt(gsl_matrix_get(r->cov, r->cov->size1 - 1, r->cov->size2 - 1));
 		double c = gsl_vector_get(r->beta, r->beta->size - 1);
@@ -68,6 +69,7 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	gsl_matrix* cov_mat = gsl_matrix_calloc(X.size2, X.size2);
 	double chisq;
 	Result* r = new Result(beta, cov_mat);
+	int errcode = GSL_SUCCESS;
 
 	gsl_permutation* permu = gsl_permutation_alloc(X.size2);
 
@@ -80,7 +82,7 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 		for(unsigned int i=0; i<idx_vec->size; i++){
 			gsl_vector_set(idx_vec, i, i);
 		}
-		gsl_permute_vector(permu, idx_vec);
+		errcode |= gsl_permute_vector(permu, idx_vec);
 
 		r->dropped_cols.reserve(n_colinear);
 		for(unsigned int i=0; i<n_colinear; i++){
@@ -97,7 +99,7 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 
 	// set A = X*P
 	gsl_matrix* A = gsl_matrix_alloc(X.size1, X.size2);
-	gsl_matrix_memcpy(A, &X);
+	errcode |= gsl_matrix_memcpy(A, &X);
 	MatrixUtils::applyPermutation(A, permu);
 	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
 
@@ -110,10 +112,12 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	gsl_multifit_linear_workspace* ws = gsl_multifit_linear_alloc(X.size1, n_indep);
 
 	// run the regression now
-	gsl_multifit_linear(&A_v.matrix, &Y, &bv.vector, &cov_mat_view.matrix, &chisq, ws);
+	errcode |= gsl_multifit_linear(&A_v.matrix, &Y, &bv.vector, &cov_mat_view.matrix, &chisq, ws);
 	// set the residuals here
-	r->resid = gsl_vector_alloc(A_v.matrix.size1);
-	gsl_multifit_linear_residuals(&A_v.matrix, &Y, &bv.vector, r->resid);
+	if(errcode == GSL_SUCCESS){
+		r->resid = gsl_vector_alloc(A_v.matrix.size1);
+		errcode |= gsl_multifit_linear_residuals(&A_v.matrix, &Y, &bv.vector, r->resid);
+	}
 
 	// Note: to unpermute, multiply by P transpose!
 	// Also, we need to unpermute both the rows AND columns of cov_mat
@@ -122,7 +126,7 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	// permute rows
 	MatrixUtils::applyInversePermutation(r->cov, permu, false);
 
-	gsl_permute_vector_inverse(permu, r->beta);
+	errcode |= gsl_permute_vector_inverse(permu, r->beta);
 
 	r->chisq = chisq;
 
@@ -130,6 +134,10 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	gsl_matrix_free(A);
 	gsl_multifit_linear_free(ws);
 	gsl_permutation_free(permu);
+
+	if(errcode != GSL_SUCCESS){
+		r->_conv = false;
+	}
 
 	return r;
 }
