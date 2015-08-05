@@ -217,7 +217,7 @@ void PopulationManager::loadIndividuals(){
 
 	bool allControl = false;
 	if(c_phenotype_file != ""){
-		parseTraitFile(c_phenotype_file, _pheno_names, _phenos, "pheno");
+		parseTraitFile(c_phenotype_file, _pheno_names, _phenos, "Status");
 		if(_pheno_names.size() == 0){
 			std::cerr << "WARNING: All phenotypes were completely missing, assigning all samples as control" << std::endl;
 			allControl = true;
@@ -348,8 +348,12 @@ void PopulationManager::parseTraitFile(const string& filename,
 					if(result.size() > 2){
 						std::cerr << "WARNING: No header given for multiple traits, "
 								<< "assigning sequential names" << std::endl;
-						for(unsigned int i=1; i<result.size(); i++){
-							names_out.push_back(var_prefix + "_" + boost::lexical_cast<string>(i));
+						if(result.size() ==2){
+							names_out.push_back(var_prefix);
+						} else{
+							for(unsigned int i=1; i<result.size(); i++){
+								names_out.push_back(var_prefix + "_" + boost::lexical_cast<string>(i));
+							}
 						}
 					}else{
 						names_out.push_back("");
