@@ -87,7 +87,7 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 	cerr << "Backtrace (maximum depth of " << buf_size << "):" << std::endl;
 	char** ptr = backtrace_symbols(buffer, n_buf);
 
-	for(int idx=0; idx<n_buf; idx++){
+	for (int idx = 0; idx < n_buf; idx++) {
 		cerr << idx << ":";
 #ifdef HAVE_GCC_ABI_DEMANGLE
 		// Here, we're able to demangle the names, so let's do that!
@@ -95,29 +95,40 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 		char* tok = strchr(ptr[idx], '(');
 		int paren_pos = tok - ptr[idx];
 
-		// convert the open paren to a NUL
-		ptr[idx][paren_pos] = '\0';
-
 		// Now, find the position of the first "+" to occur after the open paren
-		tok = strchr(ptr[idx] + (paren_pos+1), '+');
-		int plus_pos = tok - ptr[idx];
+		tok = strchr(ptr[idx] + (paren_pos + 1), '+');
+		char* paren_tok = strchr(ptr[idx] + (paren_pos + 1), ')');
 
-		// convert that plus sign to a NUL
-		ptr[idx][plus_pos] = '\0';
+		if (tok && paren_tok > tok) {
 
-		// great! now, we can get that string and demangle it
-		char* demangled_name = NULL;
-		int status;
-		size_t demangled_buflen;
+			// convert the open paren to a NUL
+			ptr[idx][paren_pos] = '\0';
 
-		demangled_name = abi::__cxa_demangle(ptr[idx] + (paren_pos+1), demangled_name, &demangled_buflen, &status);
+			int plus_pos = tok - ptr[idx];
 
-		if(status == 0){
-			// print up to (not including) the first paren, the demangled name, then everything after the '+'
-			cerr << ptr[idx] << "(" << demangled_name << "+" << ptr[idx][plus_pos];
-			free(demangled_name);
-		}else{
-			cerr << ptr[idx] << "(" << ptr[idx] + (paren_pos+1) << "+" << ptr[idx] + (plus_pos+1);
+			// convert that plus sign to a NUL
+			ptr[idx][plus_pos] = '\0';
+
+			// great! now, we can get that string and demangle it
+			char* demangled_name = NULL;
+			int status;
+			size_t demangled_buflen;
+
+			demangled_name = abi::__cxa_demangle(ptr[idx] + (paren_pos + 1),
+					demangled_name, &demangled_buflen, &status);
+
+			if (status == 0) {
+				// print up to (not including) the first paren, the demangled name, then everything after the '+'
+				cerr << ptr[idx] << "(" << demangled_name << "+"
+						<< ptr[idx][plus_pos];
+				free(demangled_name);
+			} else {
+				cerr << ptr[idx] << "(" << ptr[idx] + (paren_pos + 1) << "+"
+						<< ptr[idx] + (plus_pos + 1);
+			}
+
+		} else {
+			cerr << ptr[idx];
 		}
 #else
 		cerr << ptr[idx];

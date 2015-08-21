@@ -76,8 +76,12 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 	// permutation matrix checking for colinearity
 	unsigned int n_colinear = MatrixUtils::checkColinear(&X, permu);
 
-	// If we have colinearity, find them
-	if(n_colinear > 0){
+	if(n_colinear == static_cast<unsigned int>(-1)){
+		// if # colinear columns is -1, then something BAD happened while checking
+		// for colinearity, set the errcode, please!
+		errcode |= GSL_EFAILED;
+	} else if(n_colinear > 0){
+		// If we have colinearity, find them
 		gsl_vector* idx_vec = gsl_vector_alloc(X.size2);
 		for(unsigned int i=0; i<idx_vec->size; i++){
 			gsl_vector_set(idx_vec, i, i);
@@ -99,40 +103,47 @@ Regression::Result* LinearRegression::calculate(const gsl_vector& Y, const gsl_m
 
 	// set A = X*P
 	gsl_matrix* A = gsl_matrix_alloc(X.size1, X.size2);
-	errcode |= gsl_matrix_memcpy(A, &X);
-	MatrixUtils::applyPermutation(A, permu);
-	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
 
-	// get a matrix view of the first n-#colinear columns
-	gsl_matrix_const_view A_v = gsl_matrix_const_submatrix(A, 0,0, X.size1, n_indep);
-	gsl_vector_view bv = gsl_vector_subvector(r->beta, 0, n_indep);
-
-	gsl_matrix_view cov_mat_view = gsl_matrix_submatrix(r->cov, 0, 0, n_indep, n_indep);
-
-	gsl_multifit_linear_workspace* ws = gsl_multifit_linear_alloc(X.size1, n_indep);
-
-	// run the regression now
-	errcode |= gsl_multifit_linear(&A_v.matrix, &Y, &bv.vector, &cov_mat_view.matrix, &chisq, ws);
-	// set the residuals here
-	if(errcode == GSL_SUCCESS){
-		r->resid = gsl_vector_alloc(A_v.matrix.size1);
-		errcode |= gsl_multifit_linear_residuals(&A_v.matrix, &Y, &bv.vector, r->resid);
+	if (errcode == GSL_SUCCESS){
+		errcode |= gsl_matrix_memcpy(A, &X);
+		errcode |= MatrixUtils::applyPermutation(A, permu);
 	}
 
-	// Note: to unpermute, multiply by P transpose!
-	// Also, we need to unpermute both the rows AND columns of cov_mat
-	// permute columns
-	MatrixUtils::applyInversePermutation(r->cov, permu, true);
-	// permute rows
-	MatrixUtils::applyInversePermutation(r->cov, permu, false);
+	if(errcode == GSL_SUCCESS){
 
-	errcode |= gsl_permute_vector_inverse(permu, r->beta);
+		// get a matrix view of the first n-#colinear columns
+		gsl_matrix_const_view A_v = gsl_matrix_const_submatrix(A, 0,0, X.size1, n_indep);
+		gsl_vector_view bv = gsl_vector_subvector(r->beta, 0, n_indep);
+
+		gsl_matrix_view cov_mat_view = gsl_matrix_submatrix(r->cov, 0, 0, n_indep, n_indep);
+
+		// run the regression now
+		gsl_multifit_linear_workspace* ws = gsl_multifit_linear_alloc(X.size1, n_indep);
+		errcode |= gsl_multifit_linear(&A_v.matrix, &Y, &bv.vector, &cov_mat_view.matrix, &chisq, ws);
+		gsl_multifit_linear_free(ws);
+
+		// set the residuals here
+		if(errcode == GSL_SUCCESS){
+			r->resid = gsl_vector_alloc(A_v.matrix.size1);
+			errcode |= gsl_multifit_linear_residuals(&A_v.matrix, &Y, &bv.vector, r->resid);
+		}
+	}
+
+
+	if(errcode == GSL_SUCCESS){
+		// Note: to unpermute, multiply by P transpose!
+		// Also, we need to unpermute both the rows AND columns of cov_mat
+		// permute columns
+		errcode |= MatrixUtils::applyInversePermutation(r->cov, permu, true);
+		// permute rows
+		errcode |=MatrixUtils::applyInversePermutation(r->cov, permu, false);
+		errcode |= gsl_permute_vector_inverse(permu, r->beta);
+	}
 
 	r->chisq = chisq;
 
 	// And free everything... no memory leaks please!!
 	gsl_matrix_free(A);
-	gsl_multifit_linear_free(ws);
 	gsl_permutation_free(permu);
 
 	if(errcode != GSL_SUCCESS){

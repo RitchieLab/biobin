@@ -54,15 +54,15 @@ public:
 	// gets a permutation matrix obtained by moving the columns identified
 	// by idx to the end.  We guarantee that the final idx.size() columns
 	// will be those identified by the indices in idx (in no particular order)
-	static void getPermuMatrix(const std::vector<unsigned int>& idx, gsl_matrix* &P);
+	static int getPermuMatrix(const std::vector<unsigned int>& idx, gsl_matrix* &P);
 
-	static void applyPermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol = true);
-	static void applyInversePermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol = true);
+	static int applyPermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol = true);
+	static int applyInversePermutation(gsl_matrix* mat, const gsl_permutation* permu, bool byCol = true);
 	static gsl_permutation* getPermutation(const std::vector<unsigned int>& idx_permu, unsigned int size);
 
 private:
-	static void getColinearSet(const gsl_matrix*, std::vector<unsigned int>&);
-	static void setPermutation(const std::vector<unsigned int>&, gsl_permutation* permu);
+	static int getColinearSet(const gsl_matrix*, std::vector<unsigned int>&);
+	static int setPermutation(const std::vector<unsigned int>&, gsl_permutation* permu);
 
 };
 

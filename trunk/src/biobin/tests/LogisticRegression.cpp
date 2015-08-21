@@ -150,6 +150,12 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	// First, let's check for colinearity!
 	gsl_permutation* permu = gsl_permutation_alloc(X.size2);
 	unsigned int n_drop = MatrixUtils::checkColinear(&X, permu);
+	if(n_drop == static_cast<unsigned int>(-1)){
+		// colinear checking went WAY wrong here, set the error code
+		errcode |= GSL_EFAILED;
+		n_drop = 0;
+	}
+
 	unsigned int n_indep = X.size2 - n_drop;
 
 	// Right-hand side of the IRLS equation.  Defined to be X*w_t + S_t^-1*(y-mu_t)
@@ -166,9 +172,10 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	// Let's permute the columns of A
 	errcode |= gsl_matrix_memcpy(A, &X);
-	MatrixUtils::applyPermutation(A, permu);
 
-	//gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &X, P, 0.0, A);
+	if(errcode == GSL_SUCCESS){
+		errcode |= MatrixUtils::applyPermutation(A, permu);
+	}
 
 	// this is the previous beta vector, for checking convergence
 	gsl_vector* b_prev = gsl_vector_alloc(n_indep);
@@ -252,25 +259,38 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 
 	} // complete iteration
 
+
 	// set the residuals here
 	r->resid = gsl_vector_alloc(X_v.matrix.size1);
 
-	// Let's get the value of the exponent for every person
-	// (we can re-use the rhs vector since we're done with it!)
-	errcode |= gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
-	for (unsigned int i = 0; i < Y.size; i++) {
+	if (errcode == GSL_SUCCESS) {
+		// Let's get the value of the exponent for every person
+		// (we can re-use the rhs vector since we're done with it!)
+		errcode |= gsl_blas_dgemv(CblasNoTrans, 1, &X_v.matrix, &b.vector, 0, rhs);
+		for (unsigned int i = 0; i < Y.size; i++) {
 
-		// calculate the value of the exponent for the individual
-		double v = gsl_vector_get(rhs, i);
+			// calculate the value of the exponent for the individual
+			double v = gsl_vector_get(rhs, i);
 
-		// At this point, v is the value of the exponent
-		array<double, 4> v_arr = linkFunction(v);
+			// At this point, v is the value of the exponent
+			array<double, 4> v_arr = linkFunction(v);
 
-		// and the residual is Y[i] - predicted_val[i], or Y[i] - v_arr[0]
-		gsl_vector_set(r->resid, i, gsl_vector_get(&Y,i) - v_arr[0]);
+			// and the residual is Y[i] - predicted_val[i], or Y[i] - v_arr[0]
+			gsl_vector_set(r->resid, i, gsl_vector_get(&Y, i) - v_arr[0]);
+		}
 	}
 
-	//gsl_multifit_linear_residuals(&X_v.matrix, rhs, &b.vector, r->resid);
+	// OK, now time to unpermute everything!
+	// Note: to unpermute, multiply by P transpose!
+	// Also, we need to unpermute both the rows AND columns of cov_mat
+	// permute columns
+
+	if(errcode == GSL_SUCCESS){
+		MatrixUtils::applyInversePermutation(r->cov, permu, true);
+		// permute rows
+		MatrixUtils::applyInversePermutation(r->cov, permu, false);
+		errcode |= gsl_permute_vector_inverse(permu, r->beta);
+	}
 
 	// nonconvergence happens if:
 	// -Log likelihood is not finite (inf or NaN)
@@ -290,17 +310,6 @@ Regression::Result* LogisticRegression::calculate(const gsl_vector& Y, const gsl
 	gsl_vector_free(rhs);
 	gsl_multifit_linear_free(ws);
 	gsl_matrix_free(A);
-
-	// OK, now time to unpermute everything!
-	// Note: to unpermute, multiply by P transpose!
-	// Also, we need to unpermute both the rows AND columns of cov_mat
-	// permute columns
-	MatrixUtils::applyInversePermutation(r->cov, permu, true);
-	// permute rows
-	MatrixUtils::applyInversePermutation(r->cov, permu, false);
-
-	gsl_permute_vector_inverse(permu, r->beta);
-
 	gsl_permutation_free(permu);
 
 	return r;
