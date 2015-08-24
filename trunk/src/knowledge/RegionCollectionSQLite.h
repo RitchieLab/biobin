@@ -6,7 +6,7 @@
  */
 
 #ifndef KNOWLEDGE_REGIONCOLLECTIONSQLITE_H
-#define KNOWLEDGE_REGIONCOLLECTIONSQLITE_H_
+#define KNOWLEDGE_REGIONCOLLECTIONSQLITE_H
 
 #include "RegionCollection.h"
 #include "InformationSQLite.h"
