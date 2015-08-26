@@ -13,6 +13,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/program_options.hpp>
 
 #include "Group.h"
 
@@ -226,12 +227,15 @@ private:
 	unsigned int initGroupFromArchive(const std::string& src_name, const std::vector<std::string>& split_line);
 };
 
-}
 
-namespace std{
-istream& operator>>(istream& in, Knowledge::GroupCollection::AmbiguityModel& model_out);
-ostream& operator<<(ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m);
+//namespace std{
+std::istream& operator>>(std::istream& in, GroupCollection::AmbiguityModel& model_out);
+std::ostream& operator<<(std::ostream& o, const GroupCollection::AmbiguityModel& m);
+//}
+
+
 }
+//void validate(boost::any& v, const std::vector<std::string>& values, Knowledge::GroupCollection::AmbiguityModel* m, int);
 
 
 #endif /* KNOWLEDGE_GROUPCOLLECTION_H */

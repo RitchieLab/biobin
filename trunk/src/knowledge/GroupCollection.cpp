@@ -197,11 +197,42 @@ uint GroupCollection::initGroupFromArchive(const string& src_name, const vector<
 	return _max_group;
 }
 
-}
+//}
 
-namespace std{
 
-istream& operator>>(istream& in,
+/*void validate(boost::any& v, const std::vector<std::string>& values, Knowledge::GroupCollection::AmbiguityModel* m, int){
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'a' was made.
+    validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const string& token = validators::get_single_string(values);
+
+    Knowledge::GroupCollection::AmbiguityModel model_out;
+
+    if (token.size() > 0) {
+		char s = token[0];
+		if (s == 's' || s == 'S') {
+			model_out = Knowledge::GroupCollection::STRICT;
+		} else if (s == 'r' || s == 'R') {
+			model_out = Knowledge::GroupCollection::RESOLVABLE;
+		} else if (s == 'p' || s == 'P') {
+			model_out = Knowledge::GroupCollection::PERMISSIVE;
+		} else {
+			throw validation_error(validation_error::invalid_option_value);
+		}
+	} else {
+		throw validation_error(validation_error::invalid_option_value);
+	}
+
+    v = boost::any(model_out);
+
+}*/
+
+//namespace std{
+
+std::istream& operator>>(std::istream& in,
 		Knowledge::GroupCollection::AmbiguityModel& model_out) {
 	string token;
 	in >> token;
@@ -222,7 +253,8 @@ istream& operator>>(istream& in,
 	//    else throw boost::program_options::validation_error("Invalid unit");
 	return in;
 }
-ostream& operator<<(ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m){
+
+std::ostream& operator<<(std::ostream& o, const Knowledge::GroupCollection::AmbiguityModel& m){
 	o << (const char*) m ;
 	return o;
 
