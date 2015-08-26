@@ -95,11 +95,12 @@ void Configuration::validate(boost::any& v, const std::vector<std::string>& valu
 	}
 }
 
-}
+//}
 
-namespace std{
-ostream& operator<<(ostream& o, const BioBin::Configuration::Bool& d);
-istream& operator>>(istream& in, BioBin::Configuration::Bool& d_out);
+//namespace std{
+std::ostream& operator<<(std::ostream& o, const Configuration::Bool& d);
+std::istream& operator>>(std::istream& in, Configuration::Bool& d_out);
+
 }
 
 

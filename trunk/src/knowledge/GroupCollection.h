@@ -13,7 +13,6 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <boost/program_options.hpp>
 
 #include "Group.h"
 
