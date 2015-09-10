@@ -336,10 +336,10 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	}
 }
 
-//}
+}
 
 
-//namespace std{
+namespace std{
 
 std::istream& operator>>(std::istream& in, BioBin::Configuration::Bool& d_out)
 {

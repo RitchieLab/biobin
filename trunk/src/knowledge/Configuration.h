@@ -92,8 +92,13 @@ void validate(boost::any& v,
     }
 }
 
+
+}
+
+namespace std{
+
 template <class T>
-std::ostream& operator<<(std::ostream& o, const Configuration::Container<T>& d){
+std::ostream& operator<<(std::ostream& o, const Knowledge::Configuration::Container<T>& d){
 	std::string sep = ",";
 	const std::vector<T>& data = (std::vector<T>) d ;
 	//vector<T>::const_iterator itr = data.begin();
@@ -109,7 +114,7 @@ std::ostream& operator<<(std::ostream& o, const Configuration::Container<T>& d){
 }
 
 template <class T>
-std::istream& operator>>(std::istream& in, Configuration::Container<T>& d_out){
+std::istream& operator>>(std::istream& in, Knowledge::Configuration::Container<T>& d_out){
 	std::string in_s;
 	in >> in_s;
 	// Now, split up the string
