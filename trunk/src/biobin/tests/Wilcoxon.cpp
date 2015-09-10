@@ -67,8 +67,7 @@ double Wilcoxon::runTest(const Bin& bin) const{
 		}
 
 		// If I'm here, then I need to take an average
-		double avg = (i-1)*i/2 - st*(st+1)/2;
-		avg /= (i-st);
+		double avg = (i-st+1)/2.0 + st;
 
 		for(unsigned int j=st; j<i; j++){
 			if(status.first[data[j].second]){
@@ -81,11 +80,11 @@ double Wilcoxon::runTest(const Bin& bin) const{
 	unsigned int m=status.first.count();
 	unsigned int n=status.second.count();
 
-	double denom = sqrt(m*n*(m+n+1)/12.0);
+	double denom = m*n*(m+n+1)/12.0;
 	double num = W - m*(m+n+1)/2.0;
 
 	double adj = 0;
-	for(unsigned int j=0; i<numtie.size(); i++){
+	for(unsigned int j=0; j<numtie.size(); j++){
 		adj+= (numtie[j]-1)*numtie[j]*(numtie[j]+1);
 	}
 	if(adj != 0){
@@ -93,7 +92,7 @@ double Wilcoxon::runTest(const Bin& bin) const{
 	}
 
 
-	double Z = num / denom;
+	double Z = num / sqrt(denom);
 
 	// now check the Z statistic, taking the area from the std normal
 	double pval;
