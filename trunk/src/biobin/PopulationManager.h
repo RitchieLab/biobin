@@ -434,8 +434,10 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 							}
 
 							if(call_list.size() != 2){
-								std::cerr << "WARNING: Non-diploid found on line " <<
+								if(!(call_list.size() == 1 && call_list[0] == ".")){
+									std::cerr << "WARNING: Non-diploid found on line " <<
 										lineno << ", setting to missing" << std::endl;
+								}
 								calls.push_back(std::make_pair(missing_geno, missing_geno));
 							} else {
 								unsigned short g1, g2;
