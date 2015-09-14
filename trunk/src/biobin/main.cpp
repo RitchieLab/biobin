@@ -147,16 +147,14 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 
 
 int main(int argc, char *argv[]) {
-	// first things first, let's set that GSL handler!
-	gsl_error_handler_t *old_handler = gsl_set_error_handler(&BioBin::Main::gsl_tracer);
-
 	std::string cfgFilename;
 
 	po::options_description cmd("General Options");
 	cmd.add_options()
 				("help,h","Display help message")
 				("version,v","Display version")
-				("sample-config,S", "Print a sample configuration to the screen");
+				("sample-config,S", "Print a sample configuration to the screen")
+				("no-gsl-bt", "Abort on GSL Errors; do not try to print backtrace");
 
 	Knowledge::Configuration::addCmdLine(BioBin::Configuration::addCmdLine(cmd));
 
@@ -237,6 +235,14 @@ int main(int argc, char *argv[]) {
 		return 3;
 	}
 
+	gsl_error_handler_t *old_handler = NULL;
+	if(!vm.count("no-gsl-bt")){
+		// first things first, let's set that GSL handler!
+		old_handler = gsl_set_error_handler(&BioBin::Main::gsl_tracer);
+
+	}
+
+
 	if(BioBin::BinApplication::s_run_normal){
 
 		// TODO: check for existence of the file here!
@@ -278,8 +284,10 @@ int main(int argc, char *argv[]) {
 
 	delete app;
 
-	// unset the GSL handler here, please!
-	gsl_set_error_handler(old_handler);
+	if(!vm.count("no-gsl-bt")){
+		// unset the GSL handler here, please!
+		gsl_set_error_handler(old_handler);
+	}
 
 	return 0;
 }
