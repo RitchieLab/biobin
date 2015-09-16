@@ -90,10 +90,15 @@ void RegionCollectionSQLite::loadFiles(){
 
 	sqlite3_exec(db, tmp_zone_sql.c_str(), NULL, NULL, NULL);
 
+	string gene_name="bioploymer";
+	if(_schema_vers >= 4){
+		gene_name="unit";
+	}
+
 	// Insert a phony record to set the autoincrement
 	string region_id_sql = "INSERT INTO " + _s_tmp_region_tbl + " "
 			"(region_id, label) "
-			"SELECT MAX(biopolymer_id), 'Fake' FROM biopolymer";
+			"SELECT MAX(" + gene_name + "_id), 'Fake' FROM " + gene_name;
 
 	sqlite3_exec(db, region_id_sql.c_str(), NULL, NULL, NULL);
 
@@ -275,13 +280,18 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 	loadFiles();
 
+	string gene_name = "biopolymer";
+	if(_schema_vers >= 4){
+		gene_name = "unit";
+	}
+
 	// First things first, get a list of all of the ids associated with aliases
 	unordered_set<uint> id_list(ids);
 	if (aliases.size() > 0){
 		stringstream alias_stream;
 		vector<string>::const_iterator a_itr = aliases.begin();
 
-		alias_stream << "SELECT biopolymer_id FROM biopolymer_name WHERE name IN ('"
+		alias_stream << "SELECT " << gene_name << "_id FROM " << gene_name << "_name WHERE name IN ('"
 				<< *a_itr << "'";
 
 		while(++a_itr != aliases.end()){
@@ -299,7 +309,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		stringstream id_stream;
 		unordered_set<uint>::const_iterator itr = id_list.begin();
 
-		id_stream << "biopolymer.biopolymer_id IN (" << *itr;
+		id_stream << gene_name << "." << gene_name << "_id IN (" << *itr;
 		while(++itr != id_list.end()){
 			id_stream << "," << *itr;
 		}
@@ -307,33 +317,52 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 		where_clause += id_stream.str();
 	}
 
-	string command = "SELECT biopolymer.biopolymer_id, biopolymer.label "
-			"FROM biopolymer_zone "
-			"INNER JOIN biopolymer_region USING (biopolymer_id, chr) "
-			"INNER JOIN biopolymer USING (biopolymer_id) ";
+	string command;
 
-	where_clause += "biopolymer_zone.chr=:chrom AND biopolymer_region.ldprofile_id IN (:pop_id, :def_pop_id) "
-			"AND zone=:pos_zone AND biopolymer_region.posMin<=:pos AND biopolymer_region.posMax>=:pos ";
+	if(_schema_vers >= 4){
+		command = "SELECT unit.unit_id, unit.label "
+				"FROM region_zone "
+				"JOIN region ON region.region_id = region_zone.region_id "
+				"JOIN unit_region ON unit_region.region_id = region.region_id "
+				"JOIN unit ON unit.unit_id = unit_region.unit_id ";
 
-	string src_str = _info->getSourceList();
-	if(src_str.size()){
-		where_clause += "AND biopolymer.source_id IN " + src_str;
+		where_clause += "region_zone.chr=:chrom AND region_zone.zone=:pos_zone "
+				"AND region.chr=:chrom AND region.posMin<=:pos  AND region.posMax>=:pos";
+
+	} else {
+
+		command = "SELECT biopolymer.biopolymer_id, biopolymer.label "
+				"FROM biopolymer_zone "
+				"INNER JOIN biopolymer_region USING (biopolymer_id, chr) "
+				"INNER JOIN biopolymer USING (biopolymer_id) ";
+
+		where_clause += "biopolymer_zone.chr=:chrom AND biopolymer_region.ldprofile_id IN (:pop_id, :def_pop_id) "
+				"AND zone=:pos_zone AND biopolymer_region.posMin<=:pos AND biopolymer_region.posMax>=:pos ";
+
+		string src_str = _info->getSourceList();
+		if(src_str.size()){
+			where_clause += "AND biopolymer.source_id IN " + src_str;
+		}
+
 	}
-
 	string stmt = command + where_clause;
 
 	sqlite3_stmt* region_stmt;
 
 	sqlite3_prepare_v2(db, stmt.c_str(), -1, &region_stmt, NULL);
 
-	int pop_idx = sqlite3_bind_parameter_index(region_stmt, ":pop_id");
-	int def_pop_idx = sqlite3_bind_parameter_index(region_stmt, ":def_pop_id");
+	// LOKI populations are a 2.0 artifact
+	if(_schema_vers < 4){
+		int pop_idx = sqlite3_bind_parameter_index(region_stmt, ":pop_id");
+		int def_pop_idx = sqlite3_bind_parameter_index(region_stmt, ":def_pop_id");
+		sqlite3_bind_int(region_stmt, pop_idx, _popID);
+		sqlite3_bind_int(region_stmt, def_pop_idx, _def_id);
+	}
+
 	int chr_idx = sqlite3_bind_parameter_index(region_stmt, ":chrom");
 	int pos_zone_idx = sqlite3_bind_parameter_index(region_stmt, ":pos_zone");
 	int pos_idx = sqlite3_bind_parameter_index(region_stmt, ":pos");
 
-	sqlite3_bind_int(region_stmt, pop_idx, _popID);
-	sqlite3_bind_int(region_stmt, def_pop_idx, _def_id);
 
 	sqlite3_stmt* tmp_region_stmt;
 
@@ -395,22 +424,37 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 void RegionCollectionSQLite::prepareStmts(){
 
+	_schema_vers = _info->getSchema();
+
+	if(_schema_vers == 0){
+		std::cerr << "WARNING: Unknown LOKI schema, assuming LOKI 2.0" << std::endl;
+	}
+
 	string region_alias_sql = "SELECT name "
 			"FROM biopolymer_name WHERE biopolymer_id=?";
+	string region_bound_sql = "SELECT ldprofile_id, chr, posMin, posMax "
+				"FROM biopolymer_region "
+				"WHERE biopolymer_id=? AND ldprofile_id IN (?, ?)";
+
+	if(_schema_vers >= 4){
+		region_alias_sql = "SELECT name FROM unit_name WHERE unit_id=?";
+
+		region_bound_sql = "SELECT 0, chr, posMin, posMax "
+						"FROM unit_region "
+						"WHERE unit_id=?";
+
+	}
 
 	sqlite3_prepare_v2(db, region_alias_sql.c_str(), -1, &_region_name_stmt, NULL);
-
-	string region_bound_sql = "SELECT ldprofile_id, chr, posMin, posMax "
-			"FROM biopolymer_region "
-			"WHERE biopolymer_id=? AND ldprofile_id IN (?, ?)";
-
 	sqlite3_prepare_v2(db, region_bound_sql.c_str(), -1, &_region_bound_stmt, NULL);
 
-	_popID = _info->getPopulationID(pop_str);
-	_def_id = _info->getPopulationID("");
+	if(_schema_vers < 4){
+		_popID = _info->getPopulationID(pop_str);
+		_def_id = _info->getPopulationID("");
 
-	sqlite3_bind_int(_region_bound_stmt, 2, _popID);
-	sqlite3_bind_int(_region_bound_stmt, 3, _def_id);
+		sqlite3_bind_int(_region_bound_stmt, 2, _popID);
+		sqlite3_bind_int(_region_bound_stmt, 3, _def_id);
+	}
 
 }
 

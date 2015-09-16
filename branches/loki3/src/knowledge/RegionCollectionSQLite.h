@@ -81,6 +81,7 @@ private:
 
 	int _popID;
 	int _def_id;
+	int _schema_vers;
 
 	static std::string _s_tmp_region_tbl;
 	static std::string _s_tmp_zone_tbl;

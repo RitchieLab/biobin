@@ -67,26 +67,32 @@ InformationSQLite::~InformationSQLite(){
 	}
 }
 
-int InformationSQLite::getPopulationID(const string& pop_str){
-	string queryStr = string("SELECT ldprofile_id FROM ldprofile "
-			"WHERE ldprofile='") + pop_str + string("'");
+int InformationSQLite::getPopulationID(const string& pop_str) const {
 
-	string result;
-	int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
-			&result, NULL);
-
-	if (err_code != 0){
+	if(getSchema() < 4){
 		string queryStr = string("SELECT ldprofile_id FROM ldprofile "
-				"WHERE ldprofile=''");
-		if(sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery, &result, NULL)){
-			//NOTE: I should never get here in a properly formatted LOKI 2.0 database!
-			return 1;
+				"WHERE ldprofile='") + pop_str + string("'");
+
+		string result;
+		int err_code = sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery,
+				&result, NULL);
+
+		if (err_code != 0){
+			string queryStr = string("SELECT ldprofile_id FROM ldprofile "
+					"WHERE ldprofile=''");
+			if(sqlite3_exec(_db, queryStr.c_str(), parseSingleStringQuery, &result, NULL)){
+				//NOTE: I should never get here in a properly formatted LOKI 2.0 database!
+				return 1;
+			}
 		}
+		return atoi(result.c_str());
+	} else {
+		std::cerr << "WARNING: No populations in LOKI v3+" << std::endl;
+		return 0;
 	}
-	return atoi(result.c_str());
 }
 
-int InformationSQLite::getZoneSize(){
+int InformationSQLite::getZoneSize() const{
 
 	// default is 100K
 	int zone_size = 100000;
@@ -97,8 +103,16 @@ int InformationSQLite::getZoneSize(){
 	return zone_size;
 }
 
+int InformationSQLite::getSchemaDB() const{
+	int schema_vers = 0;
+	string schema_sql = "SELECT value FROM setting WHERE setting='schema';";
+	sqlite3_exec(_db, schema_sql.c_str(), parseSingleIntQuery, &schema_vers, NULL);
+
+	return schema_vers;
+}
+
 void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
-		map<int, string>& group_types_out){
+		map<int, string>& group_types_out) const{
 	string query_str = string("SELECT source_id, source FROM source");
 
 	if (type_ids.size() != 0){
@@ -204,14 +218,18 @@ float InformationSQLite::getSNPWeight(const Locus& loc, const Region* const reg)
 
 }
 
-void InformationSQLite::printPopulations(ostream& os){
-	string pop_sql = "SELECT ldprofile, comment FROM ldprofile";
+void InformationSQLite::printPopulations(ostream& os) const{
+	if(getSchema() < 4){
+		string pop_sql = "SELECT ldprofile, comment FROM ldprofile";
 
-	os << "Population\tComment\n";
-	sqlite3_exec(_db, pop_sql.c_str(), printQueryResult, &os, NULL);
+		os << "Population\tComment\n";
+		sqlite3_exec(_db, pop_sql.c_str(), printQueryResult, &os, NULL);
+	} else {
+		os << "WARNING: Populations are not supported in LOKI v3+" << std::endl;
+	}
 }
 
-void InformationSQLite::printSources(ostream& os){
+void InformationSQLite::printSources(ostream& os) const{
 	string src_sql = "SELECT source FROM source";
 
 	os << "Source Name\n";
@@ -769,7 +787,7 @@ void InformationSQLite::prepRoleStmt(){
 
 }
 
-const set<unsigned int>& InformationSQLite::getSourceIds(){
+const set<unsigned int>& InformationSQLite::getSourceIds() const{
 	if(_s_source_ids.size() == 0){
 
 		vector<int> query_results;

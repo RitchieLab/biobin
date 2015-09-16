@@ -45,21 +45,24 @@ public:
 	 */
 	InformationSQLite(sqlite3* db);
 
-	virtual int getPopulationID(const std::string& pop_str);
+	virtual int getPopulationID(const std::string& pop_str) const;
 	virtual void getGroupTypes(const std::set<unsigned int>& type_ids,
-			std::map<int, std::string>& group_types_out);
-	virtual int getZoneSize();
+			std::map<int, std::string>& group_types_out) const;
+	virtual int getZoneSize() const;
 
 	virtual unsigned long getSNPRole(const Locus& loc, const Region& reg) const;
 	virtual float getSNPWeight(const Locus& loc, const Region* const reg) const;
 
-	virtual void printPopulations(std::ostream& os);
-	virtual void printSources(std::ostream& os);
+	virtual void printPopulations(std::ostream& os) const;
+	virtual void printSources(std::ostream& os) const;
 
 	virtual void loadRoles(const RegionCollection& reg);
 	virtual void loadWeights(const RegionCollection& reg);
 
-	virtual const std::set<unsigned int>& getSourceIds();
+	virtual const std::set<unsigned int>& getSourceIds() const;
+
+protected:
+	virtual int getSchemaDB() const;
 
 private:
 	void prepRoleStmt();

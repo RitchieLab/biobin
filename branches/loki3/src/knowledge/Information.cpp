@@ -8,6 +8,7 @@
 #include "Information.h"
 
 #include <sstream>
+#include <iostream>
 
 using std::stringstream;
 using std::ostream;
@@ -34,7 +35,7 @@ vector<string> Information::c_source_exclude;
 vector<string> Information::c_weight_files;
 set<unsigned int> Information::_s_source_ids;
 
-string Information::getSourceList(){
+string Information::getSourceList() const{
 	string ret_val = "";
 	//if(c_source_names.size() > 0){
 		const set<unsigned int>& id_set = getSourceIds();
@@ -53,6 +54,17 @@ string Information::getSourceList(){
 	//}
 
 	return ret_val;
+}
+
+int Information::getSchema() const{
+	if(_schema_cache == -1){
+		_schema_cache = getSchemaDB();
+		if(_schema_cache < 2 || _schema_cache > 4){
+			std::cerr << "WARNING: Unrecognized schema found; results may be unreliable" << std::endl;
+		}
+	}
+
+	return _schema_cache;
 }
 
 }

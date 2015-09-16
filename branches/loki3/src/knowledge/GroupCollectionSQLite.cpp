@@ -142,11 +142,16 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 		ambig = " AND (quality >= 100 OR implication >= 100) ";
 	}
 
-	string group_cmd = "SELECT group_id, label, description, source "
-			"FROM group_biopolymer "
+	string gene_name = "biopolymer";
+
+	if(_info->getSchema() >= 4){
+		gene_name = "unit";
+	}
+
+	string group_cmd = "SELECT group_id, label, description, source FROM group_" + gene_name +
 			"INNER JOIN 'group' USING (group_id) "
 			"INNER JOIN source ON 'group'.source_id=source.source_id "
-			"WHERE group_biopolymer.biopolymer_id=:region_id " + ambig + src_str.str();
+			"WHERE group_" + gene_name + "." + gene_name + "_id=:region_id " + ambig + src_str.str();
 
 	sqlite3_stmt* group_stmt;
 	sqlite3_prepare_v2(_db, group_cmd.c_str(), -1, &group_stmt, NULL);

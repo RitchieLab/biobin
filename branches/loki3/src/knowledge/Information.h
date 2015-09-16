@@ -93,6 +93,8 @@ public:
 	static const snp_role REGULATORY;
 	static const snp_role OTHER;
 
+	Information() : _schema_cache(-1) {};
+
 	/*!
 	 * Destroys the Information object
 	 */
@@ -107,7 +109,7 @@ public:
 	 *
 	 * \return The integer index of the given population, or 0 if not found.
 	 */
-	virtual int getPopulationID(const std::string& pop_str) = 0;
+	virtual int getPopulationID(const std::string& pop_str) const = 0;
 
 	/*!
 	 * \brief Gets the names of the sources for the given IDs
@@ -118,14 +120,20 @@ public:
 	 * \param[out] type_names_out A mapping of ID->source name
 	 */
 	virtual void getGroupTypes(const std::set<unsigned int>& group_ids,
-			std::map<int, std::string>& type_names_out) = 0;
+			std::map<int, std::string>& type_names_out) const = 0;
 
 	/*!
 	 * \brief Gets the zone size.
 	 * Queries the database and returns the size of the zones used in building
 	 * the region_zone table.
 	 */
-	virtual int getZoneSize() = 0;
+	virtual int getZoneSize() const = 0;
+
+	/*!
+	 * \brief Gets the schema version.
+	 * Queries the database and returns the schema version in use by LOKI
+	 */
+	int getSchema() const;
 
 	/*!
 	 * \brief Returns a SNP's role.
@@ -159,7 +167,7 @@ public:
 	 *
 	 * \param os The output stream to print to.
 	 */
-	virtual void printPopulations(std::ostream& os) = 0;
+	virtual void printPopulations(std::ostream& os) const = 0;
 
 	/*!
 	 * \brief Prints a list of all of the available sources
@@ -167,7 +175,7 @@ public:
 	 *
 	 * \param os The output stream to print to.
 	 */
-	virtual void printSources(std::ostream& os) = 0;
+	virtual void printSources(std::ostream& os) const = 0;
 
 	/*!
 	 * \brief Returns a vector of the source IDs from the DB
@@ -177,7 +185,7 @@ public:
 	 *
 	 * \return A list of the numerical IDs of the sources
 	 */
-	virtual const std::set<unsigned int>& getSourceIds() = 0;
+	virtual const std::set<unsigned int>& getSourceIds() const = 0;
 
 	/*
 	 * Load the roles from the files given in the c_role_files member
@@ -193,7 +201,7 @@ public:
 	 * \brief Returns a string of IDs compatible with a "where" clause.
 	 * Returns a string of IDs
 	 */
-	std::string getSourceList();
+	std::string getSourceList() const ;
 
 	/*!
 	 * \brief Clears the role cache.
@@ -207,7 +215,11 @@ public:
 	static std::vector<std::string> c_weight_files;
 
 protected:
+
+	virtual int getSchemaDB() const = 0;
+
 	static std::set<unsigned int> _s_source_ids;
+	mutable int _schema_cache;
 
 	// Allows children to create SNP roles
 	static Information::snp_role getRole(const std::string& role){ return snp_role(role);}
