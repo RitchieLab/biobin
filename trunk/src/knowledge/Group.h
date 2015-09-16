@@ -50,6 +50,8 @@ public:
 	 */
 	Group(uint id, const std::string& name, const std::string& desc = "");
 
+	~Group();
+
 	/*!
 	 * \brief Adds children groups.
 	 * Adds a set of children groups through the use of an iterator.  The
@@ -67,6 +69,14 @@ public:
 	 * \param child The Group to add as a child.
 	 */
 	void addChild(Group& child) {_children.insert(&child); child.addParent(*this);}
+
+	/*!
+	 * \brief Gives the size of a group.
+	 * Returns the current size of the group, defined to be the number of regions
+	 *
+	 * \return the size of the region set
+	 */
+	unsigned int size() const { return _regions.size(); }
 
 	/*!
 	 * \brief Adds a collection of Regions.

@@ -171,7 +171,7 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 				}
 				gp->addRegion(**r_itr);
 				(*r_itr)->addGroup(*gp);
-				_group_associations[group_id].insert(*r_itr);
+				//_group_associations[group_id].insert(*r_itr);
 			}
 		}
 		sqlite3_reset(group_stmt);
@@ -204,7 +204,7 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 					parent = _group_map[parent_id];
 				}
 				parent->addChild(*_group_map[child_groups.front()]);
-				_group_relationships[parent_id].insert(child_groups.front());
+				//_group_relationships[parent_id].insert(child_groups.front());
 			}
 		}
 		sqlite3_reset(parent_stmt);
@@ -212,6 +212,9 @@ void GroupCollectionSQLite::Load(const vector<string>& group_names,
 	}
 
 	sqlite3_finalize(parent_stmt);
+
+	// get rid of "too big to fail" groups
+	pruneGroups();
 }
 
 uint GroupCollectionSQLite::getMaxGroup() {

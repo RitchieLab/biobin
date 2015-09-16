@@ -37,6 +37,7 @@ vector<string> GroupCollection::c_group_names;
 unordered_set<uint> GroupCollection::c_id_list;
 Group GroupCollection::_group_not_found(-1, "Not found", "");
 GroupCollection::AmbiguityModel GroupCollection::c_ambiguity(GroupCollection::PERMISSIVE);
+unsigned int GroupCollection::c_max_group_size = 0;
 
 GroupCollection::GroupCollection(RegionCollection& reg) : _max_group(0), _regions(reg) {}
 
@@ -65,9 +66,7 @@ void GroupCollection::addRelationship(uint parent_id, uint child_id){
 	unordered_map<uint, Group*>::iterator child_itr = _group_map.find(child_id);
 	unordered_map<uint, Group*>::const_iterator end = _group_map.end();
 	if (parent_itr != end && child_itr != end){
-		_group_relationships[parent_id].insert(child_id);
 		parent_itr->second->addChild(*(child_itr->second));
-		//child_itr->second->addParent(*(parent_itr->second));
 	}
 }
 
@@ -78,7 +77,6 @@ void GroupCollection::addAssociation(uint group_id, uint region_id){
 		if (_regions.isValid(child)){
 			itr->second->addRegion(child);
 			child.addGroup(*(itr->second));
-			_group_associations[group_id].insert(&child);
 		}
 	}
 }
@@ -111,6 +109,21 @@ void GroupCollection::Load(const vector<string>& group_names){
 void GroupCollection::Load(){
 	vector<string> empty_set;
 	Load(empty_set);
+}
+
+void GroupCollection::pruneGroups(){
+	if(c_max_group_size > 0){
+		for(unordered_map<unsigned int, Group*>::iterator mi=_group_map.begin(); mi!=_group_map.end(); ){
+			if((*mi).second->size() > c_max_group_size){
+				// if the group is too big, get rid of it!
+				// (NOTE: dangling pointers handled in destructor of Group object)
+				delete (*mi).second;
+				mi = _group_map.erase(mi);
+			} else {
+				++mi;
+			}
+		}
+	}
 }
 
 void GroupCollection::LoadArchive(const string& filename, vector<string>& unmatched_aliases){

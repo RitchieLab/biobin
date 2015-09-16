@@ -55,6 +55,8 @@ void Configuration::initGeneric(){
 					"A list of region (gene) names to include")
 			("include-region-file", value<Container<string> >()->composing(),
 					"A file containing region (gene) names to include")
+			("max-group-size", value<unsigned int>(&GroupCollection::c_max_group_size)->default_value(0),
+					"Maximum number of regions in any group")
 			("population,P", value<string>(&RegionCollection::pop_str)->default_value(""),
 					"The population to base the gene boundaries on")
 			("region-boundary-extension,B", value<int>(&RegionCollection::gene_expansion)->default_value(0),

@@ -159,6 +159,11 @@ public:
 	void addGroup(Group& container);
 
 	/*!
+	 * Remove a group from the region (to be used when deleting a group)
+	 */
+	void removeGroup(Group& container);
+
+	/*!
 	 * \brief A mass association of Groups of a single type with this region.
 	 * Adds a whole lot of Groups (using iterators) with this region.  The
 	 * iterators again must be forward traversal iterators, which when

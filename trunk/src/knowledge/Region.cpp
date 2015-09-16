@@ -43,6 +43,10 @@ void Region::addGroup(Group& container){
 	_group_set.insert(&container);
 }
 
+void Region::removeGroup(Group& container){
+	_group_set.erase(&container);
+}
+
 string Region::getAliasString(const string& sep) const{
 	deque<string>::const_iterator itr = _aliases.begin();
 

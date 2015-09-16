@@ -181,6 +181,8 @@ public:
 	static boost::unordered_set<unsigned int> c_id_list;
 	//! The ambiguity setting to use
 	static AmbiguityModel c_ambiguity;
+	//! Maximum size of any group
+	static unsigned int c_max_group_size;
 
 protected:
 	/*!
@@ -205,14 +207,20 @@ protected:
 	 */
 	virtual unsigned int getMaxGroup() = 0;
 
+	/*!
+	 * \brief Removes groups deemed "too large"
+	 * Deletes any group that is "too large" in terms of
+	 */
+	void pruneGroups();
+
 	//! The maximum group number (for loading from archive)
 	unsigned int _max_group;
 	//! Mapping of ids -> Groups
 	boost::unordered_map<unsigned int, Group*> _group_map;
 	//! mapping of parent->child relationships
-	boost::unordered_map<unsigned int, boost::unordered_set<unsigned int> > _group_relationships;
+	//boost::unordered_map<unsigned int, boost::unordered_set<unsigned int> > _group_relationships;
 	//! mapping of group->region relationships
-	boost::unordered_map<unsigned int, boost::unordered_set<Region*> > _group_associations;
+	//boost::unordered_map<unsigned int, boost::unordered_set<Region*> > _group_associations;
 
 	RegionCollection& _regions;
 
