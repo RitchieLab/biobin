@@ -153,30 +153,45 @@ double SKATLogistic::runTest(const Bin& bin) const{
 
 	// Now, calculate (GW) * (GW)^T - (GW)^T * X * (X^T * X)^(-1) * X^T * (GW)
 	gsl_matrix* tmp_ss = gsl_matrix_calloc(GW->size2, GW->size2);
-	gsl_matrix* tmp_vs = gsl_matrix_calloc(X_v.matrix.size2, GW->size2);
-	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2, X_v.matrix.size2);
+	if(tmp_ss == 0){
+		// out of memory
+		gsl_matrix_free(GW);
+		return 11;
+	}
+
+	gsl_matrix* tmp_vs = gsl_matrix_calloc(X_v.matrix.size2,GW->size2);
+	if(tmp_vs == 0){
+		// out of memory
+		gsl_matrix_free(tmp_ss);
+		gsl_matrix_free(GW);
+		return 12;
+	}
+	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2,X_v.matrix.size2);
+	if(tmp_ss == 0){
+		// out of memory
+		gsl_matrix_free(tmp_ss);
+		gsl_matrix_free(tmp_vs);
+		gsl_matrix_free(GW);
+		return 13;
+	}
 
 	// First, set Z = Z * pi_1 (or in our parlance GW_w = GW * _resid_wt)
 	// We do this by scaling each row appropriately
 	gsl_matrix* GW_w = gsl_matrix_alloc(GW->size1, GW->size2);
+	if(GW_w == 0){
+		// out of memory
+		gsl_matrix_free(tmp_sv);
+		gsl_matrix_free(tmp_ss);
+		gsl_matrix_free(tmp_vs);
+		gsl_matrix_free(GW);
+		return 14;
+	}
+
 	errcode |= gsl_matrix_memcpy(GW_w, GW);
 	for(unsigned int i=0; i<GW->size1; i++){
 		gsl_vector_view GW_row = gsl_matrix_row(GW_w, i);
 		errcode |= gsl_vector_scale(&GW_row.vector, gsl_vector_get(_resid_wt, i));
 	}
-
-	/*
-	gsl_vector* gw_norm = gsl_vector_alloc(GW->size2);
-	for (unsigned int i=0; i<GW->size2; i++){
-		gsl_vector_const_view GW_col = gsl_matrix_const_column(GW, i);
-		gsl_vector_set(gw_norm, i, gsl_blas_dnrm2(&GW_col.vector));
-	}
-	gsl_vector* gww_norm = gsl_vector_alloc(GW->size1);
-	for (unsigned int i=0; i<GW->size2; i++){
-		gsl_vector_const_view GW_col = gsl_matrix_const_column(GW_w, i);
-		gsl_vector_set(gww_norm, i, gsl_blas_dnrm2(&GW_col.vector));
-	}
-	*/
 
 	// 1st lets get Z^T*Z
 	errcode |= gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1, GW, GW_w, 0, tmp_ss);
@@ -200,6 +215,11 @@ double SKATLogistic::runTest(const Bin& bin) const{
 	// now, tmp_ss = tmp_ss - tmp_sv * tmp_vs
 	errcode |= gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, -1, tmp_sv, tmp_vs, 1, tmp_ss);
 
+	gsl_matrix_free(tmp_sv);
+	gsl_matrix_free(tmp_vs);
+	gsl_matrix_free(GW);
+	gsl_matrix_free(GW_w);
+
 	double pval;
 	if(errcode == GSL_SUCCESS){
 		// get the p-value from tmp_ss and the Q statistic
@@ -207,11 +227,6 @@ double SKATLogistic::runTest(const Bin& bin) const{
 	} else {
 		pval = 10;
 	}
-
-	gsl_matrix_free(tmp_sv);
-	gsl_matrix_free(tmp_vs);
-	gsl_matrix_free(GW);
-	gsl_matrix_free(GW_w);
 
 	gsl_matrix_free(tmp_ss);
 

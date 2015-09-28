@@ -134,8 +134,27 @@ double SKATLinear::runTest(const Bin& bin) const{
 	// Now, calculate (GW) * (GW)^T - (GW)^T * X * (X^T * X)^(-1) * X^T * (GW)
 	// or, written another way,
 	gsl_matrix* tmp_ss = gsl_matrix_calloc(GW->size2, GW->size2);
+	if(tmp_ss == 0){
+		// out of memory
+		gsl_matrix_free(GW);
+		return 11;
+	}
+
 	gsl_matrix* tmp_vs = gsl_matrix_calloc(X_v.matrix.size2,GW->size2);
+	if(tmp_vs == 0){
+		// out of memory
+		gsl_matrix_free(tmp_ss);
+		gsl_matrix_free(GW);
+		return 12;
+	}
 	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2,X_v.matrix.size2);
+	if(tmp_ss == 0){
+		// out of memory
+		gsl_matrix_free(tmp_ss);
+		gsl_matrix_free(tmp_vs);
+		gsl_matrix_free(GW);
+		return 13;
+	}
 
 	// 1st lets get Z^T*Z
 	errcode |= gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, GW, GW, 0, tmp_ss);

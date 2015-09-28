@@ -40,7 +40,22 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 	unsigned int n_row = name_pos.size();
 
 	gsl_matrix* geno_tmp = gsl_matrix_alloc(n_row, n_col);
+
+	if(geno_tmp ==NULL){
+		// not enough memory!
+		geno = NULL;
+		return 0;
+	}
+
 	gsl_vector* wt_tmp = gsl_vector_alloc(n_col);
+	if(wt_tmp == NULL){
+		// not enough memory!
+		geno = NULL;
+		gsl_matrix_free(geno_tmp);
+		return 0;
+	}
+
+
 
 	// get the average genotype (respecting the encoding)
 	vector<double> avg_geno;
@@ -120,6 +135,13 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 			geno_tmp->size1, geno_tmp->size2 - bad_idx.size());
 
 		geno = gsl_matrix_alloc(n_row, n_col - bad_idx.size());
+		if(geno == NULL){
+			// Not enough memory!!
+			geno = 0;
+			gsl_matrix_free(geno_tmp);
+			gsl_vector_free(wt_tmp);
+			return 0;
+		}
 		gsl_matrix_memcpy(geno, &G_v.matrix);
 		gsl_matrix_free(geno_tmp);
 

@@ -120,7 +120,7 @@ void Main::gsl_tracer(const char* reason, const char* filename, int line, int gs
 			if (status == 0) {
 				// print up to (not including) the first paren, the demangled name, then everything after the '+'
 				cerr << ptr[idx] << "(" << demangled_name << "+"
-						<< ptr[idx][plus_pos];
+						<< ptr[idx] + (plus_pos+1);
 				free(demangled_name);
 			} else {
 				cerr << ptr[idx] << "(" << ptr[idx] + (paren_pos + 1) << "+"
