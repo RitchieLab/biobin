@@ -320,7 +320,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 	string command;
 
 	if(_schema_vers >= 4){
-		command = "SELECT unit.unit_id, unit.label "
+		command = "SELECT DISTINCT unit.unit_id, unit.label "
 				"FROM region_zone "
 				"JOIN region ON region.region_id = region_zone.region_id "
 				"JOIN unit_region ON unit_region.region_id = region.region_id "
@@ -331,7 +331,7 @@ uint RegionCollectionSQLite::Load(const unordered_set<uint>& ids,
 
 	} else {
 
-		command = "SELECT biopolymer.biopolymer_id, biopolymer.label "
+		command = "SELECT DISTINCT biopolymer.biopolymer_id, biopolymer.label "
 				"FROM biopolymer_zone "
 				"INNER JOIN biopolymer_region USING (biopolymer_id, chr) "
 				"INNER JOIN biopolymer USING (biopolymer_id) ";
