@@ -57,6 +57,8 @@ public:
 
 	static Test* create(){return new T();}
 
+	virtual Test* clone() const {return new T();}
+
 	virtual const std::string& getName() const {return _name;}
 
 protected:
