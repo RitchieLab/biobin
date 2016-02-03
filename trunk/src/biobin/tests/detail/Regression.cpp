@@ -55,6 +55,8 @@ void Regression::regressionSetup(const PopulationManager& pop_mgr, const Phenoty
 		float status=getPhenotype(pop_mgr, pheno, *si);
 		const vector<float>& covars(pop_mgr.getCovariates(*si));
 
+		missing |= (covars.size() != pop_mgr.getNumCovars());
+
 		// Note the empty loop here; the exit statement will exit iff we get to
 		// the end of the covariates OR we see a missing value (ie nan).  If we
 		// see a missing value, missing will be TRUE
