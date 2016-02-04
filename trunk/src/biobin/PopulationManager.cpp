@@ -327,6 +327,7 @@ void PopulationManager::parseTraitFile(const string& filename,
 	vector<string> result;
 	int line_no = 0;
 	bool header_read = false;
+	int n_bad_samp = 0;
 	while(data_file.good()){
 		getline(data_file, line);
 		++line_no;
@@ -346,8 +347,9 @@ void PopulationManager::parseTraitFile(const string& filename,
 				// if we haven't read the header, just assign arbitrary phenotype names
 				if(!header_read){
 					if(result.size() > 2){
-						std::cerr << "WARNING: No header given for multiple traits, "
-								<< "assigning sequential names" << std::endl;
+						std::cerr << "WARNING: No header given for multiple traits in "
+								<< filename << ", assigning sequential names"
+								<< std::endl;
 						if(result.size() ==2){
 							names_out.push_back(var_prefix);
 						} else{
@@ -365,7 +367,7 @@ void PopulationManager::parseTraitFile(const string& filename,
 					std::cerr << "WARNING: improperly formatted trait file " << filename
 							  << " on line " << line_no << ", ignoring." << std::endl;
 				}else if (_positions.find(result[0]) == _positions.end()){
-						std::cerr << "WARNING: cannot find " << result[0] << " in VCF file." << std::endl;
+						++n_bad_samp;
 				} else {
 					vals_out[result[0]].reserve(names_out.size());
 					for(unsigned int i=1; i<result.size(); i++){
@@ -380,6 +382,11 @@ void PopulationManager::parseTraitFile(const string& filename,
 			}
 			header_read = true;
 		}
+	}
+
+	if(n_bad_samp){
+		std::cerr << "WARNING: Could not find " << n_bad_samp << " samples from "
+				  << filename << " in VCF file." << std::endl;
 	}
 
 	unsigned int n_del = 0;
