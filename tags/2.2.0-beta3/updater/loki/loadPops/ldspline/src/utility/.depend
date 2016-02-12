@@ -1,0 +1,17 @@
+application.o: application.cpp application.h types.h basiclog.h
+basiclog.o: basiclog.cpp basiclog.h types.h
+binarrayparser.o: binarrayparser.cpp binarrayparser.h
+configurationparser.o: configurationparser.cpp configurationparser.h \
+  lineparser.h types.h strings.h
+executionlog.o: executionlog.cpp executionlog.h types.h exception.h \
+  strings.h
+filebuffer.o: filebuffer.cpp filebuffer.h
+genolookup.o: genolookup.cpp genolookup.h typelookup.h types.h
+genobplookup.o: genobplookup.cpp genobplookup.h genolookup.h typelookup.h \
+  types.h
+generatereport.o: generatereport.cpp generatereport.h
+genotypeparser.o: genotypeparser.cpp genotypeparser.h
+lineparser.o: lineparser.cpp lineparser.h types.h strings.h exception.h
+strings.o: strings.cpp strings.h types.h exception.h
+typelookup.o: typelookup.cpp typelookup.h
+types.o: types.cpp types.h

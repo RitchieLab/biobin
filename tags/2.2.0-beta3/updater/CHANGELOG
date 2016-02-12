@@ -1,0 +1,44 @@
+CHANGELOG
+
+2.2.2 (TBD)
+- added support for headers in HTTP download requests
+- added special namespace '*', equivalent to '', to lookup by any namespace
+
+2.2.1 (2014-06-27)
+- fixed a bug in liftOver when the input start position was inside a gap
+- fixed a bug in the coordinate normalization of the chainfiles loader
+- normalized the region coordinate convention across LOKI
+- added the "extra" data field in all liftOver inputs and outputs
+- made loki-build verbose by default, with --quiet to suppress notices
+
+2.2.0 (2014-05-27)
+- added support for HTTP (but not SOCKS) proxy servers for downloading source
+  data via HTTP
+- added support for parsing updated genome build identities from
+  http://genome.ucsc.edu/FAQ/FAQreleases.html
+- added warnings for unrecognized builds which could lead to mismatched data
+- added a tally of SNP role records with unrecognized Entrez GeneIDs
+- added support for (mandatory) "extra" data fields on all lookup inputs,
+  which is returned with all corresponding output records
+
+2.1.0 (2013-07-19)
+- updated dbsnp loader to handle incomplete SNP roles in dbSNP's data download
+- added "gwas" catalog source loader and supporting tables and methods
+
+2.0.1 (2013-05-02)
+- updated pfam loader to 2.1 to handle the new release's file format
+- fixed loki-build option --temp-directory to apply to SQLite temp files
+- fixed loki-build option --archive to skip re-archive if --cache-only is used
+- fixed a bug in the stack trace output in the event of an error during update
+- fixed a bug in the updater which would mask the original error if the error-
+  handler itself caused an additional error
+- added a source file metadata check to skip updates when the source loader
+  code and all data files are unchanged since the last update
+- new loki-build option --force-update to skip the metadata check
+- separated the optimization and finalization of knowledge database files; the
+  updater always optimizes at the end, but finalizes only by request
+- new loki-build option --no-optimize to skip the automatic optimization step
+- fixed a bug in the UCSC ECR loader that increased the minimum region size
+
+2.0.0 (2013-02-14)
+- first public release
