@@ -148,7 +148,7 @@ double SKATLinear::runTest(const Bin& bin) const{
 		return 12;
 	}
 	gsl_matrix* tmp_sv = gsl_matrix_calloc(GW->size2,X_v.matrix.size2);
-	if(tmp_ss == 0){
+	if(tmp_sv == 0){
 		// out of memory
 		gsl_matrix_free(tmp_ss);
 		gsl_matrix_free(tmp_vs);

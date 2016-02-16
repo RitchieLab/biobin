@@ -176,7 +176,12 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 			bad_idx.push_back(i);
 		}
 	}
-	if(bad_idx.size() > 0){
+	if(bad_idx.size() == W->size2){
+		// ERROR: no non-monomorphic SNPs to be had! ABORT!
+		gsl_matrix_free(W_tmp);
+		return -1;
+
+	}else if(bad_idx.size() > 0){
 
 		errcode |= gsl_matrix_memcpy(W_tmp, W);
 
