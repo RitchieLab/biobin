@@ -49,14 +49,14 @@ if __name__ == "__main__":
 					pv_names.add(pv_test[0])
 				pv_dict[pv_test[0]] = pv_arr[2:]
 			else:
-				n_case += ((not args.all_control) and pv_arr[1] != args.control_value)
-				n_control += (pv_arr[1].isnumeric() and (args.all_control or pv_arr[1] == args.control_value))
+				n_case += (pv_arr[1] != "nan" and (not args.all_control) and pv_arr[1] != args.control_value)
+				n_control += (pv_arr[1] != "nan" and (args.all_control or pv_arr[1] == args.control_value))
 	
 		for l in f:
 			ptid, status, junk = l.split(args.sep, 2)
 		
-			n_case += ((not args.all_control) and status != args.control_value)
-			n_control += (pv_arr[1].isnumeric() and (args.all_control or status == args.control_value))
+			n_case += (status != "nan" and (not args.all_control) and status != args.control_value)
+			n_control += (status != "nan" and (args.all_control or status == args.control_value))
 		
 
 		f.close()
