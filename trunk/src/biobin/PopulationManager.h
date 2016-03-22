@@ -322,6 +322,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	std::pair<unsigned short, unsigned short> curr_call;
 	std::vector<unsigned int> call_count;
 
+	static const std::string PASS_STR("PASS");
+	static const std::string DOT_STR(".");
 
 	const unsigned short missing_geno = static_cast<unsigned short>(-1);
 	calls.reserve(_positions.size());
@@ -422,7 +424,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 						//std::string currstr(fields[i+9].begin(), fields[i+9].end());
 						boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
 
-						if(fields[i+9] != "." && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == "PASS")){
+						if(fields[i+9] != DOT_STR && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == PASS_STR)){
 							call_list.clear();
 							boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
 							if(call_list.size() == 1){
@@ -434,7 +436,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 							}
 
 							if(call_list.size() != 2){
-								if(!(call_list.size() == 1 && call_list[0] == ".")){
+								if(!(call_list.size() == 1 && call_list[0] == DOT_STR)){
 									std::cerr << "WARNING: Non-diploid genotype '" << geno_list[gt_idx] << "' found on line " <<
 										lineno << ", setting to missing" << std::endl;
 								}
