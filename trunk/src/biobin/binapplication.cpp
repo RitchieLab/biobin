@@ -74,6 +74,11 @@ BinApplication::~BinApplication(){
 	if(_info){
 		delete _info;
 	}
+
+	if(groups){
+		delete groups;
+	}
+
 	if(regions){
 		delete regions;
 	}
@@ -84,9 +89,6 @@ BinApplication::~BinApplication(){
 		++d_itr;
 	}
 	//dataset.clear();
-	if(groups){
-		delete groups;
-	}
 
 	for(unsigned int i=0; i<_locus_bins.size(); i++){
 		fclose(_locus_bins[i]);
