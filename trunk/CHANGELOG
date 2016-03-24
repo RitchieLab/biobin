@@ -16,7 +16,12 @@ Features and Changes:
 	- SKAT (dichotomous phenotype)
 
 Bug Fixes:
-- Consider loci that lift to non-standard chromosomes as "unlifted" 
+- Consider loci that lift to non-standard chromosomes as "unlifted"
+- Correctly parsing variants including the "FT" genotype-level filter flag.
+  Previously, all variants with a "FT" flag were incorrectly marked as monomorphic
+
+== 2.1.2 ==
+- Fixed reactome, GWAS catalog and liftOver loaders in LOKI.
 
 == 2.1.1 ==
 
