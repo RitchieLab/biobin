@@ -622,9 +622,9 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		os << sep;
 		printEscapedString(os, "Total Loci", sep, sep_repl);
 		os << sep;
-		printEscapedString(os, "Control Loci Totals", sep, sep_repl);
+		printEscapedString(os, "Control Variant Totals", sep, sep_repl);
 		os << sep;
-		printEscapedString(os, "Case Loci Totals", sep, sep_repl);
+		printEscapedString(os, "Case Variant Totals", sep, sep_repl);
 		os << sep;
 		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
 		os << sep;
