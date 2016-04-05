@@ -46,7 +46,7 @@ if __name__ == "__main__":
 			if pv_arr[0].endswith("p-value"):
 				pv_test = pv_arr[0].rsplit(" ", 1)
 				if not header_printed:
-					pv_names.add(pv_test[0].replace('-','_'))
+					pv_names.add(pv_test[0])
 				pv_dict[pv_test[0]] = pv_arr[2:]
 			else:
 				n_case += (pv_arr[1] != "nan" and (not args.all_control) and pv_arr[1] != args.control_value)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 					"Control_Vars",
 					"Case_Capacity",
 					"Control_Capacity"
-				] + [n for n in pv_names]
+				] + [n.replace('-','_') for n in pv_names]
 			)
 		
 		# Now, enumerate all the lists we have - they should have the same # of elements
