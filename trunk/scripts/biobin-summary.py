@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--control-value", help="Phenotype control value", default="0")
 	parser.add_argument("-a", "--all-control", help="Use all non-missing subjects as controls", action="store_true", default=False)
 	parser.add_argument("-s", "--sep", help="Separator character in bins file(s)", default=",")
-	parser.add_argument("-o", "--output-sep", help="Separator character for output", default=",")
+	parser.add_argument("-o", "--output-sep", help="Separator character for output", default="\t")
 	
 	args=parser.parse_args()
 	
