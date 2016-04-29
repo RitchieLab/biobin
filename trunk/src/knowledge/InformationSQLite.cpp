@@ -119,7 +119,6 @@ void InformationSQLite::getGroupTypes(const set<uint>& type_ids,
 }
 
 unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg) const{
-//TODO std::cerr << "getSNPRole(" << loc.getChrom() << ":" << loc.getPos() << ", " << reg.getID() << ")\n";
 	unsigned long ret_val = 0;
 
 	map<int, Information::snp_role>::const_iterator db_role = _role_map.end();
@@ -162,11 +161,7 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg)
 	sqlite3_bind_int(_snp_role_stmt, chr_idx, loc.getChrom());
 	sqlite3_bind_int(_snp_role_stmt, pos_idx, loc.getPos());
 	sqlite3_bind_int(_snp_role_stmt, gid_idx, reg.getID());
-//TODO std::cerr << "query: " << sqlite3_sql(_snp_role_stmt) << "\n";
 	while(SQLITE_ROW==sqlite3_step(_snp_role_stmt)){
-//TODO std::cerr << "columns: " << sqlite3_column_count(_snp_role_stmt) << "\n";
-//TODO std::cerr << "type 0: " << sqlite3_column_type(_snp_role_stmt, 0) << "\n";
-//TODO std::cerr << "text 0: [" << sqlite3_column_text(_snp_role_stmt, 0) << "]\n";
 		int role = sqlite3_column_int(_snp_role_stmt, 0);
 		db_role = _role_map.find(role);
 		if (db_role != _role_map.end()){
