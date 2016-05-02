@@ -66,11 +66,11 @@ PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
 }
 
-unsigned int PopulationManager::genotypeContribution(const Locus& loc) const{
+unsigned int PopulationManager::genotypeContribution(const Locus& loc, const dynamic_bitset<>* nonmiss) const{
 	unordered_map<const Locus*, bitset_pair>::const_iterator itr = _genotypes.find(&loc);
 
 	if(itr != _genotypes.end()){
-		return getTotalContrib((*itr).second);
+		return getTotalContrib((*itr).second, nonmiss);
 	} else {
 		return 0;
 	}
@@ -685,20 +685,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 			os << sep << (*b_itr)->getVariantSize();
 
 			// print case/control loci
-			boost::array<unsigned int, 2> num_loci;
-			num_loci[0] = 0;
-			num_loci[1] = 0;
-			l_itr = (*b_itr)->variantBegin();
-			while (l_itr != (*b_itr)->variantEnd()) {
-				loc_itr = _genotypes.find((*l_itr));
-				if (loc_itr != _genotypes.end()) {
-					num_loci[0] += getTotalContrib((*loc_itr).second, & pheno.getStatus().first);
-					num_loci[1] += getTotalContrib((*loc_itr).second, & pheno.getStatus().second);
-				}
-				++l_itr;
-			}
-
-			os << sep << num_loci[0] << sep << num_loci[1];
+			os << sep << (*b_itr)->getCaseSize() << sep << (*b_itr)->getControlSize();
 
 			// print case/control capacity
 			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());
@@ -773,7 +760,6 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		}
 		os << "\n";
 
-		int locus_count = 0;
 		// Print 4th + 5th lines (variant totals for cases + controls
 		for(int i=0; i<2; i++){
 			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
@@ -781,17 +767,7 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 			b_itr = bins.begin();
 			b_end = bins.end();
 			while(b_itr != b_end){
-				l_itr = (*b_itr)->variantBegin();
-				l_end = (*b_itr)->variantEnd();
-				locus_count = 0;
-				while(l_itr != l_end){
-					loc_itr = _genotypes.find((*l_itr));
-					if (loc_itr != loc_not_found){
-						locus_count += getTotalContrib((*loc_itr).second, &(i ? pheno.getStatus().second : pheno.getStatus().first));
-					}
-					++l_itr;
-				}
-				os << sep << locus_count;
+				os << sep << (i ? (*b_itr)->getCaseSize(): (*b_itr)->getControlSize());
 				++b_itr;
 			}
 			os << "\n";

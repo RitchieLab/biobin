@@ -163,7 +163,7 @@ public:
 	void loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv=0);
 
 	// Usage functions
-	unsigned int genotypeContribution(const Knowledge::Locus& locus) const;
+	unsigned int genotypeContribution(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss=0) const;
 	unsigned short getIndivGeno(const Knowledge::Locus& loc, int position) const;
 	float getAvgGenotype(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss_status=0) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;

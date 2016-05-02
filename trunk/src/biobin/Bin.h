@@ -15,6 +15,7 @@
 #include "knowledge/Group.h"
 #include "knowledge/Region.h"
 #include "knowledge/Locus.h"
+#include "util/Phenotype.h"
 
 namespace BioBin{
 
@@ -34,7 +35,7 @@ public:
 	 * the variants and people.
 	 * \param grp The group that this Bin represents
 	 */
-	Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp);
+	Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp, const Utility::Phenotype& pheno);
 	/*!
 	 * \brief Construct a Bin representing a Region (or Gene)
 	 *
@@ -42,7 +43,7 @@ public:
 	 * the variants and people.
 	 * \param reg The Region that this Bin represents
 	 */
-	Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg);
+	Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg, const Utility::Phenotype& pheno);
 	/*!
 	 * \brief Construct an Intergenic Bin
 	 *
@@ -52,7 +53,7 @@ public:
 	 * \param bin The bin number, counting from 0 from the beginning of the
 	 * chromosome.
 	 */
-	Bin(const PopulationManager& pop_mgr, short chrom, int bin);
+	Bin(const PopulationManager& pop_mgr, short chrom, int bin, const Utility::Phenotype& pheno);
 
 	/*!
 	 * \brief Construct a copy of a given bin.
@@ -74,7 +75,22 @@ public:
 	 *
 	 * \return The size (number of contributions) of this bin.
 	 */
-	unsigned int getSize() const;
+	unsigned int getSize() const { return getCaseSize() + getControlSize(); }
+
+	/*!
+	 * \brief Return the size of the case.
+	 *
+	 * \return The size (number of contributions) of this bin.
+	 */
+	unsigned int getCaseSize() const;
+
+	/*!
+	 * \brief Return the size of the controls.
+	 *
+	 * \return The size (number of contributions) of this bin.
+	 */
+	unsigned int getControlSize() const;
+
 	/*!
 	 * \brief Return the number of variants in the bin.
 	 *
@@ -99,7 +115,7 @@ public:
 	bool isIntergenic() const {return _is_intergenic;}
 	short getChrom() const {return _chrom;}
 
-	void addLocus(Knowledge::Locus* to_ins) {_variants.insert(to_ins);}
+	void addLocus(Knowledge::Locus* to_ins) {_cached_case = false; _cached_control = false; _variants.insert(to_ins);}
 
 	/**
 	 * Strict ordering is given by Groups, then Regions, then Intergenic, which
@@ -122,7 +138,7 @@ public:
 	 *
 	 * \param itr The iterator pointing to the element to erase
 	 */
-	locus_iterator erase(locus_iterator itr) {_cached = false; _variants.erase(itr++); return itr; }
+	locus_iterator erase(locus_iterator itr) {_cached_case = false; _cached_control = false; _variants.erase(itr++); return itr; }
 
 	/*!
 	 * \brief Adds extraconversion data to the bin.
@@ -145,11 +161,13 @@ private:
 
 	bool _is_group;
 	bool _is_intergenic;
-	mutable bool _cached;
+	mutable bool _cached_case;
+	mutable bool _cached_control;
 
 	short _chrom;
 
-	mutable unsigned int _size_cache;
+	mutable unsigned int _size_case_cache;
+	mutable unsigned int _size_control_cache;
 
 	std::string _name;
 	std::vector<std::string> _extra_data;
@@ -157,6 +175,8 @@ private:
 	std::set<Knowledge::Locus*> _variants;
 
 	const PopulationManager& _pop_mgr;
+
+	const Utility::Phenotype& _pheno;
 };
 }
 

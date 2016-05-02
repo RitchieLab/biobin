@@ -15,24 +15,25 @@
 using std::stringstream;
 using std::set;
 using std::list;
+using BioBin::Utility::Phenotype;
 
 namespace BioBin{
 
-Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp) :
-		_is_group(true), _is_intergenic(false), _cached(false), _chrom(-1),
-		_name(grp->getName()), _pop_mgr(pop_mgr) {
+Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Group* grp, const Utility::Phenotype& pheno) :
+		_is_group(true), _is_intergenic(false), _cached_case(false), _cached_control(false),
+		_chrom(-1), _name(grp->getName()), _pop_mgr(pop_mgr), _pheno(pheno) {
 	_member.group = grp;
 }
 
-Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg) :
-		_is_group(false), _is_intergenic(false), _cached(false), _chrom(reg->getChrom()),
-		_name(reg->getName()), _pop_mgr(pop_mgr){
+Bin::Bin(const PopulationManager& pop_mgr, Knowledge::Region* reg, const Utility::Phenotype& pheno) :
+		_is_group(false), _is_intergenic(false), _cached_case(false), _cached_control(false),
+		_chrom(reg->getChrom()), _name(reg->getName()), _pop_mgr(pop_mgr), _pheno(pheno){
 	_member.region = reg;
 }
 
-Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
-		_is_group(false), _is_intergenic(true),	_cached(false), _chrom(chrom),
-		_pop_mgr(pop_mgr) {
+Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin, const Utility::Phenotype& pheno) :
+		_is_group(false), _is_intergenic(true),	_cached_case(false), _cached_control(false),
+		_chrom(chrom), _pop_mgr(pop_mgr), _pheno(pheno) {
 	stringstream ss;
 	ss << "chr" << Knowledge::Locus::getChromStr(chrom) << ":"
 			<< bin*BinManager::IntergenicBinStep << "K-"
@@ -44,8 +45,8 @@ Bin::Bin(const PopulationManager& pop_mgr, short chrom, int bin) :
 
 Bin::Bin(const Bin& other) : _member(other._member),
 		_is_group(other._is_group), _is_intergenic(other._is_intergenic),
-		_cached(false), _chrom(other._chrom), _name(other._name),
-		_extra_data(other._extra_data), _pop_mgr(other._pop_mgr) {}
+		_cached_case(false), _cached_control(false), _chrom(other._chrom), _name(other._name),
+		_extra_data(other._extra_data), _pop_mgr(other._pop_mgr), _pheno(other._pheno) {}
 
 bool Bin::operator<(const Bin& other) const{
 	bool ret_val = false;
@@ -81,23 +82,36 @@ bool Bin::operator<(const Bin& other) const{
 	}
 
 	return ret_val;
-
 }
 
-unsigned int Bin::getSize() const{
-	int ret_val = 0;
-	if(!_cached){
+unsigned int Bin::getCaseSize() const {
+	if (!_cached_case) {
 		set<Knowledge::Locus*>::const_iterator itr = _variants.begin();
-		while(itr != _variants.end()){
-			ret_val += _pop_mgr.genotypeContribution(**itr);
+		int case_t = 0;
+		while (itr != _variants.end()) {
+			case_t += _pop_mgr.genotypeContribution(**itr,
+					&(_pheno.getStatus().second));
 			++itr;
 		}
-		_size_cache = ret_val;
-		_cached = true;
-	}else{
-		ret_val = _size_cache;
+		_size_case_cache = case_t;
+		_cached_case = true;
 	}
-	return ret_val;
+	return _size_case_cache;
+}
+
+unsigned int Bin::getControlSize() const {
+	if (!_cached_control) {
+		set<Knowledge::Locus*>::const_iterator itr = _variants.begin();
+		int control_t = 0;
+		while (itr != _variants.end()) {
+			control_t += _pop_mgr.genotypeContribution(**itr,
+					&(_pheno.getStatus().first));
+			++itr;
+		}
+		_size_control_cache = control_t;
+		_cached_control = true;
+	}
+	return _size_control_cache;
 }
 
 } // namespace BioBin

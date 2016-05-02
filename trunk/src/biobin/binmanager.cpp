@@ -101,7 +101,7 @@ void BinManager::InitBins(const deque<Knowledge::Locus*>& loci) {
 
 					if (i_bin == _intergenic_bins.end()){
 						// OK, this bin is nonexistent
-						curr_bin = new Bin(_pop_mgr, key.first, key.second);
+						curr_bin = new Bin(_pop_mgr, key.first, key.second, _pheno);
 						_intergenic_bins.insert(make_pair(key, curr_bin));
 						_bin_list.insert(curr_bin);
 					}else{
@@ -134,7 +134,7 @@ void BinManager::InitBins(const deque<Knowledge::Locus*>& loci) {
 					int id = (*g_itr)->getID();
 					unordered_map<int, Bin*>::const_iterator gm_itr = _group_bins.find(id);
 					if (gm_itr == _group_bins.end()){
-						curr_bin = new Bin(_pop_mgr, *g_itr);
+						curr_bin = new Bin(_pop_mgr, *g_itr, _pheno);
 						_bin_list.insert(curr_bin);
 						_group_bins.insert(make_pair(id,curr_bin));
 					}else{
@@ -400,7 +400,7 @@ Bin* BinManager::addRegionBin(Region* reg){
 	int id = reg->getID();
 	unordered_map<int, Bin*>::const_iterator rm_itr = _region_bins.find(id);
 	if (rm_itr == _region_bins.end()){
-		curr_bin = new Bin(_pop_mgr, reg);
+		curr_bin = new Bin(_pop_mgr, reg, _pheno);
 		_bin_list.insert(curr_bin);
 		_region_bins.insert(make_pair(id, curr_bin));
 	}else{
