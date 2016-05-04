@@ -1,3 +1,8 @@
+== 2.2.1 ==
+
+Bug Fixes:
+- Fixed a potential segfault when using roles and threading together
+
 == 2.2.0 ==
 
 Features and Changes:
