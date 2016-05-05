@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <map>
 
+#include <boost/thread.hpp>
+
 #include <sqlite3.h>
 
 #include "Information.h"
@@ -120,6 +122,8 @@ private:
 	int _tmp_role_zone;
 	int _tmp_weight_zone;
 
+	// mutex for shared libsqlite prepared statements
+	static boost::mutex _sqlite_lock;
 };
 
 }

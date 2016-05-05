@@ -36,6 +36,8 @@ using boost::algorithm::split;
 
 namespace Knowledge{
 
+boost::mutex InformationSQLite::_sqlite_lock;
+
 string InformationSQLite::_role_region_tbl = "__tmp_role_region";
 string InformationSQLite::_role_zone_tbl = "__tmp_role_zone";
 string InformationSQLite::_role_snp_tbl = "__tmp_role_snp";
@@ -121,6 +123,8 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg)
 
 	map<int, Information::snp_role>::const_iterator db_role = _role_map.end();
 
+	_sqlite_lock.lock();
+
 	// Look up dbSNP role here
 	sqlite3_bind_int(_role_stmt, 1, loc.getChrom());
 	sqlite3_bind_int(_role_stmt, 2, loc.getPos());
@@ -166,6 +170,7 @@ unsigned long InformationSQLite::getSNPRole(const Locus& loc, const Region& reg)
 	}
 	sqlite3_reset(_snp_role_stmt);
 
+	_sqlite_lock.unlock();
 
 	return ret_val;
 }
