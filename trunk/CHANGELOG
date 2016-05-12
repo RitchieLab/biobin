@@ -1,3 +1,8 @@
+== running ==
+
+New Features:
+- Automatic detection of build as given in a VCF.
+
 == 2.2.1 ==
 
 Bug Fixes:
