@@ -190,6 +190,11 @@ public:
 	virtual void loadWeights(const RegionCollection& reg) = 0;
 
 	/*!
+	 * Return loki build
+	 */
+	virtual std::string getLOKIBuild() const = 0;
+
+	/*!
 	 * \brief Returns a string of IDs compatible with a "where" clause.
 	 * Returns a string of IDs
 	 */

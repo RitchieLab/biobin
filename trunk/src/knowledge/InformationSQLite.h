@@ -61,6 +61,7 @@ public:
 	virtual void loadRoles(const RegionCollection& reg);
 	virtual void loadWeights(const RegionCollection& reg);
 
+	virtual std::string getLOKIBuild() const;
 	virtual const std::set<unsigned int>& getSourceIds();
 
 private:

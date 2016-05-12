@@ -148,15 +148,16 @@ void Configuration::initGeneric(){
 				"Number of threads to use when PheWAS binning")
 		("add-group", value<vector<string> >()->composing(),
 				"A list of filenames containing a group collection definition")
-		("genomic-build,G",value<string>(&Main::c_genome_build)->default_value("37"),
+		("genomic-build,G",value<string>(&Main::c_genome_build),
 				"Genomic build of input data")
+		("ignore-build-difference", value<Bool>()->default_value(false),
+				"Ignore genome build difference in vcf")
 		;
 
 	_generic.add(binning_opts);
 	_generic.add(pheno_opts);
 	_generic.add(report_options);
 	_generic.add(test_opts);
-
 
 	_generic_init = true;
 }
@@ -262,6 +263,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::RareCaseControl = vm["rare-case-control"].as<Bool>();
 	PopulationManager::c_use_calc_weight = vm["weight-loci"].as<Bool>();
 	PopulationManager::c_keep_monomorphic = vm["keep-monomorphic"].as<Bool>();
+	PopulationManager::c_ignore_build_diff = vm["ignore-build-difference"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
@@ -333,6 +335,10 @@ void Configuration::parseOptions(const po::variables_map& vm){
 				}
 			}
 		}
+	}
+
+	if (vm.count("genomic-build")) {
+			BioBin::PopulationManager::c_custom_genome_build  = true;
 	}
 }
 

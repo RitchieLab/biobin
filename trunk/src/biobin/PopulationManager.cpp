@@ -11,9 +11,11 @@
 #include "binmanager.h"
 
 #include "tests/Test.h"
+#include "main.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/program_options.hpp>
 #include <math.h>
 
@@ -61,6 +63,8 @@ bool PopulationManager::RareCaseControl = true;
 bool PopulationManager::c_keep_monomorphic = false;
 bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::NoSummary = false;
+bool PopulationManager::c_ignore_build_diff = false;
+bool PopulationManager::c_custom_genome_build = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
@@ -173,6 +177,8 @@ float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenot
 }
 
 unsigned int PopulationManager::readVCFHeader(std::istream& v){
+	boost::regex g_chr_regex("(.*)(ID=\\D*)([1-9]|1[0-9]|2[0-2]|X|Y|x|y])(>|,)(.*)");
+	boost::regex g_build_regex("assembly=\\D*([\\d+]*?)(>|,)");
 	unsigned int lineno = 0;
 	bool header_read = false;
 	string curr_line;
@@ -203,6 +209,15 @@ unsigned int PopulationManager::readVCFHeader(std::istream& v){
 			}
 
 			header_read = true;
+		}
+		else if (boost::starts_with(curr_line, "##contig")) {
+			boost::smatch match;
+			if (boost::regex_match(curr_line, g_chr_regex)) {
+				if (boost::regex_search(curr_line, match, g_build_regex))
+				{
+					_genome_build_set.insert(std::string(match[1].first, match[1].second));
+				}
+			}
 		}
 	}
 
@@ -828,9 +843,9 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 	}
 }
 
-
-
-
+void PopulationManager::setGenomeBuild(const std::string& build) const{
+	Main::c_genome_build = build;
+}
 
 }
 

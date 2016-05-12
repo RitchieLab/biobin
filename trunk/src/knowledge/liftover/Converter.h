@@ -81,6 +81,12 @@ public:
 	 */
 	Knowledge::Locus* convertLocus(const Knowledge::Locus& old_loc) const;
 
+	/*!
+	 * Set the build to lift from
+	 */
+	int setBuild(std::string& build) {_origBuild = build; return Load();};
+
+
 protected:
 	// A mapping of chromosome -> chains, ordered by score
 	std::map<short, std::set<Chain*> > _chains;

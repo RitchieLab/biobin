@@ -185,16 +185,8 @@ void BinApplication::InitBins() {
 }
 
 void BinApplication::InitVcfDataset(const std::string& genomicBuild) {
-
 	Knowledge::Liftover::ConverterSQLite cnv(genomicBuild, _db);
-	int chainCount = cnv.Load();
-
-	if (chainCount > 0) {
-		_pop_mgr.loadLoci(dataset,reportPrefix,Main::OutputDelimiter,&cnv);
-	}else{
-		_pop_mgr.loadLoci(dataset,reportPrefix,Main::OutputDelimiter);
-	}
-
+	_pop_mgr.loadLoci(dataset, reportPrefix, Main::OutputDelimiter, genomicBuild, cnv);
 }
 
 

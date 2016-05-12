@@ -620,6 +620,13 @@ void InformationSQLite::loadWeights(const RegionCollection& reg) {
 
 }
 
+string InformationSQLite::getLOKIBuild() const{
+	string build;
+	string build_sql = "SELECT value FROM setting WHERE setting='ucschg'";
+	sqlite3_exec(_db, build_sql.c_str(), parseSingleStringQuery, &build, NULL);
+	return build;
+}
+
 void InformationSQLite::UpdateZones(const string& tbl_name, const string& tbl_zone_name, int zone_size){
 	// See loki_updater.py for the algorithm here
 	// NOTE: blatantly and unabashedly copied from ldsplineimporter

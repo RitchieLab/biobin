@@ -160,7 +160,8 @@ public:
 	~PopulationManager(){}
 
 	template <class T_cont>
-	void loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv=0);
+	void loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const std::string& genome_build,
+			Knowledge::Liftover::Converter& conv);
 
 	// Usage functions
 	unsigned int genotypeContribution(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss=0) const;
@@ -208,6 +209,11 @@ public:
 
 	const static unsigned short missing_geno = static_cast<unsigned short>(-1);
 
+	//! If custom build is specified using -G option
+	static bool c_custom_genome_build;
+	//! Ignore difference between build specified using -G option and build in vcf header.
+	static bool c_ignore_build_diff;
+
 private:
 
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
@@ -231,6 +237,7 @@ private:
 	float calcBrowningWeight(unsigned long N, unsigned long M) const;
 	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
+	void setGenomeBuild(const std::string& build) const;
 
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
@@ -284,17 +291,63 @@ private:
 
 	const Knowledge::Information* _info;
 
+	std::set <std::string> _genome_build_set;
 };
 
 template<class T_cont>
-void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep, const Knowledge::Liftover::Converter* conv){
+void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep,
+		const std::string& genome_build, Knowledge::Liftover::Converter& conv){
 	typedef std::string::const_iterator sc_iter;
 	typedef boost::iterator_range<sc_iter> string_view;
-
+	std::string build = genome_build;
 
 	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());
 	unsigned int lineno = readVCFHeader(vcf_f);
 	loadIndividuals();
+	// If no build is given, the build is determined by the build of the VCF if and only if ALL builds for all contigs match
+	if (!c_custom_genome_build) {
+		if (_genome_build_set.size() == 1) {
+			std::set<std::string>::const_iterator itr = _genome_build_set.begin();
+			build = (*itr);
+		}
+		else if (_genome_build_set.size() > 1){
+			std::set<std::string>::const_iterator itr = _genome_build_set.begin();
+			std::string builds((*itr));
+			++itr;
+			while (itr != _genome_build_set.end()) {
+					builds.append(", "+(*itr));
+					++itr;
+			}
+			throw std::runtime_error("Different genome builds detected in vcf: ("+ builds +
+					")\nPlease provide build using -G and --ignore-build-difference Y if you want to continue");
+		}
+		// no genome build in vcf
+		else {
+			build = _info->getLOKIBuild();
+			std::cerr
+					<< "WARNING: No genome build detected in vcf! As no build is provided using -G option, using default LOKI build version "
+					<< _info->getLOKIBuild() << std::endl;
+		}
+	}
+	//If a build is given, the build is determined by the build of the VCF if ANY builds for any contig (1-22+X+Y) match the given build
+	//If a build is given and does not match the determined build of the VCF, an error is thrown unless "--ignore-build-difference Y" is provided
+	else {
+		if (_genome_build_set.size() > 0 && _genome_build_set.find(genome_build) == _genome_build_set.end() && !c_ignore_build_diff) {
+			std::set<std::string>::const_iterator itr = _genome_build_set.begin();
+			std::string builds((*itr));
+			++itr;
+			while (itr != _genome_build_set.end()) {
+				builds.append(", "+(*itr));
+				++itr;
+			}
+			throw std::runtime_error("Genome build difference detected: Build provided is:"+
+					genome_build+ " Genome builds detected in vcf: ("+ builds +
+					")\nPlease use --ignore-build-difference Y if you want to continue");
+		}
+	}
+
+	int chainCount = conv.setBuild(build);
+	setGenomeBuild(build);
 
 	std::string geno_sep = "/";
 	std::string alt_geno_sep = "|";
@@ -330,8 +383,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 	format_list.reserve(10);
 	call_list.reserve(2);
 
-	//boost::char_separator<char> vcf_sep("\t");
-
 	while(vcf_f.good()){
 		getline(vcf_f, curr_line);
 		++lineno;
@@ -365,8 +416,8 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 				// construct a locus object and lift over, if necessary
 				Knowledge::Locus* loc = new Knowledge::Locus(chr,bploc,id,ref);
-				if(conv){
-					Knowledge::Locus* new_loc = conv->convertLocus(*loc);
+				if(chainCount > 0){
+					Knowledge::Locus* new_loc = conv.convertLocus(*loc);
 					// make sure to drop loci that lift to unknown chromosomes, too!
 					if (! new_loc || new_loc->getChrom() == Knowledge::Locus::UNKNOWN_CHROM){
 						if(!lift_warn){
@@ -506,7 +557,6 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 			} // end marker parsing
 		}
-
 	} // end while(getline)
 
 	if(lift_warn){

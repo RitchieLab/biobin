@@ -31,6 +31,7 @@ private:
 
 	sqlite3* _db;
 	bool _self_open;
+	std::string _build_loaded;
 
 };
 
