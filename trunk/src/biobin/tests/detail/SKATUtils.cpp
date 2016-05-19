@@ -262,7 +262,11 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 		return -1;
 	}
 
-	return qfc_err == 0 ? 1-pval : 1+qfc_err;
+	pval =  qfc_err == 0 ? 1-pval : 1+qfc_err;
+	if (qfc_err == 0 && pval - acc/2 < 0){
+		pval = std::min(-pval, std::max(pval, 0.0)-acc/2);
+	}
+	return pval;
 }
 
 }

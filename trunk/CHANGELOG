@@ -2,6 +2,8 @@
 
 New Features:
 - Automatic detection of build as given in a VCF.
+- Modified representation of p-values in SKAT methods when a p-value very close 
+  to 0 is found.
 
 == 2.2.1 ==
 
