@@ -700,7 +700,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 			os << sep << (*b_itr)->getVariantSize();
 
 			// print case/control loci
-			os << sep << (*b_itr)->getCaseSize() << sep << (*b_itr)->getControlSize();
+			os << sep << (*b_itr)->getControlSize() << sep << (*b_itr)->getCaseSize();
 
 			// print case/control capacity
 			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());

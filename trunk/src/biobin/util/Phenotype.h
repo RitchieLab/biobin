@@ -29,6 +29,7 @@ public:
 
 private:
 	unsigned int _idx;
+	//! bistset pair.  Note: _status.first == control, _status.second==case.
 	const bitset_pair* _status;
 };
 
