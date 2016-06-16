@@ -34,6 +34,7 @@ using boost::dynamic_bitset;
 
 using Knowledge::Locus;
 using Knowledge::Region;
+using Knowledge::Group;
 using Knowledge::Information;
 
 using BioBin::Test::Test;
@@ -45,7 +46,6 @@ using boost::algorithm::is_any_of;
 using boost::trim;
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
-using Knowledge::Locus;
 
 namespace BioBin{
 
@@ -644,6 +644,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		printEscapedString(os, "Control Bin Capacity", sep, sep_repl);
 		os << sep;
 		printEscapedString(os, "Case Bin Capacity", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, "Gene(s)", sep, sep_repl);
 	}
 
 	for(unsigned int i=0; i<c_tests.size(); i++){
@@ -705,6 +707,21 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 			// print case/control capacity
 			boost::array<unsigned int, 2> capacity = getBinCapacity(**b_itr, pheno.getStatus());
 			os << sep << capacity[0] << sep << capacity[1];
+
+			// print pathway genes, if applicable
+			os << sep;
+			Knowledge::Group* grp = (*b_itr)->getGroup();
+			if(grp != NULL) {
+				Group::const_region_iterator r_itr = grp->regionBegin();
+				Group::const_region_iterator r_end = grp->regionEnd();
+				while(r_itr != r_end) {
+					os << (*r_itr)->getName();
+					++r_itr;
+					if(r_itr != r_end) {
+						os << "|";
+					}
+				}
+			}
 		} // End summary info
 
 		// start test info
@@ -800,6 +817,29 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 			}
 			os << "\n";
 		}
+
+		// Print 8th line (pathway genes, if applicable)
+		printEscapedString(os, "Gene(s)", sep, sep_repl);
+		os << sep << missing_status;
+		b_itr = bins.begin();
+		b_end = bins.end();
+		while(b_itr != b_end){
+			os << sep;
+			Knowledge::Group* grp = (*b_itr)->getGroup();
+			if(grp != NULL) {
+				Group::const_region_iterator r_itr = grp->regionBegin();
+				Group::const_region_iterator r_end = grp->regionEnd();
+				while(r_itr != r_end) {
+					os << (*r_itr)->getName();
+					++r_itr;
+					if(r_itr != r_end) {
+						os << "|";
+					}
+				}
+			}
+			++b_itr;
+		}
+		os << "\n";
 	}
 
 	// Print the results of the tests
