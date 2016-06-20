@@ -38,12 +38,16 @@ if __name__ == "__main__":
 		ctl_cap=f.readline().strip().split(args.sep)[2:]
 		case_cap=f.readline().strip().split(args.sep)[2:]
 		
+		genes=["" for n in bin_names]
+		
 		# OK, now the header is read, let's read the p-values
 		
 		pv_dict = {}
 		for l in f:
 			pv_arr = l.strip().split(args.sep)
-			if pv_arr[0].endswith("p-value"):
+			if pv_arr[0] == "Gene(s)":
+				genes = pv_arr[2:]
+			elif pv_arr[0].endswith("p-value"):
 				pv_test = pv_arr[0].rsplit(" ", 1)
 				if not header_printed:
 					pv_names.add(pv_test[0])
@@ -79,7 +83,8 @@ if __name__ == "__main__":
 					"Case_Vars",
 					"Control_Vars",
 					"Case_Capacity",
-					"Control_Capacity"
+					"Control_Capacity",
+					"Gene(s)"
 				] + [n.replace('-','_') for n in pv_names]
 			)
 		
@@ -96,7 +101,8 @@ if __name__ == "__main__":
 					case_vars[i],
 					ctl_vars[i],
 					case_cap[i],
-					ctl_cap[i]
+					ctl_cap[i],
+					genes[i]
 				] + [pv_dict[n][i] for n in pv_names]
 			)
 		
