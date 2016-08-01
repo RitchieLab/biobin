@@ -139,18 +139,61 @@ public:
 	};
 
 
-	typedef std::vector<std::string>::const_iterator const_sample_iterator;
+	template <class I, class B>
+	class const_sample_iterator_facade : public boost::iterator_facade<const_sample_iterator_facade<I, B>, std::string const, boost::forward_traversal_tag> {
+
+		public:
+		const_sample_iterator_facade(const typename I::const_iterator& si, const typename I::const_iterator& se, const typename  B::const_iterator& bi, const typename B::const_iterator& be) :
+				_s_itr(si), _s_end(se), _b_itr(bi), _b_end(be) {
+			if (! *_b_itr) {
+				increment();
+			}
+		}
+
+		private:
+			friend class boost::iterator_core_access;
+
+			void increment() {
+				bool nextf = false;
+				while(_s_itr != _s_end && _b_itr != _b_end && !nextf) {
+					++_b_itr;
+					++_s_itr;
+					nextf = (_b_itr == _b_end || *_b_itr);
+				}
+				if(_s_itr == _s_end || _b_itr == _b_end){
+					_s_itr = _s_end;
+					_b_itr = _b_end;
+				}
+			}
+
+			bool equal(const const_sample_iterator_facade& other) const {
+				return _s_itr == other._s_itr;
+			}
+
+			const std::string& dereference() const {
+				return *_s_itr;
+			}
+
+			typename I::const_iterator _s_itr;
+			typename I::const_iterator _s_end;
+			typename B::const_iterator _b_itr;
+			typename B::const_iterator _b_end;
+	};
+
+	typedef const_sample_iterator_facade<std::vector<std::string>, std::vector<bool> > const_sample_iterator;
+
 	const_sample_iterator beginSample() const{
-		return _sample_names.begin();
+		return  const_sample_iterator (_sample_names.begin(), _sample_names.end(), _include_samples.begin(), _include_samples.end());
 	}
 
 	const_sample_iterator endSample() const{
-		return _sample_names.end();
+		return  const_sample_iterator (_sample_names.end(), _sample_names.end(), _include_samples.end(), _include_samples.end());
 	}
 
 	const_pheno_iterator beginPheno() const{
 		return const_pheno_iterator(0, *this);
 	}
+
 	const_pheno_iterator endPheno() const{
 		return const_pheno_iterator(_pheno_names.size(), *this);
 	}
@@ -170,7 +213,7 @@ public:
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}
-	unsigned int getNumSamples() const {return _sample_names.size();}
+	unsigned int getNumSamples() const {return _positions_include_samples.size();}
 	unsigned int getSamplePosition(const std::string& s) const;
 	const std::string& getPhenotypeName(unsigned int i) const {return _pheno_names[i];}
 	float getPhenotypeVal(const std::string& sample, const Utility::Phenotype& pheno) const;
@@ -214,6 +257,9 @@ public:
 	//! Ignore difference between build specified using -G option and build in vcf header.
 	static bool c_ignore_build_diff;
 
+	static std::string c_include_samples;
+	static std::string c_exclude_samples;
+
 private:
 
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
@@ -238,6 +284,7 @@ private:
 	float calcWeight(const Knowledge::Locus& loc, const bitset_pair& status) const;
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
 	void setGenomeBuild(const std::string& build) const;
+	void readSamplesFromFile(boost::unordered_set<std::string>& sample_names, std::string file) const;
 
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)
@@ -264,6 +311,10 @@ private:
 
 	// mapping of ID -> position in the VCF file
 	boost::unordered_map<std::string, unsigned int> _positions;
+
+	// mapping of ID -> position in the VCF file after including/excluding samples.
+	boost::unordered_map<std::string, unsigned int> _positions_include_samples;
+
 	// vector of samples, as given in the VCF file
 	std::vector<std::string> _sample_names;
 
@@ -292,6 +343,9 @@ private:
 	const Knowledge::Information* _info;
 
 	std::set <std::string> _genome_build_set;
+
+	std::vector<bool> _include_samples;
+
 };
 
 template<class T_cont>
@@ -303,6 +357,20 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());
 	unsigned int lineno = readVCFHeader(vcf_f);
+
+	_include_samples.resize(_sample_names.size(), true);
+	boost::unordered_set<std::string> include_sample_names, exclude_sample_names;
+	readSamplesFromFile(include_sample_names, c_include_samples);
+	readSamplesFromFile(exclude_sample_names, c_exclude_samples);
+	unsigned int positions_index = 0;
+	for (int i = 0; i < _sample_names.size(); i++) {
+		std::string s = _sample_names[i];
+		if ((include_sample_names.size() > 0 && include_sample_names.find(s) == include_sample_names.end())
+				|| exclude_sample_names.find(s) != exclude_sample_names.end()) {
+			_include_samples[i] = false;
+		}
+	}
+
 	loadIndividuals();
 	// If no build is given, the build is determined by the build of the VCF if and only if ALL builds for all contigs match
 	if (!c_custom_genome_build) {
@@ -469,45 +537,47 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 					calls.clear();
 					for (unsigned int i=0; i<fields.size() - 9; i++){
+						if (_include_samples[i]) {
 
-						// parse the individual call
-						geno_list.clear();
-						//std::string currstr(fields[i+9].begin(), fields[i+9].end());
-						boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
+							// parse the individual call
+							geno_list.clear();
+							//std::string currstr(fields[i+9].begin(), fields[i+9].end());
+							boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
 
-						if(fields[i+9] != DOT_STR && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == PASS_STR)){
-							call_list.clear();
-							boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
-							if(call_list.size() == 1){
-								// we should be here very rarely!  If we're here,
-								// we'll assume that the "primary" separator of
-								// genotypes is in fact the "alternate", so swap them!
-								boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(alt_geno_sep));
-								geno_sep.swap(alt_geno_sep);
-							}
-
-							if(call_list.size() != 2){
-								if(!(call_list.size() == 1 && call_list[0] == DOT_STR)){
-									std::cerr << "WARNING: Non-diploid genotype '" << geno_list[gt_idx] << "' found on line " <<
-										lineno << ", setting to missing" << std::endl;
+							if(fields[i+9] != DOT_STR && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == PASS_STR)){
+								call_list.clear();
+								boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
+								if(call_list.size() == 1){
+									// we should be here very rarely!  If we're here,
+									// we'll assume that the "primary" separator of
+									// genotypes is in fact the "alternate", so swap them!
+									boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(alt_geno_sep));
+									geno_sep.swap(alt_geno_sep);
 								}
-								calls.push_back(std::make_pair(missing_geno, missing_geno));
-							} else {
-								unsigned short g1, g2;
-								//boost::string_ref c1(&*call_list[0].begin(), call_list[0].size());
-								//boost::string_ref c2(&*call_list[1].begin(), call_list[1].size());
-								if(*call_list[0].begin() != '.' && *call_list[1].begin() != '.'){
-									g1 = fast_atoi(call_list[0]);
-									g2 = fast_atoi(call_list[1]);
-									calls.push_back(std::make_pair(g1, g2));
-									++call_count[g1];
-									++call_count[g2];
-								} else{
+
+								if(call_list.size() != 2){
+									if(!(call_list.size() == 1 && call_list[0] == DOT_STR)){
+										std::cerr << "WARNING: Non-diploid genotype '" << geno_list[gt_idx] << "' found on line " <<
+											lineno << ", setting to missing" << std::endl;
+									}
 									calls.push_back(std::make_pair(missing_geno, missing_geno));
+								} else {
+									unsigned short g1, g2;
+									//boost::string_ref c1(&*call_list[0].begin(), call_list[0].size());
+									//boost::string_ref c2(&*call_list[1].begin(), call_list[1].size());
+									if(*call_list[0].begin() != '.' && *call_list[1].begin() != '.'){
+										g1 = fast_atoi(call_list[0]);
+										g2 = fast_atoi(call_list[1]);
+										calls.push_back(std::make_pair(g1, g2));
+										++call_count[g1];
+										++call_count[g2];
+									} else{
+										calls.push_back(std::make_pair(missing_geno, missing_geno));
+									}
 								}
+							} else {
+								calls.push_back(std::make_pair(missing_geno, missing_geno));
 							}
-						} else {
-							calls.push_back(std::make_pair(missing_geno, missing_geno));
 						}
 
 					} // end iterating over genotypes

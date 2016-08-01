@@ -152,6 +152,10 @@ void Configuration::initGeneric(){
 				"Genomic build of input data")
 		("ignore-build-difference", value<Bool>()->default_value(false),
 				"Ignore genome build difference in vcf")
+		("include-samples", value<string>(&PopulationManager::c_include_samples),
+				"File of samples to include (one per line)")
+		("exclude-samples", value<string>(&PopulationManager::c_exclude_samples),
+				"File of samples to exclude (one per line)")
 		;
 
 	_generic.add(binning_opts);

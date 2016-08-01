@@ -65,6 +65,8 @@ bool PopulationManager::c_use_calc_weight = false;
 bool PopulationManager::NoSummary = false;
 bool PopulationManager::c_ignore_build_diff = false;
 bool PopulationManager::c_custom_genome_build = false;
+std::string PopulationManager::c_include_samples = "";
+std::string PopulationManager::c_exclude_samples = "";
 
 PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
@@ -150,8 +152,8 @@ float PopulationManager::getPhenotypeVal(const string& sample, const Phenotype& 
 
 unsigned int PopulationManager::getSamplePosition(const std::string& s) const{
 	unsigned int pos = static_cast<unsigned int>(-1);
-	boost::unordered_map<std::string, unsigned int>::const_iterator pos_itr = _positions.find(s);
-	if (pos_itr != _positions.end()){
+	boost::unordered_map<std::string, unsigned int>::const_iterator pos_itr = _positions_include_samples.find(s);
+	if (pos_itr != _positions_include_samples.end()){
 		pos = (*pos_itr).second;
 	}
 	return pos;
@@ -174,6 +176,21 @@ float PopulationManager::getTotalIndivContrib(const Bin& b,int pos, const Phenot
 		++l_itr;
 	}
 	return bin_count;
+}
+
+void PopulationManager::readSamplesFromFile(boost::unordered_set<std::string>& sample_names, string file) const{
+	if (!file.empty()) {
+		std::ifstream v(file.c_str());
+		if (v.good()) {
+			string curr_line;
+			while(getline(v, curr_line)) {
+				trim(curr_line);
+				sample_names.insert(curr_line);
+			}
+		} else {
+			throw std::runtime_error("Could not find file "+ file);
+		}
+	}
 }
 
 unsigned int PopulationManager::readVCFHeader(std::istream& v){
@@ -241,9 +258,18 @@ void PopulationManager::loadIndividuals(){
 		allControl = true;
 	}
 
+	const_sample_iterator s_itr = beginSample();
+	const_sample_iterator s_end = endSample();
+	unsigned int sample_num = 0;
+	while (s_itr != s_end) {
+		_positions_include_samples[*s_itr] = sample_num;
+		++sample_num;
+		++s_itr;
+	}
+
 	// Now, we go through and determine who is a case and who is a control
-	boost::unordered_map<string, unsigned int>::const_iterator p_itr = _positions.begin();
-	boost::unordered_map<string, unsigned int>::const_iterator p_end = _positions.end();
+	boost::unordered_map<string, unsigned int>::const_iterator p_itr = _positions_include_samples.begin();
+	boost::unordered_map<string, unsigned int>::const_iterator p_end = _positions_include_samples.end();
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_itr;
 	boost::unordered_map<string, vector<float> >::const_iterator pheno_not_found = _phenos.end();
 	if(allControl){
@@ -253,15 +279,15 @@ void PopulationManager::loadIndividuals(){
 			_phenos[(*p_itr).first].push_back(0);
 			++p_itr;
 		}
-		dynamic_bitset<> cab = dynamic_bitset<>(_positions.size());
-		dynamic_bitset<> cob = dynamic_bitset<>(_positions.size());
+		dynamic_bitset<> cab = dynamic_bitset<>(_positions_include_samples.size());
+		dynamic_bitset<> cob = dynamic_bitset<>(_positions_include_samples.size());
 		cob.set();
 		_pheno_status.push_back(std::make_pair(cob, cab));
 	} else {
 
 		// push back all phenotypes that consists of "all missing"
-		dynamic_bitset<> cab(_positions.size());
-		dynamic_bitset<> cob(_positions.size());
+		dynamic_bitset<> cab(_positions_include_samples.size());
+		dynamic_bitset<> cob(_positions_include_samples.size());
 		_pheno_status.reserve(_pheno_names.size());
 		for(unsigned int i=0; i<_pheno_names.size(); i++){
 			_pheno_status.push_back(std::make_pair(cob, cab));
@@ -653,8 +679,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 	}
 
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
-	while(m_itr != _positions.end()){
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples.begin();
+	while(m_itr != _positions_include_samples.end()){
 		os << sep;
 		printEscapedString(os, (*m_itr).first, sep, sep_repl);
 		++m_itr;
@@ -669,8 +695,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		   << sep << missing_status << sep << missing_status << sep << missing_status;
 	}
 
-	m_itr = _positions.begin();
-	while(m_itr != _positions.end()){
+	m_itr = _positions_include_samples.begin();
+	while(m_itr != _positions_include_samples.end()){
 		os << sep << getPhenotypeVal((*m_itr).first, pheno);
 		++m_itr;
 	}
@@ -732,8 +758,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 
 
 		// print for each person
-		m_itr = _positions.begin();
-		while (m_itr != _positions.end()) {
+		m_itr = _positions_include_samples.begin();
+		while (m_itr != _positions_include_samples.end()) {
 			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno);
 			++m_itr;
 		}
@@ -856,8 +882,8 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		os << "\n";
 	}
 
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions.begin();
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions.end();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples.begin();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions_include_samples.end();
 
 	int pos;
 	float status;
