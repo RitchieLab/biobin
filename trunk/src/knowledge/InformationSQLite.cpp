@@ -283,6 +283,7 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 		if (!data_file.is_open()) {
 			std::cerr << "WARNING: cannot find " << *fn_itr << ", ignoring.\n";
 		} else {
+			unsigned int line_num = 1;
 			string line;
 			vector<string> result;
 			while (data_file.good()) {
@@ -392,12 +393,13 @@ void InformationSQLite::loadRoles(const RegionCollection& reg) {
 							}
 						}
 					}else {
-						std:: cerr << "WARNING: Unable to lift region \n";
+						std:: cerr << "WARNING: Unable to lift region at line " << line_num << "\n";
 					}
 
 				} else if(result.size() > 0) {
-					std:: cerr << "WARNING: Improperly formatted role file\n";
+					std:: cerr << "WARNING: Improperly formatted role file at line " << line_num <<  "\n";
 				}
+				line_num++;
 			}
 			data_file.close();
 		}
