@@ -260,6 +260,8 @@ public:
 	static std::string c_include_samples;
 	static std::string c_exclude_samples;
 
+	static bool c_drop_missing_pheno_samples;
+
 private:
 
 	void printEscapedString(std::ostream& os, const std::string& toPrint, const std::string& toRepl, const std::string& replStr) const;
@@ -285,6 +287,7 @@ private:
 	float getCustomWeight(const Knowledge::Locus& loc, const Knowledge::Region* const reg = NULL) const;
 	void setGenomeBuild(const std::string& build) const;
 	void readSamplesFromFile(boost::unordered_set<std::string>& sample_names, std::string file) const;
+	bool missingAllPheno(const std::string& sample_name) const;
 
 	/*
 	 * Fast atoi that handles up to 5 digits (max unsigned short is ~65K)

@@ -114,6 +114,8 @@ void Configuration::initGeneric(){
 				"Flag indicating determining rarity of variants by both case and control populations")
 		("phenotype-control-value", value<float>(&PopulationManager::c_phenotype_control)->default_value(0, "0"),
 				"Phenotype control value")
+		("drop-missing-phenotype-samples", value<Bool>()->default_value(true),
+				"Flag indicating whether to drop samples not in case/control for any phenotype")
 		;
 
 	stringstream test_ss;
@@ -268,6 +270,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::c_use_calc_weight = vm["weight-loci"].as<Bool>();
 	PopulationManager::c_keep_monomorphic = vm["keep-monomorphic"].as<Bool>();
 	PopulationManager::c_ignore_build_diff = vm["ignore-build-difference"].as<Bool>();
+	PopulationManager::c_drop_missing_pheno_samples = vm["drop-missing-phenotype-samples"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();

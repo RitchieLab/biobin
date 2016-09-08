@@ -67,6 +67,7 @@ bool PopulationManager::c_ignore_build_diff = false;
 bool PopulationManager::c_custom_genome_build = false;
 std::string PopulationManager::c_include_samples = "";
 std::string PopulationManager::c_exclude_samples = "";
+bool PopulationManager::c_drop_missing_pheno_samples = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
@@ -262,8 +263,15 @@ void PopulationManager::loadIndividuals(){
 	const_sample_iterator s_end = endSample();
 	unsigned int sample_num = 0;
 	while (s_itr != s_end) {
-		_positions_include_samples[*s_itr] = sample_num;
-		++sample_num;
+		if (c_drop_missing_pheno_samples && !allControl && missingAllPheno(*s_itr)) {
+			std::cerr << "WARNING: All phenotypes are completely missing for sample " << (*s_itr) <<
+								". Can't assign to control or case. Removing the sample." << std::endl;
+			// set samples to include index to false
+			_include_samples[_positions[*s_itr]] = false;
+		} else {
+			_positions_include_samples[*s_itr] = sample_num;
+			++sample_num;
+		}
 		++s_itr;
 	}
 
@@ -347,6 +355,20 @@ void PopulationManager::loadIndividuals(){
 					  << _pheno_names[i] << "." << std::endl;
 		}
 	}
+}
+
+
+
+bool PopulationManager::missingAllPheno(const std::string& sample_name) const{
+	bool isAllMissing = true;
+	boost::unordered_map<std::string, std::vector<float> >::const_iterator ph_iter = _phenos.find(sample_name);
+	if (_phenos.find(sample_name) != _phenos.end()) {
+		std::vector<float>::const_iterator first_real_itr =
+				std::find_if((*ph_iter).second.begin(), (*ph_iter).second.end(), std::isnormal<float>);
+
+		isAllMissing = (first_real_itr == (*ph_iter).second.end());
+	}
+	return isAllMissing;
 }
 
 void PopulationManager::parseTraitFile(const string& filename,
