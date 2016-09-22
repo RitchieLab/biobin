@@ -261,6 +261,7 @@ public:
 	static std::string c_exclude_samples;
 
 	static bool c_drop_missing_pheno_samples;
+	static bool c_force_all_control;
 
 private:
 
@@ -354,8 +355,8 @@ private:
 template<class T_cont>
 void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, const std::string& sep,
 		const std::string& genome_build, Knowledge::Liftover::Converter& conv){
-	typedef std::string::const_iterator sc_iter;
-	typedef boost::iterator_range<sc_iter> string_view;
+	//typedef std::string::const_iterator sc_iter;
+	//typedef boost::iterator_range<sc_iter> string_view;
 	std::string build = genome_build;
 
 	Utility::ICompressedFile vcf_f(_vcf_fn.c_str());

@@ -68,6 +68,7 @@ bool PopulationManager::c_custom_genome_build = false;
 std::string PopulationManager::c_include_samples = "";
 std::string PopulationManager::c_exclude_samples = "";
 bool PopulationManager::c_drop_missing_pheno_samples = false;
+bool PopulationManager::c_force_all_control = false;
 
 PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){
@@ -325,12 +326,14 @@ void PopulationManager::loadIndividuals(){
 		unsigned int total = n_controls + n_cases;
 
 		// If we don't have enough controls, print a warning and make everyone a control
-		if ((n_controls / (float) total) < c_min_control_frac){
-			std::cerr << "WARNING: In Phenotype '" << _pheno_names[i]
-			          << "', number of controls is less than "
-			          << c_min_control_frac * 100
-			          << "% of the data.  Using all individuals as controls"
-			          << std::endl;
+		if ((n_controls / (float) total) < c_min_control_frac || c_force_all_control){
+			if (!c_force_all_control) {
+				std::cerr << "WARNING: In Phenotype '" << _pheno_names[i]
+			              << "', number of controls is less than "
+			              << c_min_control_frac * 100
+			              << "% of the data.  Using all individuals as controls"
+			              << std::endl;
+			}
 			_pheno_status[i].first |= _pheno_status[i].second;
 			_pheno_status[i].second.reset();
 			n_controls = total;
@@ -343,16 +346,18 @@ void PopulationManager::loadIndividuals(){
 			          << std::endl;
 		}
 
-		// Print a warning if rare variants will only be fixed variants
-		if (1 / static_cast<float>(2 *n_controls) > BinManager::mafCutoff){
-			std::cerr << "WARNING: MAF cutoff is set so low that only variants "
-					  << "fixed in controls are rare for phenotype '"
-					  << _pheno_names[i] << "'." << std::endl;
-		}
-		if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(n_cases)) > BinManager::mafCutoff){
-			std::cerr << "WARNING: MAF cutoff is set so low that only variants "
-					  << "fixed in cases are rare for phenotype '"
-					  << _pheno_names[i] << "." << std::endl;
+		if (!c_force_all_control) {
+			// Print a warning if rare variants will only be fixed variants
+			if (1 / static_cast<float>(2 *n_controls) > BinManager::mafCutoff){
+				std::cerr << "WARNING: MAF cutoff is set so low that only variants "
+						  << "fixed in controls are rare for phenotype '"
+						  << _pheno_names[i] << "'." << std::endl;
+			}
+			if (RareCaseControl && n_controls != total && 1 / static_cast<float>(2*(n_cases)) > BinManager::mafCutoff){
+				std::cerr << "WARNING: MAF cutoff is set so low that only variants "
+						  << "fixed in cases are rare for phenotype '"
+						  << _pheno_names[i] << "." << std::endl;
+			}
 		}
 	}
 }

@@ -116,6 +116,8 @@ void Configuration::initGeneric(){
 				"Phenotype control value")
 		("drop-missing-phenotype-samples", value<Bool>()->default_value(true),
 				"Flag indicating whether to drop samples not in case/control for any phenotype")
+		("force-all-control", value<Bool>()->default_value(false),
+				"Flag indicating whether all the phenotypes be considered as control")
 		;
 
 	stringstream test_ss;
@@ -271,6 +273,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::c_keep_monomorphic = vm["keep-monomorphic"].as<Bool>();
 	PopulationManager::c_ignore_build_diff = vm["ignore-build-difference"].as<Bool>();
 	PopulationManager::c_drop_missing_pheno_samples = vm["drop-missing-phenotype-samples"].as<Bool>();
+	PopulationManager::c_force_all_control = vm["force-all-control"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
