@@ -69,6 +69,7 @@ std::string PopulationManager::c_include_samples = "";
 std::string PopulationManager::c_exclude_samples = "";
 bool PopulationManager::c_drop_missing_pheno_samples = false;
 bool PopulationManager::c_force_all_control = false;
+bool PopulationManager::c_set_star_referent = true;
 
 PopulationManager::PopulationManager(const string& vcf_fn) :
 		_vcf_fn(vcf_fn), _use_custom_weight(false), _info(0){

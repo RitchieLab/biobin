@@ -262,6 +262,7 @@ public:
 
 	static bool c_drop_missing_pheno_samples;
 	static bool c_force_all_control;
+	static bool c_set_star_referent;
 
 private:
 
@@ -449,6 +450,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 
 	static const std::string PASS_STR("PASS");
 	static const std::string DOT_STR(".");
+	static const std::string STAR_STR("*");
 
 	const unsigned short missing_geno = static_cast<unsigned short>(-1);
 	calls.reserve(_positions.size());
@@ -572,9 +574,25 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 									if(*call_list[0].begin() != '.' && *call_list[1].begin() != '.'){
 										g1 = fast_atoi(call_list[0]);
 										g2 = fast_atoi(call_list[1]);
-										calls.push_back(std::make_pair(g1, g2));
-										++call_count[g1];
-										++call_count[g2];
+										if (c_set_star_referent) {
+											if (alleles[g1] == STAR_STR) {
+												g1 = 0;
+											}
+											if (alleles[g2] == STAR_STR) {
+												g2 = 0;
+											}
+											calls.push_back(std::make_pair(g1, g2));
+											++call_count[g1];
+											++call_count[g2];
+										} else {
+											if(alleles[g1] == STAR_STR || alleles[g2] == STAR_STR) {
+												calls.push_back(std::make_pair(missing_geno, missing_geno));
+											} else {
+												calls.push_back(std::make_pair(g1, g2));
+												++call_count[g1];
+												++call_count[g2];
+											}
+										}
 									} else{
 										calls.push_back(std::make_pair(missing_geno, missing_geno));
 									}

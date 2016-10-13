@@ -85,7 +85,8 @@ void Configuration::initGeneric(){
 				"Number of kilobases intergenic bins can hold")
 		("interregion-bin-step",value<unsigned int>(),
 				"Sliding distance for intergenic bins, in kilobases (default = interregion-bin-length)")
-
+		("set-star-referent", value<Bool>()->default_value(true),
+				"Set star alleles as referent if Y else treat star alleles as missing (default = Y)")
 				;
 
 	po::options_description report_options("Report Generation Options");
@@ -274,6 +275,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::c_ignore_build_diff = vm["ignore-build-difference"].as<Bool>();
 	PopulationManager::c_drop_missing_pheno_samples = vm["drop-missing-phenotype-samples"].as<Bool>();
 	PopulationManager::c_force_all_control = vm["force-all-control"].as<Bool>();
+	PopulationManager::c_set_star_referent = vm["set-star-referent"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();
