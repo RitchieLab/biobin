@@ -45,6 +45,7 @@ bool BinManager::FilterByRole = false;
 bool BinManager::KeepUnknown = false;
 float BinManager::mafCutoff = 0.05;
 float BinManager::mafThreshold = 0;
+bool BinManager::BinConstantLoci = false;
 
 BinManager::BinManager(const PopulationManager& pop_mgr,
 		const Knowledge::RegionCollection& regions,
@@ -74,7 +75,8 @@ void BinManager::InitBins(const deque<Knowledge::Locus*>& loci) {
 		Knowledge::Locus& l = **l_itr;
 
 
-		if (_pop_mgr.isRare(l,_pheno.getStatus(), mafThreshold, mafCutoff)) {
+		if (_pop_mgr.isRare(l, _pheno.getStatus(), mafThreshold, mafCutoff)
+				&& (BinConstantLoci || _pop_mgr.isPresent(l, _pheno.getStatus()))) {
 			++_rare_variants;
 
 			// First, find all of the regions that contain this locus

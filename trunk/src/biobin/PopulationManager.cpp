@@ -142,6 +142,21 @@ bool PopulationManager::isRare(const Locus& locus, const bitset_pair& status, fl
 	return rare;
 }
 
+/**
+ * Returns false in case locus has no non-major allele overlapping with a non-missing phenotype
+ */
+bool PopulationManager::isPresent(const Locus& locus, const bitset_pair& status) const{
+	unordered_map<const Locus*, bitset_pair>::const_iterator g_itr = _genotypes.find(&locus);
+	if (g_itr != _genotypes.end()) {
+		boost::dynamic_bitset<> nonmissing = ~((*g_itr).second.first & (*g_itr).second.second);
+		if (&status != 0) {
+			nonmissing &= (status.first | status.second);
+			return (nonmissing.count() > 0);
+		}
+	}
+	return false;
+}
+
 float PopulationManager::getPhenotypeVal(const string& sample, const Phenotype& pheno) const{
 	static const float missing_status = std::numeric_limits<float>::quiet_NaN();
 	boost::unordered_map<std::string, std::vector<float> >::const_iterator pheno_status = _phenos.find(sample);

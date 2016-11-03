@@ -85,6 +85,7 @@ public:
 	static bool KeepUnknown;
 	static float mafCutoff; 	///< Max maf to produce result in a bin
 	static float mafThreshold; ///< Min maf to produce result in a bin
+	static bool BinConstantLoci;
 
 private:
 

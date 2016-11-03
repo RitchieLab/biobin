@@ -87,6 +87,8 @@ void Configuration::initGeneric(){
 				"Sliding distance for intergenic bins, in kilobases (default = interregion-bin-length)")
 		("set-star-referent", value<Bool>()->default_value(true),
 				"Set star alleles as referent if Y else treat star alleles as missing (default = Y)")
+		("bin-constant-loci", value<Bool>()->default_value(false),
+				"Bin loci that have no variation in any samples with non-missing phenotype (default = N)")
 				;
 
 	po::options_description report_options("Report Generation Options");
@@ -307,6 +309,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	BinManager::UsePathways = vm["bin-pathways"].as<Bool>();
 	BinManager::ExpandByGenes = vm["bin-regions"].as<Bool>();
 	BinManager::IncludeIntergenic = vm["bin-interregion"].as<Bool>();
+	BinManager::BinConstantLoci = vm["bin-constant-loci"].as<Bool>();
 
 	BinManager::IntergenicBinStep = vm.count("interregion-bin-step") ?
 				vm["interregion-bin-step"].as<unsigned int>() :

@@ -211,6 +211,7 @@ public:
 	unsigned short getIndivGeno(const Knowledge::Locus& loc, int position) const;
 	float getAvgGenotype(const Knowledge::Locus& locus, const boost::dynamic_bitset<>* nonmiss_status=0) const;
 	bool isRare(const Knowledge::Locus& locus, const bitset_pair& status, float lower, float upper) const;
+	bool isPresent(const Knowledge::Locus& locus, const bitset_pair& status) const;
 	unsigned int getNumPhenotypes() const {return _pheno_names.size();}
 	unsigned int getNumCovars() const {return _covar_names.size();}
 	unsigned int getNumSamples() const {return _positions_include_samples.size();}
