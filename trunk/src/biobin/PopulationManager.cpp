@@ -385,7 +385,7 @@ bool PopulationManager::missingAllPheno(const std::string& sample_name) const{
 	boost::unordered_map<std::string, std::vector<float> >::const_iterator ph_iter = _phenos.find(sample_name);
 	if (_phenos.find(sample_name) != _phenos.end()) {
 		std::vector<float>::const_iterator first_real_itr =
-				std::find_if((*ph_iter).second.begin(), (*ph_iter).second.end(), std::isnormal<float>);
+				std::find_if((*ph_iter).second.begin(), (*ph_iter).second.end(), std::isfinite<float>);
 
 		isAllMissing = (first_real_itr == (*ph_iter).second.end());
 	}
