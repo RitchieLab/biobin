@@ -863,7 +863,7 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 
 		// Print 4th + 5th lines (variant totals for cases + controls
 		for(int i=0; i<2; i++){
-			printEscapedString(os, std::string(i ? "Case" : "Control") + " Loci Totals", sep, sep_repl);
+			printEscapedString(os, std::string(i ? "Case" : "Control") + " Variant Totals", sep, sep_repl);
 			os << sep << missing_status;
 			b_itr = bins.begin();
 			b_end = bins.end();
