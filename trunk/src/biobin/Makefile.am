@@ -39,7 +39,7 @@ biobin_SOURCES= \
    tests/detail/Regression.h \
    tests/detail/Regression.cpp
 
-EXTRA_DIST=$(top_srcdir)/doc/manual.odt $(top_srcdir)/scripts/biobin-summary.py
+EXTRA_DIST=$(top_srcdir)/doc/manual.pdf $(top_srcdir)/scripts/biobin-summary.py
  
 AM_CPPFLAGS=-I$(top_srcdir)/src $(BOOST_CPPFLAGS) $(SQLITE_CFLAGS) $(GSL_CFLAGS) -DDATA_DIR='"$(datadir)"'
 AM_LDFLAGS=$(BOOST_LDFLAGS) $(GSL_LDFLAGS)
