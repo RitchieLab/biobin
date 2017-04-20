@@ -1,0 +1,78 @@
+== running ==
+
+== 2.3.0 ==
+
+New Features:
+- Genomic build is now detected from the VCF file when --genomic-build is not specified.
+- Summary script output now includes case/control capacity and gene list, and is tab-separated by default.
+- Changed the representation of p-values from SKAT methods in the case when they are very close to 0.
+- Added option --bin-constant-loci to bin loci even when they do not vary among samples with non-missing phenotypes (default: N).
+- Added option --drop-missing-phenotype-samples to drop samples which are neither case nor control for any phenotype (default: Y).
+- Added option --force-all-control to consider all phenotypes as controls (default: N).
+- Added option --ignore-build-difference to suppress the error when the specified genome build does not match the VCF (default: N).
+- Added options --include-samples and --exclude-samples to specify files containing samples (one per line) to keep or filter out, respectively.
+- Added option --set-star-referent to consider star alleles as referent rather than missing (default: Y).
+
+== 2.2.1 ==
+
+Bug Fixes:
+- Fixed a potential segfault when using roles and threading together
+
+== 2.2.0 ==
+
+Features and Changes:
+- Added ability to run PheWAS, reading the VCF only once
+- Compressed VCFs are automatically detected
+- Added an output listing unlifted loci
+- Added the ability to suppress summary information in the bins file
+- Removed dependence on VCFTools library
+- Removed Genotype and Frequency reports
+- Removed all allele information from memory storage
+- Added the ability to run statistical tests within BioBin.  Tests included:
+	- linear regression
+	- logistic regression
+	- Wincoxon rank-sum test
+	- SKAT (continuous phenotype)
+	- SKAT (dichotomous phenotype)
+
+Bug Fixes:
+- Consider loci that lift to non-standard chromosomes as "unlifted"
+- Correctly parsing variants including the "FT" genotype-level filter flag.
+  Previously, all variants with a "FT" flag were incorrectly marked as monomorphic
+
+== 2.1.2 ==
+- Fixed reactome, GWAS catalog and liftOver loaders in LOKI.
+
+== 2.1.1 ==
+
+- Fixed bug that yields NaN for some bins when using locus weighting
+
+== 2.1.0 ==
+
+Features:
+- Added weighting of individual loci in the collapsing methods
+- Added ability to accept locus weights by region
+- Added sliding-window intergenic bins
+- Added a minimum MAF threshold to consider for binning.
+- Added ability to filter genes/regions in consideration for binning.
+
+Bug Fixes:
+- Corrected bug in LOKI that produced incorrect annotations caused by upgrade to build 38
+
+== 2.0.3 ==
+
+- Fixed bug for using correct include paths for BOOST libraries
+
+== 2.0.2 ==
+
+- Moved "updater" to "loki" to make biobin closer in spirit to biofilter
+- Updated method of building the LOKI database
+- Caught errors when building the LOKI database so we don't have to "make clean" all the time
+
+== 2.0.1 ==
+
+- Updated and improved documentation
+
+== 2.0.0 ==
+
+Initial Release
