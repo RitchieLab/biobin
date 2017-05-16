@@ -10,6 +10,7 @@
 #include <set>
 #include <limits>
 #include <cmath>
+#include <algorithm>
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
@@ -122,6 +123,9 @@ int MatrixUtils::setPermutation(const vector<unsigned int>& idx_permu,
 		// swap the permuted index and the n-i'th index
 		errcode |= gsl_permutation_swap(permu, permu->data[idx_permu[i]], permu->size - 1
 				- i);
+	}
+	if (idx_permu.size() > 0) {
+		std::sort(permu->data, permu->data + (permu->size - idx_permu.size()));
 	}
 
 	return errcode;

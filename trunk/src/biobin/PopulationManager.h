@@ -397,10 +397,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 		}
 		// no genome build in vcf
 		else {
-			build = _info->getLOKIBuild();
-			std::cerr
-					<< "WARNING: No genome build detected in vcf! As no build is provided using -G option, using default LOKI build version "
-					<< _info->getLOKIBuild() << std::endl;
+			throw std::runtime_error("No genome build detected in vcf!\nYou must use the -G option to specify the genome build.");
 		}
 	}
 	//If a build is given, the build is determined by the build of the VCF if ANY builds for any contig (1-22+X+Y) match the given build
