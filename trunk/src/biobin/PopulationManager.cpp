@@ -287,6 +287,15 @@ void PopulationManager::loadIndividuals(){
 			_include_samples[_positions[*s_itr]] = false;
 		} else {
 			_positions_include_samples[*s_itr] = sample_num;
+			
+			// check for covars a-la Regression::regressionSetup()
+			const vector<float>& covars(getCovariates(*s_itr));
+			bool missing = (covars.size() != getNumCovars());
+			for(vector<float>::const_iterator ci = covars.begin();
+					ci!=covars.end() && !(missing |= isnan(*ci)); ci++);
+			if (!missing)
+				_positions_include_samples_with_covars[*s_itr] = sample_num;
+			
 			++sample_num;
 		}
 		++s_itr;
@@ -722,10 +731,12 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 	}
 
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples.begin();
-	while(m_itr != _positions_include_samples.end()){
-		os << sep;
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples_with_covars.begin();
+	while(m_itr != _positions_include_samples_with_covars.end()){
+		if (!isnan(getPhenotypeVal((*m_itr).first, pheno))) {
+			os << sep;
+			printEscapedString(os, (*m_itr).first, sep, sep_repl);
+		}
 		++m_itr;
 	}
 
@@ -738,9 +749,11 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		   << sep << missing_status << sep << missing_status << sep << missing_status;
 	}
 
-	m_itr = _positions_include_samples.begin();
-	while(m_itr != _positions_include_samples.end()){
-		os << sep << getPhenotypeVal((*m_itr).first, pheno);
+	m_itr = _positions_include_samples_with_covars.begin();
+	while(m_itr != _positions_include_samples_with_covars.end()){
+		float status = getPhenotypeVal((*m_itr).first, pheno);
+		if (!isnan(status))
+			os << sep << status;
 		++m_itr;
 	}
 
@@ -801,9 +814,11 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 
 
 		// print for each person
-		m_itr = _positions_include_samples.begin();
-		while (m_itr != _positions_include_samples.end()) {
-			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno);
+		m_itr = _positions_include_samples_with_covars.begin();
+		while (m_itr != _positions_include_samples_with_covars.end()) {
+			if (!isnan(getPhenotypeVal((*m_itr).first, pheno))) {
+				os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, (*m_itr).second, pheno);
+			}
 			++m_itr;
 		}
 		os << "\n";
@@ -925,29 +940,28 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		os << "\n";
 	}
 
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples.begin();
-	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions_include_samples.end();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples_with_covars.begin();
+	boost::unordered_map<std::string, unsigned int>::const_iterator m_end = _positions_include_samples_with_covars.end();
 
 	int pos;
 	float status;
 
 	while (m_itr != m_end){
-		b_itr = bins.begin();
-		b_end = bins.end();
-
-		pos = (*m_itr).second;
 		status = getPhenotypeVal((*m_itr).first, pheno);
+		if (!isnan(status)) {
+			pos = (*m_itr).second;
+			printEscapedString(os, (*m_itr).first, sep, sep_repl);
+			os << sep << status;
 
-		printEscapedString(os, (*m_itr).first, sep, sep_repl);
+			b_itr = bins.begin();
+			b_end = bins.end();
+			while(b_itr != b_end){
+				os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, pos, pheno);
+				++b_itr;
+			}
 
-		os << sep << status;
-
-		while(b_itr != b_end){
-			os << sep << std::setprecision(4) << getTotalIndivContrib(**b_itr, pos, pheno);
-			++b_itr;
+			os << "\n";
 		}
-
-		os << "\n";
 		++m_itr;
 	}
 }

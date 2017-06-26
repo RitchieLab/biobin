@@ -321,6 +321,9 @@ private:
 	// mapping of ID -> position in the VCF file after including/excluding samples.
 	boost::unordered_map<std::string, unsigned int> _positions_include_samples;
 
+	// mapping of ID -> position in the VCF file after including/excluding samples, not including any with missing covariates
+	boost::unordered_map<std::string, unsigned int> _positions_include_samples_with_covars;
+
 	// vector of samples, as given in the VCF file
 	std::vector<std::string> _sample_names;
 
