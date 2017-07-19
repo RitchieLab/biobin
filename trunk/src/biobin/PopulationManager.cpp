@@ -729,6 +729,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 	for(unsigned int i=0; i<c_tests.size(); i++){
 		os << sep;
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
+		os << sep;
+		printEscapedString(os, c_tests[i]->getName() + " accuracy", sep, sep_repl);
 	}
 
 	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples_with_covars.begin();
@@ -764,10 +766,12 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 	boost::unordered_map<const Knowledge::Locus*, bitset_pair >::const_iterator loc_itr;
 
 	vector<vector<double> > test_pvals(c_tests.size());
+	vector<vector<double> > test_accs(c_tests.size());
 	for(unsigned int i=0; i<c_tests.size(); i++){
 		test_pvals[i].reserve(bins.size());
+		test_accs[i].reserve(bins.size());
 		Test::Test* t = c_tests[i]->clone();
-		t->runAllTests(*this, pheno,bins,test_pvals[i]);
+		t->runAllTests(*this, pheno, bins, test_pvals[i], test_accs[i]);
 		delete t;
 	}
 
@@ -810,6 +814,8 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		for(unsigned int j=0; j<c_tests.size(); j++){
 			os << sep;
 			os << test_pvals[j][i];
+			os << sep;
+			os << test_accs[j][i];
 		}
 
 
@@ -926,16 +932,30 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		os << "\n";
 	}
 
+	// Run the tests
+	vector<vector<double> > test_pvals(c_tests.size());
+	vector<vector<double> > test_accs(c_tests.size());
+	for(unsigned int i=0; i<c_tests.size(); i++){
+		test_pvals[i].reserve(bins.size());
+		test_accs[i].reserve(bins.size());
+		Test::Test* t = c_tests[i]->clone();
+		t->runAllTests(*this, pheno, bins, test_pvals[i], test_accs[i]);
+		delete t;
+	}
+
 	// Print the results of the tests
 	for(unsigned int i=0; i<c_tests.size(); i++){
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 		os << sep << missing_status;
-		vector<double> pvals(bins.size());
-		Test::Test* t = c_tests[i]->clone();
-		t->runAllTests(*this, pheno,bins,pvals);
-		delete t;
-		for(unsigned int j=0; j<pvals.size(); j++){
-			os << sep << pvals[j];
+		for(unsigned int j=0; j<test_pvals[i].size(); j++){
+			os << sep << test_pvals[i][j];
+		}
+		os << "\n";
+
+		printEscapedString(os, c_tests[i]->getName() + " accuracy", sep, sep_repl);
+		os << sep << missing_status;
+		for(unsigned int j=0; j<test_accs[i].size(); j++){
+			os << sep << test_accs[i][j];
 		}
 		os << "\n";
 	}

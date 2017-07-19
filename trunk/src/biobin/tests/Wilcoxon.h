@@ -23,7 +23,7 @@ public:
 
 protected:
 	virtual void init();
-	virtual double runTest(const Bin& bin) const;
+	virtual double runTest(const Bin& bin, double *accuracy) const;
 
 private:
 	static std::string testname;

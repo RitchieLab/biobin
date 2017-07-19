@@ -86,7 +86,7 @@ void SKATLinear::init(){
 	gsl_matrix_free(svd_mat_ws);
 }
 
-double SKATLinear::runTest(const Bin& bin) const{
+double SKATLinear::runTest(const Bin& bin, double *accuracy) const{
 
 	// check for guaranteed failure to begin with...
 	if(_willfail || _base_reg._willfail){
@@ -179,7 +179,7 @@ double SKATLinear::runTest(const Bin& bin) const{
 	double pval;
 	if(errcode == GSL_SUCCESS){
 		// get the p-value from tmp_ss and the Q statistic
-		pval = SKATUtils::getPvalue(Q, tmp_ss);
+		pval = SKATUtils::getPvalue(Q, tmp_ss, accuracy);
 	} else{
 		pval = 10;
 	}

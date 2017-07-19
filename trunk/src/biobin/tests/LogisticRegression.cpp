@@ -48,7 +48,7 @@ void LogisticRegression::init(){
 	}
 }
 
-double LogisticRegression::runTest(const Bin& bin) const {
+double LogisticRegression::runTest(const Bin& bin, double *accuracy) const {
 	// If we are guaranteed to fail, bail out early
 	if (_willfail) {
 		return 1;
@@ -65,6 +65,7 @@ double LogisticRegression::runTest(const Bin& bin) const {
 	// Get the p-value of the last term
 
 	double pval = 1;
+	accuracy[0] = 0; // TODO
 	if(r){
 		double se = sqrt(gsl_matrix_get(r->cov, r->cov->size1 - 1, r->cov->size2 - 1));
 		double c = gsl_vector_get(r->beta, r->beta->size - 1);

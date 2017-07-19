@@ -26,7 +26,7 @@ public:
 
 protected:
 	virtual void init(){regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);}
-	virtual double runTest(const Bin& bin) const;
+	virtual double runTest(const Bin& bin, double *accuracy) const;
 
 	virtual Regression::Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const;
 	virtual float getPhenotype(const PopulationManager& pop_mgr,

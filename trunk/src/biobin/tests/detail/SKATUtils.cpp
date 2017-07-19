@@ -29,6 +29,11 @@ namespace Test{
 
 boost::mutex SKATUtils::_qfc_lock;
 
+double SKATUtils::skat_matrix_threshold = std::numeric_limits<float>::epsilon();
+double SKATUtils::skat_eigen_threshold = std::numeric_limits<float>::epsilon();
+double SKATUtils::skat_pvalue_accuracy = std::numeric_limits<float>::epsilon();
+bool SKATUtils::skat_raw_pvalues = false;
+
 unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 		const Utility::Phenotype& pheno,
 		const boost::dynamic_bitset<>& incl,
@@ -162,7 +167,7 @@ unsigned int SKATUtils::getGenoWeights(const PopulationManager& pop_mgr,
 	return n_col - bad_idx.size();
 }
 
-double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
+double SKATUtils::getPvalue(double Q, const gsl_matrix* W, double *accuracy){
 	int errcode = GSL_SUCCESS;
 
 	gsl_matrix* W_tmp = gsl_matrix_calloc(W->size1, W->size2);
@@ -172,7 +177,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	vector<unsigned int> bad_idx;
 	for(unsigned int i=0; i<W->size2; i++){
 		gsl_vector_const_view W_col = gsl_matrix_const_column(W, i);
-		if(gsl_blas_dasum(&W_col.vector) < std::numeric_limits<float>::epsilon()){
+		if(gsl_blas_dasum(&W_col.vector) < skat_matrix_threshold){
 			bad_idx.push_back(i);
 		}
 	}
@@ -212,7 +217,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	}
 
 	int n_eval = 0;
-	while(gsl_vector_get(eval, n_eval) > std::numeric_limits<float>::epsilon()
+	while(gsl_vector_get(eval, n_eval) > skat_eigen_threshold
 			&& static_cast<unsigned int>(++n_eval) < eval->size);
 
 	// try the SVD instead
@@ -226,7 +231,7 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	//gsl_vector_free(svd_ws);
 
 	// TODO: find where these eigenvalues go to zero and only take those
-	//while(static_cast<unsigned int>(n_eval) < eval_sq->size && gsl_vector_get(eval_sq, n_eval) > std::numeric_limits<float>::epsilon()){
+	//while(static_cast<unsigned int>(n_eval) < eval_sq->size && gsl_vector_get(eval_sq, n_eval) > skat_eigen_threshold){
 	//	gsl_vector_set(eval_sq, n_eval, sqrt(gsl_vector_get(eval_sq, n_eval)));
 	//	++n_eval;
 	//}
@@ -241,13 +246,13 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	int qfc_err = 1;
 	double pval;
 	int lim=10000;
-	double acc=std::numeric_limits<float>::epsilon();
+	double acc = skat_pvalue_accuracy;
 	double sigma=0;
 
 
 	// qfc is NOT thread-safe (or even reentrant!)
 	_qfc_lock.lock();
-	while(qfc_err == 1 && acc < 0.001){
+	while((qfc_err == 1 || qfc_err == 2) && acc < 0.001){
 		qfc(eval->data, &nct[0], &df[0], &n_eval, &sigma, &Q, &lim, &acc, &qfc_detail[0], &qfc_err, &pval);
 		acc *= 2;
 	}
@@ -263,7 +268,8 @@ double SKATUtils::getPvalue(double Q, const gsl_matrix* W){
 	}
 
 	pval =  qfc_err == 0 ? 1-pval : 1+qfc_err;
-	if (qfc_err == 0 && pval - acc/2 < 0){
+	accuracy[0] = acc / 2;
+	if (qfc_err == 0 && pval - acc/2 < 0 && !skat_raw_pvalues){
 		pval = std::min(-pval, std::max(pval, 0.0)-acc/2);
 	}
 	return pval;

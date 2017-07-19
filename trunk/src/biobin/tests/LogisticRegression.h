@@ -32,7 +32,7 @@ protected:
 
 	// Inherited from Test
 	virtual void init();
-	virtual double runTest(const Bin& bin) const;
+	virtual double runTest(const Bin& bin, double *accuracy) const;
 
 	// Inherited from Regression
 	virtual Regression::Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const;

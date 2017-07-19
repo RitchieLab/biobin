@@ -24,6 +24,8 @@
 #include "tests/TestFactory.h"
 #include "tests/Test.h"
 
+#include "tests/detail/SKATUtils.h"
+
 using std::string;
 using std::vector;
 using std::ostream;
@@ -144,6 +146,17 @@ void Configuration::initGeneric(){
 				"Disease model (additive, dominant, or recessive)")
 		("test", value<vector<string> >()->composing(),
 				test_ss.str().c_str())
+		("skat-matrix-threshold", value<double>(&Test::SKATUtils::skat_matrix_threshold)
+				->default_value(std::numeric_limits<float>::epsilon(), "~1.2e-7"),
+				"Threshold for culling near-zero rows/columns of the symmetric matrix W")
+		("skat-eigen-threshold", value<double>(&Test::SKATUtils::skat_eigen_threshold)
+				->default_value(std::numeric_limits<float>::epsilon(), "~1.2e-7"),
+				"Threshold for culling near-zero eignvalues of the symmetric matrix W")
+		("skat-pvalue-accuracy", value<double>(&Test::SKATUtils::skat_pvalue_accuracy)
+				->default_value(std::numeric_limits<float>::epsilon(), "~1.2e-7"),
+				"Desired SKAT p-value accuracy")
+		("skat-raw-pvalues", value<Bool>()->default_value(false),
+				"Report overly small p-values (below accuracy) directly as computed")
 		;
 
 
@@ -180,7 +193,8 @@ void Configuration::initHidden(){
 void Configuration::initCmd(){
 	_cmd.add_options()
 		("print-populations", "Print populations available in LOKI")
-		("print-sources", "Print the sources available in LOKI");
+		("print-sources", "Print the sources available in LOKI")
+		;
 	_cmd_init = true;
 }
 
@@ -278,6 +292,7 @@ void Configuration::parseOptions(const po::variables_map& vm){
 	PopulationManager::c_drop_missing_pheno_samples = vm["drop-missing-phenotype-samples"].as<Bool>();
 	PopulationManager::c_force_all_control = vm["force-all-control"].as<Bool>();
 	PopulationManager::c_set_star_referent = vm["set-star-referent"].as<Bool>();
+	Test::SKATUtils::skat_raw_pvalues = vm["skat-raw-pvalues"].as<Bool>();
 
 	if(vm.count("add-groups")){
 		Main::c_custom_groups = vm["add-groups"].as<vector<string> >();

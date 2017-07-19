@@ -32,16 +32,18 @@ public:
 
 	virtual const std::string& getName() const  = 0;
 
-	template<class Bin_ptr_cont, class Pval_cont>
+	template<class Bin_ptr_cont, class Pval_cont, class Acc_cont>
 	void runAllTests(const PopulationManager& pop_mgr,
 			const Utility::Phenotype& pheno,
-			const Bin_ptr_cont& bins, Pval_cont& pvals_out);
+			const Bin_ptr_cont& bins,
+			Pval_cont& pvals_out,
+			Acc_cont& accs_out);
 
 	virtual Test* clone() const = 0;
 
 protected:
 	virtual void init() = 0;
-	virtual double runTest(const Bin& bin) const = 0;
+	virtual double runTest(const Bin& bin, double *accuracy) const = 0;
 
 	void setup(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
 
@@ -70,15 +72,18 @@ protected:
 
 };
 
-template<class Bin_ptr_cont, class Pval_cont>
+template<class Bin_ptr_cont, class Pval_cont, class Acc_cont>
 void Test::runAllTests(const PopulationManager& pop_mgr,
 		const Utility::Phenotype& pheno, const Bin_ptr_cont& bins,
-		Pval_cont& pvals_out) {
+		Pval_cont& pvals_out, Acc_cont& accs_out) {
 	setup(pop_mgr, pheno);
 	pvals_out.clear();
 	typename Bin_ptr_cont::const_iterator bin_itr = bins.begin();
+	double pval, accuracy;
 	while(bin_itr != bins.end()){
-		pvals_out.push_back(runTest(**bin_itr));
+		pval = runTest(**bin_itr, &accuracy);
+		pvals_out.push_back(pval);
+		accs_out.push_back(accuracy);
 		++bin_itr;
 	}
 }

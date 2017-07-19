@@ -29,7 +29,7 @@ namespace Test {
 
 string LinearRegression::testname = LinearRegression::doRegister("linear");
 
-double LinearRegression::runTest(const Bin& bin) const{
+double LinearRegression::runTest(const Bin& bin, double *accuracy) const{
 
 	if (_willfail) {
 		return 1;
@@ -43,6 +43,7 @@ double LinearRegression::runTest(const Bin& bin) const{
 	// run the model now
 	Result* r = calculate(*_phenos, *_data);
 
+	accuracy[0] = 0; // TODO
 	double pval = 1;
 	if(r && r->_conv){
 	// Get the p-value of the last term

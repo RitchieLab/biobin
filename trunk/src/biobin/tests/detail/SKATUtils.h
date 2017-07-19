@@ -44,7 +44,13 @@ public:
 			const std::vector<std::pair<std::string, unsigned int> >& name_pos,
 			gsl_matrix* &geno_wt);
 
-	static double getPvalue(double Q, const gsl_matrix* W);
+	static double getPvalue(double Q, const gsl_matrix* W, double *accuracy);
+
+        // configurable p-value calculation settings
+        static double skat_matrix_threshold;
+        static double skat_eigen_threshold;
+        static double skat_pvalue_accuracy;
+	static bool skat_raw_pvalues;
 
 private:
 	static unsigned char popcount(unsigned char v){

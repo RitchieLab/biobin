@@ -31,7 +31,7 @@ void Wilcoxon::init(){
 	}
 }
 
-double Wilcoxon::runTest(const Bin& bin) const{
+double Wilcoxon::runTest(const Bin& bin, double *accuracy) const{
 
 	// let's get the values for all non-missing samples
 	const Utility::Phenotype::bitset_pair& status = _pheno_ptr->getStatus();
@@ -95,6 +95,7 @@ double Wilcoxon::runTest(const Bin& bin) const{
 	double Z = num / sqrt(denom);
 
 	// now check the Z statistic, taking the area from the std normal
+	accuracy[0] = 0; // TODO
 	double pval;
 	if(Z > 0){
 		pval = 2*gsl_cdf_ugaussian_Q(Z);
