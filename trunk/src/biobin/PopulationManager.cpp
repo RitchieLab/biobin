@@ -730,7 +730,7 @@ void PopulationManager::printBinsTranspose(std::ostream& os, const BinManager& b
 		os << sep;
 		printEscapedString(os, c_tests[i]->getName() + " p-value", sep, sep_repl);
 		os << sep;
-		printEscapedString(os, c_tests[i]->getName() + " accuracy", sep, sep_repl);
+		printEscapedString(os, c_tests[i]->getName() + " error margin", sep, sep_repl);
 	}
 
 	boost::unordered_map<std::string, unsigned int>::const_iterator m_itr = _positions_include_samples_with_covars.begin();
@@ -952,7 +952,7 @@ void PopulationManager::printBins(std::ostream& os, const BinManager& bins, cons
 		}
 		os << "\n";
 
-		printEscapedString(os, c_tests[i]->getName() + " accuracy", sep, sep_repl);
+		printEscapedString(os, c_tests[i]->getName() + " error margin", sep, sep_repl);
 		os << sep << missing_status;
 		for(unsigned int j=0; j<test_accs[i].size(); j++){
 			os << sep << test_accs[i][j];

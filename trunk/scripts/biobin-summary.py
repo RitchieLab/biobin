@@ -43,6 +43,7 @@ if __name__ == "__main__":
 		# OK, now the header is read, let's read the p-values
 		
 		pv_dict = {}
+		em_dict = {}
 		for l in f:
 			pv_arr = l.strip().split(args.sep)
 			if pv_arr[0] == "Gene(s)":
@@ -52,6 +53,11 @@ if __name__ == "__main__":
 				if not header_printed:
 					pv_names.add(pv_test[0])
 				pv_dict[pv_test[0]] = pv_arr[2:]
+			elif pv_arr[0].endswith("error margin"):
+				pv_test = pv_arr[0].rsplit(" ", 2)
+				if not header_printed:
+					pv_names.add(pv_test[0])
+				em_dict[pv_test[0]] = pv_arr[2:]				
 			else:
 				n_case += (pv_arr[1] != "nan" and (not args.all_control) and pv_arr[1] != args.control_value)
 				n_control += (pv_arr[1] != "nan" and (args.all_control or pv_arr[1] == args.control_value))
