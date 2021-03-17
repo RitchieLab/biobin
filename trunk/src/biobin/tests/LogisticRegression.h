@@ -19,7 +19,7 @@ namespace Test {
 
 class LogisticRegression : public TestImpl<LogisticRegression> , public Regression{
 public:
-	friend class SKATLogistic;
+//TODO:SKAT	friend class SKATLogistic;
 
 	LogisticRegression() : TestImpl<LogisticRegression>(testname), Regression(){
 	}

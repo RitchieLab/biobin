@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(biobin, 2.3.0, software@ritchielab.psu.edu)
+AC_INIT(biobin, 2.3.1b1, software@ritchielab.psu.edu)
 
 # Checks for --enable-debug added
 AX_CHECK_ENABLE_DEBUG

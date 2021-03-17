@@ -1,4 +1,11 @@
-== running ==
+== 2.3.1 ==
+
+Changes:
+- The -g/--genomic-build option is now required if the genomic build is not specified in the VCF file; BioBin will no longer default to using the genomic build of the LOKI database.
+
+Bug Fixes:
+- Samples which do not contribute to the test(s) on a bin due to missingness in the tested phenotype or any covariate are no longer included in the corresponding bin report.
+- SKAT Linear and SKAT Logistic tests are disabled pending further testing and review.
 
 == 2.3.0 ==
 

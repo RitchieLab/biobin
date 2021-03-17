@@ -24,20 +24,22 @@ biobin_SOURCES= \
    tests/LinearRegression.cpp \
    tests/LogisticRegression.h \
    tests/LogisticRegression.cpp \
-   tests/SKATLinear.h \
-   tests/SKATLinear.cpp \
    tests/Wilcoxon.h \
    tests/Wilcoxon.cpp \
-   tests/SKATLogistic.h \
-   tests/SKATLogistic.cpp \
    tests/detail/MatrixUtils.h \
    tests/detail/MatrixUtils.cpp \
-   tests/detail/SKATUtils.h \
-   tests/detail/SKATUtils.cpp \
-   tests/detail/qfc.h \
-   tests/detail/qfc.cpp \
    tests/detail/Regression.h \
    tests/detail/Regression.cpp
+
+#   tests/SKATLinear.h \
+#   tests/SKATLinear.cpp \
+#   tests/SKATLogistic.h \
+#   tests/SKATLogistic.cpp \
+#   tests/detail/SKATUtils.h \
+#   tests/detail/SKATUtils.cpp \
+#   tests/detail/qfc.h \
+#   tests/detail/qfc.cpp \
+#TODO:SKAT
 
 EXTRA_DIST=$(top_srcdir)/doc/manual.pdf $(top_srcdir)/scripts/biobin-summary.py
  

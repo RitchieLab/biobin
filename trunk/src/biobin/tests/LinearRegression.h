@@ -16,7 +16,7 @@ namespace BioBin {
 namespace Test {
 
 class LinearRegression : public TestImpl<LinearRegression>, public Regression {
-	friend class SKATLinear;
+//TODO:SKAT	friend class SKATLinear;
 
 public:
 	LinearRegression() : TestImpl<LinearRegression>(testname), Regression() {}
