@@ -551,7 +551,7 @@ void PopulationManager::loadLoci(T_cont& loci_out, const std::string& prefix, co
 							//std::string currstr(fields[i+9].begin(), fields[i+9].end());
 							boost::algorithm::iter_split(geno_list, fields[i+9], boost::first_finder(":"));
 
-							if(fields[i+9] != DOT_STR && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == PASS_STR)){
+							if(fields[i+9] != DOT_STR && (ft_idx == static_cast<unsigned int>(-1) || geno_list[ft_idx] == PASS_STR || geno_list[ft_idx] == DOT_STR)){
 								call_list.clear();
 								boost::algorithm::iter_split(call_list, geno_list[gt_idx], boost::first_finder(geno_sep));
 								if(call_list.size() == 1){
