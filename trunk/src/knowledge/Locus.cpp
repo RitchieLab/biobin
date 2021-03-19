@@ -87,13 +87,19 @@ Locus::Locus(const string& chrom_str, uint pos, const string& id, const string& 
 }
 
 bool Locus::operator <(const Locus& other) const{
-	return _chrom == other._chrom ?
-			_pos < other._pos :
+	return _chrom == other._chrom ? (
+			_pos == other._pos ? (
+				_id == other._id ?
+					this < &other :
+					_id < other._id
+				) :
+				_pos < other._pos
+			) :
 			_chrom < other._chrom;
 }
 
 unsigned int Locus::distance(const Locus& other) const{
-	return _chrom == other._chrom ?	abs(_pos - other._pos) : -1;
+	return _chrom == other._chrom ?	(_pos > other._pos ? _pos - other._pos : other._pos - _pos) : -1;
 }
 
 const string& Locus::getChromStr(unsigned short chrom){
