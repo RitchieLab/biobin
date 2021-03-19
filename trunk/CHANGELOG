@@ -1,10 +1,16 @@
 == 2.3.1 ==
 
-Changes:
+New Features and Changes:
 - The -g/--genomic-build option is now required if the genomic build is not specified in the VCF file; BioBin will no longer default to using the genomic build of the LOKI database.
+- Added options --skat-matrix-threshold, --skat-eigen-threshold, --skat-pvalue-accuracy, and --skat-raw-pvalues to customize the handling extremely small SKAT p-values.
+- Removed the outdated ldspline utility from the distribution.
+- Removed the build dependency on python suds.
 
 Bug Fixes:
 - Samples which do not contribute to the test(s) on a bin due to missingness in the tested phenotype or any covariate are no longer included in the corresponding bin report.
+- Fixed a crash when the VCF contains multiple variants at the same position (i.e. with different ref/alt alleles).
+- Samples are now omitted from the bins report if they are missing for the reported phenotype or for any covariate.
+- Fixed a bug in the generation of SKAT p-values when covariates are provided while some samples have missing phenotypes.
 - SKAT Linear and SKAT Logistic tests are disabled pending further testing and review.
 
 == 2.3.0 ==
