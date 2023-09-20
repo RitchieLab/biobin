@@ -1,6 +1,6 @@
 #include "main.h"
 
-#include "config.h"
+//#include "config.h"
 
 #include <iostream>
 #include <cstring>
@@ -220,12 +220,19 @@ int main(int argc, char *argv[]) {
 				++itr;
 			}
 		}
-	}catch(...){
-		std::cout << "Error processing configuration file\n";
+	}//catch(...){
+	 catch(po::error& e){
 		BioBin::Configuration::printConfig(std::cout);
 		Knowledge::Configuration::printConfig(std::cout);
+		std::cout << "\n#### Error processing configuration file ####\n";
+		std::cout << e.what() << std::endl;
 		return 2;
-	}
+	}catch(...){
+                BioBin::Configuration::printConfig(std::cout);
+                Knowledge::Configuration::printConfig(std::cout);
+		std::cout << "\n#### Error processing configuration file ####\n";
+        }
+	
 
 	try{
 		Knowledge::Configuration::parseOptions(vm);

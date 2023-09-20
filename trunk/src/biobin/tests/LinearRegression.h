@@ -24,7 +24,7 @@ public:
 
 //	virtual Test* clone() const {return new LinearRegression();}
 
-protected:
+//protected:
 	virtual void init(){regressionSetup(*_pop_mgr_ptr, *_pheno_ptr);}
 	virtual double runTest(const Bin& bin, double *accuracy) const;
 

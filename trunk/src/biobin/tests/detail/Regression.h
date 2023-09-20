@@ -54,7 +54,7 @@ public:
 		bool _conv;
 	};
 
-protected:
+//protected:
 
 	void regressionSetup(const PopulationManager& pop_mgr, const Utility::Phenotype& pheno);
 	virtual Result* calculate(const gsl_vector& Y, const gsl_matrix& X) const = 0;

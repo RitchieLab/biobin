@@ -41,7 +41,7 @@ public:
 
 	virtual Test* clone() const = 0;
 
-protected:
+//protected:
 	virtual void init() = 0;
 	virtual double runTest(const Bin& bin, double *accuracy) const = 0;
 
